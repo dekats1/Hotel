@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: hotel-booking-backend
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hotel
+    username: postgres
+    password: 12345
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate  # или none, если используем Flyway
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true  # ДОБАВЬТЕ ЭТУ СТРОКУ
+    baseline-version: 0  # ДОБАВЬТЕ ЭТУ СТРОКУ
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL_USERNAME:}
+    password: ${EMAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: 8080  # ИЗМЕНИТЕ С 5432 НА 8080 (5432 - это порт PostgreSQL!)
+
+logging:
+  level:
+    com.hotel.booking: DEBUG
+    org.springframework.security: DEBUG
