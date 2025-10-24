@@ -1,3 +1,3 @@
 package com.hotel.booking.repository;
 
-class ReviewRepository {}
+public interface ReviewRepository {}

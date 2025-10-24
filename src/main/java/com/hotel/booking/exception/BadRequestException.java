@@ -1,3 +1,7 @@
 package com.hotel.booking.exception;
 
-class BadRequestException extends RuntimeException {}
+public class BadRequestException extends RuntimeException {
+    public BadRequestException(String s) {
+        super(s);
+    }
+}

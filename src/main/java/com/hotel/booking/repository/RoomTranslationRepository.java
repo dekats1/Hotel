@@ -1,3 +1,3 @@
 package com.hotel.booking.repository;
 
-class RoomTranslationRepository {}
+public interface RoomTranslationRepository {}

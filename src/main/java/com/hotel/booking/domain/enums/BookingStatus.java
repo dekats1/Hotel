@@ -11,7 +11,7 @@ public enum BookingStatus {
 
     @Getter
     private final String displayName;
-    private final boolean isFinal; // финальный статус (нельзя изменить)
+    private final boolean isFinal;
 
     BookingStatus(String displayName, boolean isFinal) {
         this.displayName = displayName;
@@ -24,7 +24,7 @@ public enum BookingStatus {
 
     public boolean canTransitionTo(BookingStatus newStatus) {
         if (this.isFinal) {
-            return false; // из финального статуса нельзя перейти
+            return false;
         }
 
         return switch (this) {

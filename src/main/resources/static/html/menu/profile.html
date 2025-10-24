@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой профиль - Отель "Райский уголок"</title>
+    <link rel="stylesheet" href="../../css/index.css">
+    <link rel="stylesheet" href="../../css/menu/profile.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        // Apply theme immediately to prevent flash
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <i class="fas fa-hotel"></i>
+                    <span>Райский уголок</span>
+                </div>
+                <div class="theme-toggle">
+                    <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">
+                        <i class="fas fa-sun" id="themeIcon"></i>
+                    </button>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="/" class="nav-link">Главная</a></li>
+                    <li><a href="/#rooms" class="nav-link">Номера</a></li>
+                    <li><a href="/#services" class="nav-link">Услуги</a></li>
+                    <li><a href="aboutUs" class="nav-link">О нас</a></li>
+                    <li><a href="/#contact" class="nav-link">Контакты</a></li>
+                </ul>
+                <div class="nav-auth">
+                    <div class="user-profile">
+                        <div class="user-info">
+                            <div class="user-avatar" id="userAvatar">👤</div>
+                            <div class="user-details">
+                                <div class="user-name" id="userName">Пользователь</div>
+                                <div class="user-wallet">
+                                    <i class="fas fa-wallet"></i>
+                                    <span id="userWallet">0₽</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="user-menu">
+                            <button class="btn-auth btn-user" onclick="toggleUserMenu()">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="user-dropdown" id="userDropdown">
+                                <div class="dropdown-header">
+                                    <div class="user-avatar-small" id="userAvatarSmall">👤</div>
+                                    <div>
+                                        <div class="user-name-small" id="userNameSmall">Пользователь</div>
+                                        <div class="user-email-small" id="userEmailSmall">user@example.com</div>
+                                    </div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <a href="/profile" class="dropdown-item">
+                                    <i class="fas fa-user"></i>
+                                    Мой профиль
+                                </a>
+                                <a href="/booking" class="dropdown-item">
+                                    <i class="fas fa-calendar"></i>
+                                    Мои бронирования
+                                </a>
+                                <a href="/wallet" class="dropdown-item">
+                                    <i class="fas fa-wallet"></i>
+                                    Кошелек
+                                </a>
+                                <a href="/setting" class="dropdown-item">
+                                    <i class="fas fa-cog"></i>
+                                    Настройки
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a href="#" class="dropdown-item logout-item" onclick="logout()">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    Выйти
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="nav-toggle">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Profile Content -->
+    <main class="profile-main">
+        <div class="container">
+            <!-- Profile Header -->
+            <section class="profile-header">
+                <div class="profile-cover">
+                    <div class="cover-image"></div>
+                    <div class="profile-actions">
+                        <button class="btn btn-secondary" onclick="changeCoverPhoto()">
+                            <i class="fas fa-camera"></i>
+                            Изменить обложку
+                        </button>
+                    </div>
+                    <div class="profile-info">
+                        <div class="profile-avatar-section">
+                            <div class="profile-avatar" id="profileAvatar">
+                                <div class="avatar-placeholder">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <button class="avatar-edit" onclick="changeProfilePhoto()">
+                                    <i class="fas fa-camera"></i>
+                                </button>
+                            </div>
+                            <input type="file" id="avatarInput" accept="image/*" style="display: none;" onchange="handleAvatarChange(event)">
+                        </div>
+                        <div class="profile-details">
+                            <h1 class="profile-name" id="profileName">Иван Иванов</h1>
+                            <p class="profile-email" id="profileEmail">ivan.ivanov@example.com</p>
+                            <div class="profile-stats">
+                                <div class="stat-item">
+                                    <span class="stat-number">15</span>
+                                    <span class="stat-label">Бронирований</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-number">4.9</span>
+                                    <span class="stat-label">Рейтинг</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-number">2</span>
+                                    <span class="stat-label">Года с нами</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Profile Content -->
+            <section class="profile-content">
+                <div class="profile-tabs">
+                    <button class="tab-btn active" data-tab="personal" onclick="switchTab('personal')">
+                        <i class="fas fa-user"></i>
+                        Личные данные
+                    </button>
+                    <button class="tab-btn" data-tab="security" onclick="switchTab('security')">
+                        <i class="fas fa-shield-alt"></i>
+                        Безопасность
+                    </button>
+                    <button class="tab-btn" data-tab="preferences" onclick="switchTab('preferences')">
+                        <i class="fas fa-cog"></i>
+                        Настройки
+                    </button>
+                    <button class="tab-btn" data-tab="notifications" onclick="switchTab('notifications')">
+                        <i class="fas fa-bell"></i>
+                        Уведомления
+                    </button>
+                </div>
+
+                <!-- Personal Information Tab -->
+                <div class="tab-content active" id="personal-tab">
+                    <div class="profile-card">
+                        <div class="card-header">
+                            <h3>Личная информация</h3>
+                            <button class="btn btn-primary" onclick="editPersonalInfo()">
+                                <i class="fas fa-edit"></i>
+                                Редактировать
+                            </button>
+                        </div>
+                        <div class="card-content">
+                            <form class="profile-form" id="personalForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="firstName">Имя</label>
+                                        <input type="text" id="firstName" name="firstName" value="Иван" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="lastName">Фамилия</label>
+                                        <input type="text" id="lastName" name="lastName" value="Иванов" readonly>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="email">Email</label>
+                                        <input type="email" id="email" name="email" value="ivan.ivanov@example.com" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="phone">Телефон</label>
+                                        <input type="tel" id="phone" name="phone" value="+7 (999) 123-45-67" readonly>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="birthDate">Дата рождения</label>
+                                        <input type="date" id="birthDate" name="birthDate" value="1990-05-15" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="gender">Пол</label>
+                                        <select id="gender" name="gender" disabled>
+                                            <option value="male" selected>Мужской</option>
+                                            <option value="female">Женский</option>
+                                            <option value="other">Другой</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="address">Адрес</label>
+                                    <textarea id="address" name="address" rows="3" readonly>г. Москва, ул. Примерная, д. 123, кв. 45</textarea>
+                                </div>
+                                <div class="form-actions" style="display: none;">
+                                    <button type="button" class="btn btn-secondary" onclick="cancelEdit()">Отмена</button>
+                                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Tab -->
+                <div class="tab-content" id="security-tab">
+                    <div class="profile-card">
+                        <div class="card-header">
+                            <h3>Безопасность</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="security-section">
+                                <div class="security-item">
+                                    <div class="security-info">
+                                        <i class="fas fa-key"></i>
+                                        <div>
+                                            <h4>Пароль</h4>
+                                            <p>Последнее изменение: 15 января 2024</p>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-outline" onclick="changePassword()">
+                                        Изменить пароль
+                                    </button>
+                                </div>
+                                <div class="security-item">
+                                    <div class="security-info">
+                                        <i class="fas fa-mobile-alt"></i>
+                                        <div>
+                                            <h4>Двухфакторная аутентификация</h4>
+                                            <p>Добавьте дополнительный уровень безопасности</p>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-outline" onclick="setup2FA()">
+                                        Настроить
+                                    </button>
+                                </div>
+                                <div class="security-item">
+                                    <div class="security-info">
+                                        <i class="fas fa-history"></i>
+                                        <div>
+                                            <h4>История входов</h4>
+                                            <p>Просмотрите последние входы в аккаунт</p>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-outline" onclick="viewLoginHistory()">
+                                        Просмотреть
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preferences Tab -->
+                <div class="tab-content" id="preferences-tab">
+                    <div class="profile-card">
+                        <div class="card-header">
+                            <h3>Настройки</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="preferences-section">
+                                <div class="preference-item">
+                                    <div class="preference-info">
+                                        <h4>Язык интерфейса</h4>
+                                        <p>Выберите предпочитаемый язык</p>
+                                    </div>
+                                    <select class="form-select" id="language">
+                                        <option value="ru" selected>Русский</option>
+                                        <option value="en">English</option>
+                                        <option value="de">Deutsch</option>
+                                    </select>
+                                </div>
+                                <div class="preference-item">
+                                    <div class="preference-info">
+                                        <h4>Часовой пояс</h4>
+                                        <p>Время будет отображаться в выбранном часовом поясе</p>
+                                    </div>
+                                    <select class="form-select" id="timezone">
+                                        <option value="Europe/Moscow" selected>Москва (UTC+3)</option>
+                                        <option value="Europe/London">Лондон (UTC+0)</option>
+                                        <option value="America/New_York">Нью-Йорк (UTC-5)</option>
+                                    </select>
+                                </div>
+                                <div class="preference-item">
+                                    <div class="preference-info">
+                                        <h4>Валюта</h4>
+                                        <p>Валюта для отображения цен</p>
+                                    </div>
+                                    <select class="form-select" id="currency">
+                                        <option value="RUB" selected>Российский рубль (₽)</option>
+                                        <option value="USD">Доллар США ($)</option>
+                                        <option value="EUR">Евро (€)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications Tab -->
+                <div class="tab-content" id="notifications-tab">
+                    <div class="profile-card">
+                        <div class="card-header">
+                            <h3>Уведомления</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="notifications-section">
+                                <div class="notification-category">
+                                    <h4>Email уведомления</h4>
+                                    <div class="notification-item">
+                                        <div class="notification-info">
+                                            <span>Подтверждение бронирования</span>
+                                            <p>Получать подтверждения о бронировании номеров</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="notification-item">
+                                        <div class="notification-info">
+                                            <span>Напоминания о заезде</span>
+                                            <p>Напоминания за день до заезда</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="notification-item">
+                                        <div class="notification-info">
+                                            <span>Специальные предложения</span>
+                                            <p>Информация о скидках и акциях</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="notification-category">
+                                    <h4>Push уведомления</h4>
+                                    <div class="notification-item">
+                                        <div class="notification-info">
+                                            <span>Мгновенные уведомления</span>
+                                            <p>Получать уведомления в реальном времени</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Change Password Modal -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Изменение пароля</h2>
+                <button class="modal-close" onclick="closePasswordModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="password-form" id="passwordForm">
+                    <div class="form-group">
+                        <label for="currentPassword">Текущий пароль</label>
+                        <input type="password" id="currentPassword" name="currentPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">Новый пароль</label>
+                        <input type="password" id="newPassword" name="newPassword" required>
+                        <div class="password-strength" id="passwordStrength"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Подтвердите пароль</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closePasswordModal()">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Изменить пароль</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/menu/profile.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои бронирования - Отель "Райский уголок"</title>
+    <link rel="stylesheet" href="../../css/index.css">
+    <link rel="stylesheet" href="../../css/menu/booking.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        // Apply theme immediately to prevent flash
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <i class="fas fa-hotel"></i>
+                    <span>Райский уголок</span>
+                </div>
+                <div class="theme-toggle">
+                    <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">
+                        <i class="fas fa-sun" id="themeIcon"></i>
+                    </button>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="/" class="nav-link">Главная</a></li>
+                    <li><a href="/#rooms" class="nav-link">Номера</a></li>
+                    <li><a href="/#services" class="nav-link">Услуги</a></li>
+                    <li><a href="aboutUs" class="nav-link">О нас</a></li>
+                    <li><a href="/#contact" class="nav-link">Контакты</a></li>
+                </ul>
+                <div class="nav-auth">
+                    <div class="user-profile">
+                        <div class="user-info">
+                            <div class="user-avatar" id="userAvatar">👤</div>
+                            <div class="user-details">
+                                <div class="user-name" id="userName">Пользователь</div>
+                                <div class="user-wallet">
+                                    <i class="fas fa-wallet"></i>
+                                    <span id="userWallet">0₽</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="user-menu">
+                            <button class="btn-auth btn-user" onclick="toggleUserMenu()">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="user-dropdown" id="userDropdown">
+                                <div class="dropdown-header">
+                                    <div class="user-avatar-small" id="userAvatarSmall">👤</div>
+                                    <div>
+                                        <div class="user-name-small" id="userNameSmall">Пользователь</div>
+                                        <div class="user-email-small" id="userEmailSmall">user@example.com</div>
+                                    </div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <a href="/profile" class="dropdown-item">
+                                    <i class="fas fa-user"></i>
+                                    Мой профиль
+                                </a>
+                                <a href="/booking" class="dropdown-item active">
+                                    <i class="fas fa-calendar"></i>
+                                    Мои бронирования
+                                </a>
+                                <a href="/wallet" class="dropdown-item">
+                                    <i class="fas fa-wallet"></i>
+                                    Кошелек
+                                </a>
+                                <a href="/setting" class="dropdown-item">
+                                    <i class="fas fa-cog"></i>
+                                    Настройки
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a href="#" class="dropdown-item logout-item" onclick="logout()">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    Выйти
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="nav-toggle">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Booking Content -->
+    <main class="booking-main">
+        <div class="container">
+            <!-- Booking Header -->
+            <section class="booking-header">
+                <div class="booking-title">
+                    <h1>Мои бронирования</h1>
+                    <p>Управляйте своими бронированиями и историей поездок</p>
+                </div>
+                <div class="booking-actions">
+                    <button class="btn btn-primary" onclick="openNewBookingModal()">
+                        <i class="fas fa-plus"></i>
+                        Новое бронирование
+                    </button>
+                </div>
+            </section>
+
+            <!-- Filter Tabs -->
+            <section class="filter-section">
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all" onclick="filterBookings('all')">
+                        <i class="fas fa-list"></i>
+                        Все бронирования
+                    </button>
+                    <button class="filter-tab" data-filter="upcoming" onclick="filterBookings('upcoming')">
+                        <i class="fas fa-calendar-check"></i>
+                        Предстоящие
+                    </button>
+                    <button class="filter-tab" data-filter="current" onclick="filterBookings('current')">
+                        <i class="fas fa-bed"></i>
+                        Текущие
+                    </button>
+                    <button class="filter-tab" data-filter="completed" onclick="filterBookings('completed')">
+                        <i class="fas fa-check-circle"></i>
+                        Завершенные
+                    </button>
+                    <button class="filter-tab" data-filter="cancelled" onclick="filterBookings('cancelled')">
+                        <i class="fas fa-times-circle"></i>
+                        Отмененные
+                    </button>
+                </div>
+            </section>
+
+            <!-- Bookings List -->
+            <section class="bookings-section">
+                <div class="bookings-list" id="bookingsList">
+                    <!-- Bookings will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Statistics -->
+            <section class="statistics-section">
+                <h2>Статистика бронирований</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-number" id="totalBookings">0</div>
+                            <div class="stat-label">Всего бронирований</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-bed"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-number" id="totalNights">0</div>
+                            <div class="stat-label">Ночей прожито</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-ruble-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-number" id="totalSpent">0₽</div>
+                            <div class="stat-label">Потрачено</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-number" id="averageRating">0.0</div>
+                            <div class="stat-label">Средняя оценка</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- New Booking Modal -->
+    <div class="modal" id="newBookingModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2>Новое бронирование</h2>
+                <button class="modal-close" onclick="closeNewBookingModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="booking-form" id="newBookingForm">
+                    <div class="form-section">
+                        <h3>Даты проживания</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="checkinDate">Дата заезда</label>
+                                <input type="date" id="checkinDate" name="checkinDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="checkoutDate">Дата выезда</label>
+                                <input type="date" id="checkoutDate" name="checkoutDate" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Количество гостей</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="adults">Взрослые</label>
+                                <select id="adults" name="adults" required>
+                                    <option value="1">1 взрослый</option>
+                                    <option value="2" selected>2 взрослых</option>
+                                    <option value="3">3 взрослых</option>
+                                    <option value="4">4 взрослых</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="children">Дети</label>
+                                <select id="children" name="children">
+                                    <option value="0">Без детей</option>
+                                    <option value="1">1 ребенок</option>
+                                    <option value="2">2 ребенка</option>
+                                    <option value="3">3 ребенка</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Тип номера</h3>
+                        <div class="room-options">
+                            <div class="room-option" data-room="standard">
+                                <div class="room-option-header">
+                                    <h4>Стандарт</h4>
+                                    <div class="room-price">от 3,500₽/ночь</div>
+                                </div>
+                                <div class="room-option-details">
+                                    <p>Уютный номер с современным дизайном</p>
+                                    <ul class="room-features">
+                                        <li><i class="fas fa-bed"></i> 1 кровать</li>
+                                        <li><i class="fas fa-user"></i> До 2 гостей</li>
+                                        <li><i class="fas fa-wifi"></i> Wi-Fi</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="room-option" data-room="deluxe">
+                                <div class="room-option-header">
+                                    <h4>Делюкс</h4>
+                                    <div class="room-price">от 5,500₽/ночь</div>
+                                </div>
+                                <div class="room-option-details">
+                                    <p>Просторный номер с панорамными окнами</p>
+                                    <ul class="room-features">
+                                        <li><i class="fas fa-bed"></i> 1 большая кровать</li>
+                                        <li><i class="fas fa-user"></i> До 3 гостей</li>
+                                        <li><i class="fas fa-wifi"></i> Wi-Fi</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="room-option" data-room="suite">
+                                <div class="room-option-header">
+                                    <h4>Люкс</h4>
+                                    <div class="room-price">от 8,500₽/ночь</div>
+                                </div>
+                                <div class="room-option-details">
+                                    <p>Роскошный номер с отдельной гостиной</p>
+                                    <ul class="room-features">
+                                        <li><i class="fas fa-bed"></i> 2 кровати</li>
+                                        <li><i class="fas fa-user"></i> До 4 гостей</li>
+                                        <li><i class="fas fa-wifi"></i> Wi-Fi</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Дополнительные услуги</h3>
+                        <div class="services-options">
+                            <label class="service-option">
+                                <input type="checkbox" name="services" value="breakfast">
+                                <span class="checkmark"></span>
+                                <div class="service-info">
+                                    <h4>Завтрак</h4>
+                                    <p>+500₽/ночь</p>
+                                </div>
+                            </label>
+                            <label class="service-option">
+                                <input type="checkbox" name="services" value="spa">
+                                <span class="checkmark"></span>
+                                <div class="service-info">
+                                    <h4>СПА-процедуры</h4>
+                                    <p>+1,500₽/ночь</p>
+                                </div>
+                            </label>
+                            <label class="service-option">
+                                <input type="checkbox" name="services" value="airport">
+                                <span class="checkmark"></span>
+                                <div class="service-info">
+                                    <h4>Трансфер из аэропорта</h4>
+                                    <p>+2,000₽</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeNewBookingModal()">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Забронировать</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Details Modal -->
+    <div class="modal" id="bookingDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Детали бронирования</h2>
+                <button class="modal-close" onclick="closeBookingDetailsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="bookingDetailsContent">
+                <!-- Booking details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/menu/booking.js"></script>
+</body>
+</html>

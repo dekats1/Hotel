@@ -4,11 +4,18 @@ import com.hotel.booking.domain.enums.*;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 @Entity
@@ -22,11 +29,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User extends BaseEntity {
+public class User extends BaseEntity implements UserDetails {
 
     // Роль пользователя
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
+    @Column(name = "role", nullable = false, columnDefinition = "user_role")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Builder.Default
     private UserRole role = UserRole.USER;
 
@@ -62,7 +70,8 @@ public class User extends BaseEntity {
     private LocalDate birthDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "gender", nullable = false)
+    @Column(name = "gender", nullable = false, columnDefinition = "user_gender")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private UserGender gender;
 
     // Аутентификация
@@ -85,10 +94,6 @@ public class User extends BaseEntity {
     @Builder.Default
     private Boolean emailVerified = false;
 
-    @Column(name = "phone_verified")
-    @Builder.Default
-    private Boolean phoneVerified = false;
-
     @Column(name = "last_login")
     private Instant lastLogin;
 
@@ -105,7 +110,42 @@ public class User extends BaseEntity {
     @Builder.Default
     private List<Review> reviews = new ArrayList<>();
 
-    // Вспомогательные методы
+    // UserDetails методы
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));
+    }
+
+    @Override
+    public String getPassword() {
+        return passwordHash;
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return isActive;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return isActive && emailVerified;
+    }
+
     public String getFullName() {
         if (middleName != null && !middleName.isEmpty()) {
             return lastName + " " + firstName + " " + middleName;
@@ -119,5 +159,17 @@ public class User extends BaseEntity {
 
     public boolean canAfford(BigDecimal amount) {
         return balance.compareTo(amount) >= 0;
+    }
+
+    public boolean hasRole(UserRole requiredRole) {
+        return this.role == requiredRole;
+    }
+
+    public boolean isAdmin() {
+        return this.role == UserRole.ADMIN;
+    }
+
+    public void updateLastLogin() {
+        this.lastLogin = Instant.now();
     }
 }

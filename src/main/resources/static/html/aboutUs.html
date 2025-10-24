@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>О нас - Отель "Райский уголок"</title>
+    <link rel="stylesheet" href="../css/index.css">
+    <link rel="stylesheet" href="../css/aboutUs.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        // Apply theme immediately to prevent flash
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <i class="fas fa-hotel"></i>
+                    <span>Райский уголок</span>
+                </div>
+                <div class="theme-toggle">
+                    <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">
+                        <i class="fas fa-sun" id="themeIcon"></i>
+                    </button>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="/" class="nav-link">Главная</a></li>
+                    <li><a href="/#rooms" class="nav-link">Номера</a></li>
+                    <li><a href="/#services" class="nav-link">Услуги</a></li>
+                    <li><a href="aboutUs" class="nav-link active">О нас</a></li>
+                    <li><a href="/#contact" class="nav-link">Контакты</a></li>
+                </ul>
+                <div class="nav-auth">
+                    <button class="btn-auth btn-login" onclick="mockLogin()">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Войти (заглушка)
+                    </button>
+                    <a href="authentication/register.html" class="btn-auth btn-register">
+                        <i class="fas fa-user-plus"></i>
+                        Регистрация
+                    </a>
+                </div>
+                <div class="nav-toggle">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="about-hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">О нашем отеле</h1>
+                <p class="hero-subtitle">История, традиции и ценности, которые делают нас особенными</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Story -->
+    <section class="about-story">
+        <div class="container">
+            <div class="story-content">
+                <div class="story-text">
+                    <h2 class="section-title">Наша история</h2>
+                    <p class="story-description">
+                        Отель "Райский уголок" был основан в 2010 году с мечтой создать место, где каждый гость 
+                        почувствует себя особенным. За более чем 10 лет мы превратились из небольшого семейного 
+                        отеля в один из самых престижных курортов региона.
+                    </p>
+                    <p class="story-description">
+                        Наша философия основана на принципах гостеприимства, комфорта и индивидуального подхода 
+                        к каждому гостю. Мы верим, что качественный отдых — это не роскошь, а необходимость для 
+                        современного человека.
+                    </p>
+                </div>
+                <div class="story-image">
+                    <div class="image-placeholder">
+                        <i class="fas fa-hotel"></i>
+                        <span>История отеля</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Values Section -->
+    <section class="values-section">
+        <div class="container">
+            <h2 class="section-title">Наши ценности</h2>
+            <div class="values-grid">
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h3>Гостеприимство</h3>
+                    <p>Мы встречаем каждого гостя как дорогого друга и делаем все возможное для его комфорта</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h3>Качество</h3>
+                    <p>Высочайшие стандарты обслуживания и внимания к деталям в каждом аспекте нашей работы</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <h3>Экология</h3>
+                    <p>Забота об окружающей среде и устойчивое развитие — основа нашей деятельности</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Команда</h3>
+                    <p>Профессиональная команда, которая делает ваш отдых незабываемым</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="team-section">
+        <div class="container">
+            <h2 class="section-title">Наша команда</h2>
+            <div class="team-grid">
+                <div class="team-member">
+                    <div class="member-photo">
+                        <div class="photo-placeholder">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                    </div>
+                    <div class="member-info">
+                        <h3>Анна Петрова</h3>
+                        <p class="member-position">Генеральный директор</p>
+                        <p class="member-description">
+                            Более 15 лет опыта в гостиничном бизнесе. 
+                            Специалист по управлению качеством обслуживания.
+                        </p>
+                    </div>
+                </div>
+                <div class="team-member">
+                    <div class="member-photo">
+                        <div class="photo-placeholder">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                    </div>
+                    <div class="member-info">
+                        <h3>Михаил Соколов</h3>
+                        <p class="member-position">Директор по развитию</p>
+                        <p class="member-description">
+                            Эксперт в области инноваций и цифровых технологий 
+                            в сфере гостеприимства.
+                        </p>
+                    </div>
+                </div>
+                <div class="team-member">
+                    <div class="member-photo">
+                        <div class="photo-placeholder">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                    </div>
+                    <div class="member-info">
+                        <h3>Елена Волкова</h3>
+                        <p class="member-position">Главный консьерж</p>
+                        <p class="member-description">
+                            Профессионал с международным опытом, 
+                            знает все секреты идеального сервиса.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Achievements Section -->
+    <section class="achievements-section">
+        <div class="container">
+            <h2 class="section-title">Наши достижения</h2>
+            <div class="achievements-grid">
+                <div class="achievement-item">
+                    <div class="achievement-number">10+</div>
+                    <div class="achievement-text">Лет успешной работы</div>
+                </div>
+                <div class="achievement-item">
+                    <div class="achievement-number">50,000+</div>
+                    <div class="achievement-text">Довольных гостей</div>
+                </div>
+                <div class="achievement-item">
+                    <div class="achievement-number">4.9</div>
+                    <div class="achievement-text">Средняя оценка</div>
+                </div>
+                <div class="achievement-item">
+                    <div class="achievement-number">15</div>
+                    <div class="achievement-text">Наград и сертификатов</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Certificates Section -->
+    <section class="certificates-section">
+        <div class="container">
+            <h2 class="section-title">Сертификаты и награды</h2>
+            <div class="certificates-grid">
+                <div class="certificate-item">
+                    <div class="certificate-icon">
+                        <i class="fas fa-award"></i>
+                    </div>
+                    <h3>Лучший отель года 2023</h3>
+                    <p>Награда от Ассоциации гостиничного бизнеса</p>
+                </div>
+                <div class="certificate-item">
+                    <div class="certificate-icon">
+                        <i class="fas fa-certificate"></i>
+                    </div>
+                    <h3>ISO 9001:2015</h3>
+                    <p>Сертификат качества управления</p>
+                </div>
+                <div class="certificate-item">
+                    <div class="certificate-icon">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <h3>Экологический сертификат</h3>
+                    <p>Зеленый стандарт экологичности</p>
+                </div>
+                <div class="certificate-item">
+                    <div class="certificate-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h3>5 звезд</h3>
+                    <p>Официальная категория отеля</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact CTA -->
+    <section class="contact-cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Готовы к незабываемому отдыху?</h2>
+                <p>Свяжитесь с нами и мы поможем организовать ваш идеальный отпуск</p>
+                <div class="cta-buttons">
+                    <a href="/#contact" class="btn btn-primary">
+                        <i class="fas fa-phone"></i>
+                        Связаться с нами
+                    </a>
+                    <a href="/#rooms" class="btn btn-secondary">
+                        <i class="fas fa-calendar"></i>
+                        Забронировать номер
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <i class="fas fa-hotel"></i>
+                        <span>Райский уголок</span>
+                    </div>
+                    <p>Ваш идеальный отдых начинается здесь</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Быстрые ссылки</h4>
+                    <ul>
+                        <li><a href="/" class="nav-link">Главная</a></li>
+                        <li><a href="/#rooms" class="nav-link">Номера</a></li>
+                        <li><a href="/#services" class="nav-link">Услуги</a></li>
+                        <li><a href="aboutUs" class="nav-link active">О нас</a></li>
+                        <li><a href="/#contact" class="nav-link">Контакты</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Контакты</h4>
+                    <p><i class="fas fa-phone"></i> +7 (495) 123-45-67</p>
+                    <p><i class="fas fa-envelope"></i> info@paradise-hotel.ru</p>
+                    <p><i class="fas fa-map-marker-alt"></i> ул. Райская, 123, Москва</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Отель "Райский уголок". Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/aboutUs.js"></script>
+</body>
+</html>
+
+
