@@ -6,11 +6,14 @@ const navMenu = document.querySelector('.nav-menu');
 const navLinks = document.querySelectorAll('.nav-link');
 const userDropdown = document.getElementById('userDropdown');
 
+const API_BASE_URL = '/api';
+
 // User data
 let currentUser = null;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // 💡 Инициализируем UI/настройки перед попыткой загрузки данных
     initializeSettings();
     loadUserData();
     setupEventListeners();
@@ -32,25 +35,105 @@ function initializeSettings() {
     setupSettingsControls();
 }
 
-// Load user data from localStorage
+// Load user data from localStorage/backend
 function loadUserData() {
-    const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
-    
-    if (userData) {
-        currentUser = JSON.parse(userData);
-        updateUserInterface();
-    } else {
-        // Create demo user if no data exists
-        currentUser = {
-            name: 'Иван Иванов',
-            firstName: 'Иван',
-            lastName: 'Иванов',
-            email: 'ivan.ivanov@example.com',
-            wallet: 15000,
-            avatar: '👤'
-        };
-        updateUserInterface();
+    // 1. Попытка загрузить данные из localStorage (для быстрого отображения)
+    const userDataJson = localStorage.getItem('user_data');
+
+    if (userDataJson) {
+        try {
+            currentUser = JSON.parse(userDataJson);
+            updateUserInterface();
+        } catch (error) {
+            console.error('Error parsing user data from storage:', error);
+        }
     }
+
+    // 2. Всегда пытаемся загрузить актуальные данные с бэкенда
+    loadUserDataFromBackend();
+
+    // 💡 УДАЛЕНО: Создание демо-пользователя, если нет данных.
+    // На странице настроек пользователь должен быть аутентифицирован.
+}
+
+// 💡 ИЗМЕНЕНО: Load user data from backend API (используем Cookie)
+async function loadUserDataFromBackend() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/users/profile`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            // 💡 ГЛАВНОЕ ИЗМЕНЕНИЕ: включаем Cookie
+            credentials: 'include'
+        });
+
+        if (response.status === 401) {
+            // Если Cookie невалиден/отсутствует, перенаправляем
+            removeAuthData();
+            showNotification('Сессия истекла. Пожалуйста, войдите снова.', 'error');
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 1000);
+            return;
+        }
+
+        if (response.ok) {
+            const userData = await response.json();
+            currentUser = transformUserData(userData);
+
+            // Сохраняем актуальные данные в localStorage
+            const userBasicData = {
+                name: currentUser.name,
+                firstName: currentUser.firstName,
+                lastName: currentUser.lastName,
+                email: currentUser.email,
+                wallet: currentUser.wallet,
+                avatar: currentUser.avatar,
+            };
+            localStorage.setItem('user_data', JSON.stringify(userBasicData));
+
+            updateUserInterface();
+        } else {
+            console.error('Backend returned non-OK status:', response.status);
+            showNotification('Ошибка загрузки данных профиля.', 'error');
+        }
+    } catch (error) {
+        console.error('Failed to load user data from backend:', error);
+        showNotification('Ошибка сети. Не удалось загрузить данные профиля.', 'error');
+    }
+}
+
+// Transform backend user data to frontend format
+function transformUserData(apiData) {
+    return {
+        name: `${apiData.firstName} ${apiData.lastName}`,
+        firstName: apiData.firstName,
+        lastName: apiData.lastName,
+        middleName: apiData.middleName || '',
+        email: apiData.email,
+        phone: apiData.phone,
+        birthDate: apiData.birthDate,
+        gender: apiData.gender?.toLowerCase() || 'male',
+        wallet: apiData.balance ? Number(apiData.balance) : 0,
+        avatar: apiData.avatarUrl || '👤',
+        stats: {
+            bookings: apiData.totalBookings || 0,
+            rating: apiData.averageRating || 4.9,
+            yearsWithUs: apiData.membershipYears || 1
+        }
+    };
+}
+
+// ⚠️ УДАЛЕНО: getAuthToken() больше не нужен.
+
+// 💡 НОВАЯ ФУНКЦИЯ: Очистка локальных данных
+function removeAuthData() {
+    localStorage.removeItem('user_data');
+    sessionStorage.removeItem('user_data');
+    // Удаляем устаревшие ключи токена на всякий случай
+    localStorage.removeItem('auth_token');
+    sessionStorage.removeItem('auth_token');
 }
 
 // Update user interface with current user data
@@ -65,6 +148,7 @@ function updateUserInterface() {
 function updateNavigationForLoggedInUser(user) {
     const navAuth = document.querySelector('.nav-auth');
     if (navAuth) {
+        // ... (HTML structure for user profile and dropdown remains the same) ...
         navAuth.innerHTML = `
             <div class="user-profile">
                 <div class="user-info">
@@ -73,7 +157,7 @@ function updateNavigationForLoggedInUser(user) {
                         <div class="user-name">${user.name || user.firstName + ' ' + user.lastName || 'Пользователь'}</div>
                         <div class="user-wallet">
                             <i class="fas fa-wallet"></i>
-                            <span>${user.wallet ? user.wallet.toLocaleString() + '₽' : '0₽'}</span>
+                            <span id="walletAmount">${formatCurrency(user.wallet || 0)}</span>
                         </div>
                     </div>
                 </div>
@@ -90,7 +174,7 @@ function updateNavigationForLoggedInUser(user) {
                             </div>
                         </div>
                         <div class="dropdown-divider"></div>
-                       <a href="/profile" class="dropdown-item">
+                        <a href="/profile" class="dropdown-item">
                             <i class="fas fa-user"></i>
                             Мой профиль
                         </a>
@@ -102,14 +186,9 @@ function updateNavigationForLoggedInUser(user) {
                             <i class="fas fa-wallet"></i>
                             Кошелек
                         </a>
-                        <a href="/setting" class="dropdown-item">
+                        <a href="/setting" class="dropdown-item active">
                             <i class="fas fa-cog"></i>
                             Настройки
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item logout-item" onclick="logout()">
-                            <i class="fas fa-sign-out-alt"></i>
-                            Выйти
                         </a>
                         <div class="dropdown-divider"></div>
                         <a href="#" class="dropdown-item logout-item" onclick="logout()">
@@ -123,6 +202,20 @@ function updateNavigationForLoggedInUser(user) {
     }
 }
 
+// Format currency based on selected currency
+function formatCurrency(amount) {
+    const currency = localStorage.getItem('currency') || 'BYN';
+    const currencies = {
+        'BYN': 'Br',
+        'USD': '$',
+        'EUR': '€',
+        'RUB': '₽'
+    };
+
+    const symbol = currencies[currency] || 'Br';
+    return `${amount.toLocaleString()}${symbol}`;
+}
+
 // Setup settings controls
 function setupSettingsControls() {
     // Theme toggle
@@ -130,7 +223,7 @@ function setupSettingsControls() {
     if (themeToggleSetting) {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         themeToggleSetting.checked = currentTheme === 'dark';
-        
+
         themeToggleSetting.addEventListener('change', function() {
             const newTheme = this.checked ? 'dark' : 'light';
             setTheme(newTheme);
@@ -143,28 +236,65 @@ function setupSettingsControls() {
     if (languageSetting) {
         const savedLanguage = localStorage.getItem('language') || 'ru';
         languageSetting.value = savedLanguage;
-        
+
         languageSetting.addEventListener('change', function() {
-            localStorage.setItem('language', this.value);
+            const language = this.value;
+            localStorage.setItem('language', language);
+            applyLanguageSettings(language);
             showNotification('Язык интерфейса изменен', 'success');
         });
     }
 
-    // Notification settings
-    const notificationToggles = document.querySelectorAll('.settings-options .switch input[type="checkbox"]');
-    notificationToggles.forEach((toggle, index) => {
-        const settingKey = `notification_${index}`;
-        const savedValue = localStorage.getItem(settingKey);
-        if (savedValue !== null) {
-            toggle.checked = savedValue === 'true';
-        }
-        
-        toggle.addEventListener('change', function() {
-            localStorage.setItem(settingKey, this.checked);
-            const settingName = this.closest('.setting-item').querySelector('h3').textContent;
-            showNotification(`${settingName} ${this.checked ? 'включено' : 'отключено'}`, 'info');
+    // Currency setting - ADDED NEW CURRENCY SETTING
+    const currencySetting = document.getElementById('currencySetting');
+    if (currencySetting) {
+        const savedCurrency = localStorage.getItem('currency') || 'BYN';
+        currencySetting.value = savedCurrency;
+
+        currencySetting.addEventListener('change', function() {
+            const currency = this.value;
+            localStorage.setItem('currency', currency);
+            applyCurrencySettings(currency);
+            showNotification(`Валюта изменена на ${getCurrencyName(currency)}`, 'success');
         });
-    });
+    }
+}
+
+// Apply language settings
+function applyLanguageSettings(language) {
+    console.log('Language changed to:', language);
+}
+
+// Apply currency settings
+function applyCurrencySettings(currency) {
+    // Update wallet display
+    const walletAmount = document.getElementById('walletAmount');
+    if (walletAmount && currentUser) {
+        walletAmount.textContent = formatCurrency(currentUser.wallet || 0);
+    }
+
+    updateAllCurrencyDisplays();
+}
+
+// Get currency name for display
+function getCurrencyName(currencyCode) {
+    const currencyNames = {
+        'BYN': 'Белорусский рубль',
+        'USD': 'Доллар США',
+        'EUR': 'Евро',
+        'RUB': 'Российский рубль'
+    };
+    return currencyNames[currencyCode] || currencyCode;
+}
+
+// Update all currency displays on the page
+function updateAllCurrencyDisplays() {
+    if (currentUser) {
+        const walletElements = document.querySelectorAll('.user-wallet span, #walletAmount');
+        walletElements.forEach(element => {
+            element.textContent = formatCurrency(currentUser.wallet || 0);
+        });
+    }
 }
 
 // Mobile navigation toggle
@@ -187,23 +317,38 @@ function toggleUserMenu() {
     }
 }
 
-// Logout function
-function logout() {
-    showNotification('Вы вышли из системы', 'info');
-    
-    // Clear user data
-    localStorage.removeItem('userData');
-    sessionStorage.removeItem('userData');
-    
+// 💡 ИЗМЕНЕНО: Logout function (нужен API вызов для очистки Cookie на сервере)
+async function logout() {
+    try {
+        // 💡 Отправляем запрос на сервер, чтобы очистить HTTP-only Cookie
+        await fetch(`${API_BASE_URL}/auth/logout`, {
+            method: 'POST',
+            credentials: 'include' // Чтобы отправить Cookie
+        });
+
+        showNotification('Вы вышли из системы', 'info');
+        removeAuthData(); // Очищаем локальные данные
+
+    } catch (error) {
+        console.error('Logout failed but proceeding with client clear:', error);
+        // В случае сбоя сети, все равно очищаем клиент и перенаправляем
+        showNotification('Ошибка выхода из системы. Очистка клиента...', 'error');
+        removeAuthData();
+    }
+
     // Redirect to home page
-    window.location.href = '../home.html';
+    setTimeout(() => {
+        window.location.href = '/';
+    }, 1000);
 }
 
 // Header scroll effect
 function handleHeaderScroll() {
     const header = document.querySelector('.header');
     const currentTheme = document.documentElement.getAttribute('data-theme');
-    
+
+    if (!header) return;
+
     if (window.scrollY > 100) {
         if (currentTheme === 'dark') {
             header.style.background = 'rgba(15, 23, 42, 0.98)';
@@ -223,7 +368,7 @@ function handleHeaderScroll() {
 }
 
 // Theme management
-function initTheme() {
+function initializeTheme() {
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
 }
@@ -231,12 +376,18 @@ function initTheme() {
 function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
-    
+
     const themeIcon = document.getElementById('themeIcon');
     if (themeIcon) {
         themeIcon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
     }
-    
+
+    // Update settings toggle
+    const themeToggleSetting = document.getElementById('themeToggleSetting');
+    if (themeToggleSetting) {
+        themeToggleSetting.checked = theme === 'dark';
+    }
+
     // Update header background immediately
     handleHeaderScroll();
 }
@@ -245,13 +396,7 @@ function toggleTheme() {
     const currentTheme = document.documentElement.getAttribute('data-theme');
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
-    
-    // Update settings toggle
-    const themeToggleSetting = document.getElementById('themeToggleSetting');
-    if (themeToggleSetting) {
-        themeToggleSetting.checked = newTheme === 'dark';
-    }
-    
+
     // Add animation to theme button
     const themeBtn = document.getElementById('themeToggle');
     if (themeBtn) {
@@ -322,7 +467,7 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Add notification styles
+// Add notification styles (for animation)
 const notificationStyles = document.createElement('style');
 notificationStyles.textContent = `
     .notification-content {
@@ -363,4 +508,3 @@ notificationStyles.textContent = `
     }
 `;
 document.head.appendChild(notificationStyles);
-

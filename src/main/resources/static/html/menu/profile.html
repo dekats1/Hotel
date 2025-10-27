@@ -154,14 +154,6 @@
                         <i class="fas fa-shield-alt"></i>
                         Безопасность
                     </button>
-                    <button class="tab-btn" data-tab="preferences" onclick="switchTab('preferences')">
-                        <i class="fas fa-cog"></i>
-                        Настройки
-                    </button>
-                    <button class="tab-btn" data-tab="notifications" onclick="switchTab('notifications')">
-                        <i class="fas fa-bell"></i>
-                        Уведомления
-                    </button>
                 </div>
 
                 <!-- Personal Information Tab -->
@@ -266,111 +258,6 @@
                                     <button class="btn btn-outline" onclick="viewLoginHistory()">
                                         Просмотреть
                                     </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Preferences Tab -->
-                <div class="tab-content" id="preferences-tab">
-                    <div class="profile-card">
-                        <div class="card-header">
-                            <h3>Настройки</h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="preferences-section">
-                                <div class="preference-item">
-                                    <div class="preference-info">
-                                        <h4>Язык интерфейса</h4>
-                                        <p>Выберите предпочитаемый язык</p>
-                                    </div>
-                                    <select class="form-select" id="language">
-                                        <option value="ru" selected>Русский</option>
-                                        <option value="en">English</option>
-                                        <option value="de">Deutsch</option>
-                                    </select>
-                                </div>
-                                <div class="preference-item">
-                                    <div class="preference-info">
-                                        <h4>Часовой пояс</h4>
-                                        <p>Время будет отображаться в выбранном часовом поясе</p>
-                                    </div>
-                                    <select class="form-select" id="timezone">
-                                        <option value="Europe/Moscow" selected>Москва (UTC+3)</option>
-                                        <option value="Europe/London">Лондон (UTC+0)</option>
-                                        <option value="America/New_York">Нью-Йорк (UTC-5)</option>
-                                    </select>
-                                </div>
-                                <div class="preference-item">
-                                    <div class="preference-info">
-                                        <h4>Валюта</h4>
-                                        <p>Валюта для отображения цен</p>
-                                    </div>
-                                    <select class="form-select" id="currency">
-                                        <option value="RUB" selected>Российский рубль (₽)</option>
-                                        <option value="USD">Доллар США ($)</option>
-                                        <option value="EUR">Евро (€)</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Notifications Tab -->
-                <div class="tab-content" id="notifications-tab">
-                    <div class="profile-card">
-                        <div class="card-header">
-                            <h3>Уведомления</h3>
-                        </div>
-                        <div class="card-content">
-                            <div class="notifications-section">
-                                <div class="notification-category">
-                                    <h4>Email уведомления</h4>
-                                    <div class="notification-item">
-                                        <div class="notification-info">
-                                            <span>Подтверждение бронирования</span>
-                                            <p>Получать подтверждения о бронировании номеров</p>
-                                        </div>
-                                        <label class="switch">
-                                            <input type="checkbox" checked>
-                                            <span class="slider"></span>
-                                        </label>
-                                    </div>
-                                    <div class="notification-item">
-                                        <div class="notification-info">
-                                            <span>Напоминания о заезде</span>
-                                            <p>Напоминания за день до заезда</p>
-                                        </div>
-                                        <label class="switch">
-                                            <input type="checkbox" checked>
-                                            <span class="slider"></span>
-                                        </label>
-                                    </div>
-                                    <div class="notification-item">
-                                        <div class="notification-info">
-                                            <span>Специальные предложения</span>
-                                            <p>Информация о скидках и акциях</p>
-                                        </div>
-                                        <label class="switch">
-                                            <input type="checkbox">
-                                            <span class="slider"></span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="notification-category">
-                                    <h4>Push уведомления</h4>
-                                    <div class="notification-item">
-                                        <div class="notification-info">
-                                            <span>Мгновенные уведомления</span>
-                                            <p>Получать уведомления в реальном времени</p>
-                                        </div>
-                                        <label class="switch">
-                                            <input type="checkbox" checked>
-                                            <span class="slider"></span>
-                                        </label>
-                                    </div>
                                 </div>
                             </div>
                         </div>

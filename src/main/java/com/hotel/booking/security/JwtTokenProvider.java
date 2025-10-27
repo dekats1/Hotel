@@ -16,10 +16,10 @@ import java.util.UUID;
 @Slf4j
 public class JwtTokenProvider {
 
-    @Value("${app.jwt.secret}")
+    @Value("${app.jwt.secret:mySuperSecretKeyForJWTTokenGenerationWithEnoughLength1234567890}")
     private String jwtSecret;
 
-    @Value("${app.jwt.expiration}")
+    @Value("${app.jwt.expiration:86400000}") // 24 часа
     private int jwtExpiration;
 
     private SecretKey getSigningKey() {
@@ -72,19 +72,13 @@ public class JwtTokenProvider {
         return false;
     }
 
-    // Дополнительные методы для работы с токеном
+    // Дополнительный метод для получения времени истечения
     public Date getExpirationDateFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-
         return claims.getExpiration();
-    }
-
-    public boolean isTokenExpired(String token) {
-        Date expiration = getExpirationDateFromToken(token);
-        return expiration.before(new Date());
     }
 }

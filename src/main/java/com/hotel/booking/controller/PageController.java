@@ -38,7 +38,7 @@ public class PageController {
 
     @GetMapping("/profile")
     public String profilePage() {
-        return "forward:/html/menu/profile.html";
+        return "redirect:/html/menu/profile.html";
     }
 
     @GetMapping("/setting")

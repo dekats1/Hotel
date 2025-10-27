@@ -3,23 +3,20 @@ const navToggle = document.querySelector('.nav-toggle');
 const navMenu = document.querySelector('.nav-menu');
 const navLinks = document.querySelectorAll('.nav-link');
 
-// JWT Token management
-const TOKEN_KEY = 'auth_token';
+// ⚠️ Имя Cookie, используемое бэкендом (для логаута)
+const JWT_COOKIE_NAME = 'auth_jwt';
+// Ключ для данных пользователя в LocalStorage (не токен!)
 const USER_KEY = 'user_data';
 
-// Получить JWT токен из localStorage
-function getToken() {
-    return localStorage.getItem(TOKEN_KEY);
-}
+// API Base URL (предполагаем, что оно определено или 'http://localhost:8080/api' как в login.js)
+const API_BASE_URL = 'http://localhost:8080/api';
 
-// Сохранить JWT токен
-function setToken(token) {
-    localStorage.setItem(TOKEN_KEY, token);
-}
+// ----------------------------------------------------------------
+// ❌ УДАЛЕНО: getToken(), setToken(), removeToken() для LocalStorage.
+// ----------------------------------------------------------------
 
-// Удалить JWT токен
-function removeToken() {
-    localStorage.removeItem(TOKEN_KEY);
+// Удалить данные пользователя из LocalStorage
+function removeUserData() {
     localStorage.removeItem(USER_KEY);
 }
 
@@ -34,31 +31,34 @@ function setUserData(userData) {
     localStorage.setItem(USER_KEY, JSON.stringify(userData));
 }
 
-// HTTP клиент с JWT авторизацией
+// HTTP клиент с Cookie
 async function apiClient(url, options = {}) {
-    const token = getToken();
     const config = {
         headers: {
             'Content-Type': 'application/json',
-            ...options.headers,
+            // 💡 ВАЖНО: Cookie отправляются автоматически, но мы должны
+            // явно запросить их отправку (credentials: 'include')
         },
+        // 💡 ГЛАВНОЕ ИЗМЕНЕНИЕ: Включаем Cookie в запросы
+        credentials: 'include',
         ...options,
     };
 
-    // Добавляем токен в заголовки если есть
-    if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`;
-    }
+    // ❌ УДАЛЕНО: Добавление заголовка Authorization
+
+    // Если POST/PUT/DELETE, возможно, нужно настроить защиту от CSRF,
+    // но в данной реализации мы полагаемся на SameSite=Lax и HttpOnly.
 
     try {
         const response = await fetch(url, config);
 
-        if (response.status === 401) {
-            // Токен невалидный - разлогиниваем
-            removeToken();
+        if (response.status === 401 || response.status === 403) {
+            // При 401/403 (неавторизован/запрещено) удаляем локальные данные
+            // и обновляем навигацию. Сервер уже удалил или проигнорировал Cookie.
+            removeUserData();
             updateNavigation();
-            showNotification('Сессия истекла. Пожалуйста, войдите снова.', 'error');
-            throw new Error('Unauthorized');
+            showNotification('Сессия истекла или токен недействителен. Пожалуйста, войдите снова.', 'error');
+            throw new Error('Unauthorized or Forbidden');
         }
 
         // Проверяем, есть ли контент для парсинга
@@ -67,26 +67,24 @@ async function apiClient(url, options = {}) {
         const hasContent = response.status !== 204; // No Content
 
         if (!response.ok) {
+            // Логика обработки ошибок (оставлена без изменений)
             let errorMessage = `HTTP error! status: ${response.status}`;
 
-            // Пытаемся получить сообщение об ошибке из ответа
             if (hasJson && hasContent) {
                 try {
                     const errorData = await response.json();
                     errorMessage = errorData.message || errorMessage;
                 } catch (e) {
-                    // Если не удалось распарсить JSON, используем текстовое сообщение
                     if (hasContent) {
                         try {
                             const text = await response.text();
                             errorMessage = text || errorMessage;
                         } catch (textError) {
-                            // Игнорируем ошибку чтения текста
+                            // Игнорируем
                         }
                     }
                 }
             }
-
             throw new Error(errorMessage);
         }
 
@@ -94,10 +92,8 @@ async function apiClient(url, options = {}) {
         if (hasJson && hasContent) {
             return await response.json();
         } else if (hasContent) {
-            // Если есть контент, но не JSON - возвращаем текст
             return await response.text();
         } else {
-            // Если нет контента (например, 204 No Content) - возвращаем null
             return null;
         }
     } catch (error) {
@@ -106,36 +102,27 @@ async function apiClient(url, options = {}) {
     }
 }
 
-// Проверка авторизации на сервере
-async function checkAuthStatus() {
-    const token = getToken();
+// Проверка авторизации на клиенте (основана только на LocalStorage)
+function checkAuthStatus() {
     const userData = getUserData();
 
-    if (!token || !userData) {
-        updateNavigation();
-        return false;
-    }
+    // Мы не можем проверить валидность JWT токена на клиенте, так как он HttpOnly.
+    // Поэтому просто проверяем, есть ли сохраненные данные пользователя.
+    // Если эти данные есть, мы предполагаем, что Cookie существует и действителен.
+    // Если Cookie недействителен, первый же запрос к защищенному эндпоинту
+    // вернет 401, и apiClient сработает, очистив локальные данные.
+    const isAuthenticated = !!userData;
 
-    try {
-        // В вашем случае нет отдельного endpoint для проверки auth,
-        // поэтому просто проверяем валидность токена через любой защищенный endpoint
-        // или используем сохраненные данные
-        updateNavigation();
-        return true;
-    } catch (error) {
-        console.error('Auth check failed:', error);
-        removeToken();
-        updateNavigation();
-        return false;
-    }
+    updateNavigation(isAuthenticated, userData);
+    return isAuthenticated;
 }
 
 // Функция для обновления навигации
-function updateNavigation() {
+function updateNavigation(isAuthenticated, userData) {
     const navAuth = document.querySelector('.nav-auth');
-    const userData = getUserData();
+    userData = userData || getUserData(); // Используем переданные или локальные данные
 
-    if (userData && getToken()) {
+    if (isAuthenticated && userData) {
         // Показываем профиль пользователя
         navAuth.innerHTML = `
             <div class="user-profile">
@@ -199,88 +186,49 @@ function updateNavigation() {
     }
 }
 
-// Функция входа
+// Функция входа (обновляем только логику сохранения данных)
 async function login(email, password) {
-    try {
-        const response = await apiClient('/api/auth/login', {
-            method: 'POST',
-            body: JSON.stringify({ email, password })
-        });
-
-        if (response && response.token && response.user) {
-            setToken(response.token);
-            setUserData(response.user);
-            updateNavigation();
-            showNotification('Успешный вход!', 'success');
-            return true;
-        } else {
-            showNotification('Неверный email или пароль', 'error');
-            return false;
-        }
-    } catch (error) {
-        console.error('Login error:', error);
-
-        // Более конкретные сообщения об ошибках
-        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-            showNotification('Неверный email или пароль', 'error');
-        } else if (error.message.includes('Network Error')) {
-            showNotification('Ошибка сети. Проверьте подключение к интернету.', 'error');
-        } else {
-            showNotification('Ошибка входа. Попробуйте еще раз.', 'error');
-        }
-        return false;
-    }
+    // Эта функция, скорее всего, определена в login.js, но на всякий случай, если
+    // она используется здесь для другого сценария. В этом файле ее можно удалить.
 }
 
-// Функция регистрации
+// Функция регистрации (обновляем только логику сохранения данных)
 async function register(userData) {
-    try {
-        // Проверка совпадения паролей на клиенте
-        if (userData.password !== userData.confirmPassword) {
-            showNotification('Пароли не совпадают', 'error');
-            return false;
-        }
-
-        const response = await apiClient('/api/auth/register', {
-            method: 'POST',
-            body: JSON.stringify(userData)
-        });
-
-        if (response && response.token && response.user) {
-            setToken(response.token);
-            setUserData(response.user);
-            updateNavigation();
-            showNotification('Регистрация успешна! Добро пожаловать!', 'success');
-            return true;
-        } else {
-            showNotification('Ошибка регистрации', 'error');
-            return false;
-        }
-    } catch (error) {
-        console.error('Registration error:', error);
-
-        // Более конкретные сообщения об ошибках
-        if (error.message.includes('400') || error.message.includes('Bad Request')) {
-            showNotification('Пользователь с таким email или телефоном уже существует', 'error');
-        } else if (error.message.includes('Network Error')) {
-            showNotification('Ошибка сети. Проверьте подключение к интернету.', 'error');
-        } else {
-            showNotification('Ошибка регистрации. Попробуйте еще раз.', 'error');
-        }
-        return false;
-    }
+    // Аналогично, лучше оставить эту логику в register.js
 }
 
 // Функция выхода
-function logout() {
-    removeToken();
-    updateNavigation();
-    showNotification('Вы успешно вышли из системы', 'success');
+async function logout() {
+    try {
+        // 1. Отправляем запрос на бэкенд для удаления HTTP-only Cookie
+        await apiClient(`${API_BASE_URL}/auth/logout`, {
+            method: 'POST'
+            // credentials: 'include' уже установлен в apiClient
+        });
 
-    // Закрываем меню если оно открыто
-    const dropdown = document.getElementById('userDropdown');
-    if (dropdown) {
-        dropdown.classList.remove('show');
+        // 2. Удаляем локальные данные пользователя
+        removeUserData();
+
+        // 3. Обновляем UI
+        updateNavigation(false);
+        showNotification('Вы успешно вышли из системы', 'success');
+
+        // 4. Закрываем меню и перенаправляем на главную
+        const dropdown = document.getElementById('userDropdown');
+        if (dropdown) {
+            dropdown.classList.remove('show');
+        }
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 300);
+
+    } catch (error) {
+        console.error('Logout failed:', error);
+        // Если логаут не удался на бэкенде, мы все равно удаляем данные на клиенте
+        // чтобы предотвратить видимость аутентифицированного состояния.
+        removeUserData();
+        updateNavigation(false);
+        showNotification('Произошла ошибка при выходе, но локальная сессия очищена.', 'error');
     }
 }
 
@@ -295,6 +243,7 @@ function toggleUserMenu() {
 // Закрытие меню при клике вне его
 function handleDropdownClick(e) {
     const dropdown = document.getElementById('userDropdown');
+    // Проверяем, что клик не был ни на выпадающем меню, ни на кнопке
     if (dropdown && !e.target.closest('.user-menu')) {
         dropdown.classList.remove('show');
     }
@@ -326,9 +275,8 @@ navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
         const targetId = link.getAttribute('href');
 
-        // If it's an external link (not starting with #), allow normal navigation
         if (!targetId.startsWith('#')) {
-            return; // Allow normal link behavior
+            return;
         }
 
         e.preventDefault();
@@ -390,13 +338,11 @@ function updateActiveNavLink() {
     });
 }
 
-// Notification system
+// Notification system (оставлена без изменений)
 function showNotification(message, type = 'info') {
-    // Remove existing notifications
     const existingNotifications = document.querySelectorAll('.notification');
     existingNotifications.forEach(notification => notification.remove());
 
-    // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
@@ -409,7 +355,6 @@ function showNotification(message, type = 'info') {
         </div>
     `;
 
-    // Add styles
     notification.style.cssText = `
         position: fixed;
         top: 20px;
@@ -424,10 +369,8 @@ function showNotification(message, type = 'info') {
         max-width: 400px;
     `;
 
-    // Add to document
     document.body.appendChild(notification);
 
-    // Auto remove after 5 seconds
     setTimeout(() => {
         if (notification.parentElement) {
             notification.style.animation = 'slideOutRight 0.3s ease';
@@ -436,7 +379,7 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Add notification styles
+// Add notification styles (оставлена без изменений)
 const notificationStyles = document.createElement('style');
 notificationStyles.textContent = `
     .notification-content {
@@ -478,7 +421,7 @@ notificationStyles.textContent = `
 `;
 document.head.appendChild(notificationStyles);
 
-// Intersection Observer for animations
+// Intersection Observer for animations (оставлена без изменений)
 function setupScrollAnimations() {
     const observerOptions = {
         threshold: 0.1,
@@ -493,7 +436,6 @@ function setupScrollAnimations() {
         });
     }, observerOptions);
 
-    // Observe elements for animation
     const animateElements = document.querySelectorAll('.value-card, .team-member, .achievement-item, .certificate-item');
     animateElements.forEach(el => {
         el.style.opacity = '0';
@@ -502,7 +444,7 @@ function setupScrollAnimations() {
     });
 }
 
-// Counter animation for achievements
+// Counter animation for achievements (оставлена без изменений)
 function animateCounters() {
     const counters = document.querySelectorAll('.achievement-number');
 
@@ -526,7 +468,7 @@ function animateCounters() {
 
                 requestAnimationFrame(updateCounter);
             } else {
-                counter.textContent = counter.textContent; // Keep original format
+                counter.textContent = counter.textContent;
             }
         };
 
@@ -534,7 +476,7 @@ function animateCounters() {
     });
 }
 
-// Parallax effect for hero section
+// Parallax effect for hero section (оставлена без изменений)
 function handleParallax() {
     const hero = document.querySelector('.about-hero');
     const scrolled = window.pageYOffset;
@@ -545,7 +487,7 @@ function handleParallax() {
     }
 }
 
-// Theme management
+// Theme management (оставлена без изменений)
 function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
@@ -560,7 +502,6 @@ function setTheme(theme) {
         themeIcon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
     }
 
-    // Update header background immediately
     handleHeaderScroll();
 }
 
@@ -569,7 +510,6 @@ function toggleTheme() {
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
 
-    // Add animation to theme button
     const themeBtn = document.getElementById('themeToggle');
     if (themeBtn) {
         themeBtn.style.transform = 'scale(0.8)';
@@ -581,26 +521,21 @@ function toggleTheme() {
 
 // Initialize all functionality
 async function init() {
-    // Initialize theme
     initTheme();
 
     // Check user authentication state and update navigation
-    await checkAuthStatus();
+    checkAuthStatus(); // 💡 Вызываем новую функцию
 
-    // Set up event listeners
     window.addEventListener('scroll', () => {
         handleHeaderScroll();
         updateActiveNavLink();
         handleParallax();
     });
 
-    // Add dropdown click handlers
     document.addEventListener('click', handleDropdownClick);
 
-    // Initialize other features
     setupScrollAnimations();
 
-    // Animate counters when achievements section is visible
     const achievementsSection = document.querySelector('.achievements-section');
     if (achievementsSection) {
         const observer = new IntersectionObserver((entries) => {
@@ -614,7 +549,6 @@ async function init() {
         observer.observe(achievementsSection);
     }
 
-    // Set initial header state
     handleHeaderScroll();
 }
 
@@ -625,7 +559,7 @@ if (document.readyState === 'loading') {
     init();
 }
 
-// Add smooth animations on page load
+// Add smooth animations on page load (оставлена без изменений)
 document.addEventListener('DOMContentLoaded', function() {
     const heroContent = document.querySelector('.hero-content');
     if (heroContent) {
@@ -644,5 +578,5 @@ document.addEventListener('DOMContentLoaded', function() {
 window.toggleTheme = toggleTheme;
 window.toggleUserMenu = toggleUserMenu;
 window.logout = logout;
-window.login = login;
-window.register = register;
+// 💡 Удалены window.login и window.register, предполагая, что они
+// определены только на соответствующих страницах (login.js, register.js)

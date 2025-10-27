@@ -11,6 +11,7 @@ import com.hotel.booking.repository.UserRepository;
 import com.hotel.booking.security.JwtTokenProvider;
 import com.hotel.booking.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,6 +21,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -32,6 +36,8 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        log.info("Registering user with email: {}", request.getEmail());
+
         // Проверка email
         if (userRepository.existsUserByEmail(request.getEmail())) {
             throw new BadRequestException("Email уже используется");
@@ -59,11 +65,11 @@ public class AuthServiceImpl implements AuthService {
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .role(UserRole.USER)
                 .isActive(true)
-                .emailVerified(true)/// ////////////////////////////////////////////////////
-                .balance(java.math.BigDecimal.ZERO)
+                .emailVerified(true)
                 .build();
 
         User savedUser = userRepository.save(user);
+        log.info("User registered successfully with ID: {}", savedUser.getId());
 
         // Генерация токена
         String token = tokenProvider.generateToken(savedUser.getId());
@@ -74,19 +80,22 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse login(LoginRequest request) {
         try {
-            System.out.println("Login attempt for email: " + request.getEmail());
+            log.info("Login attempt for email: {}", request.getEmail());
+
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
 
-            System.out.println("Authentication successful!");
+            log.info("Authentication successful!");
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             User user = (User) authentication.getPrincipal();
             String token = tokenProvider.generateToken(user.getId());
 
+            log.info("Generated token for user: {}", user.getId());
             return createAuthResponse(token, user);
         } catch (BadCredentialsException e) {
+            log.error("Bad credentials for email: {}", request.getEmail());
             throw new BadRequestException("Неверный email или пароль");
         }
     }
@@ -97,7 +106,22 @@ public class AuthServiceImpl implements AuthService {
         if (authentication == null || !authentication.isAuthenticated()) {
             return null;
         }
-        return (User) authentication.getPrincipal();
+
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof User) {
+            return (User) principal;
+        } else {
+            // Если principal не User, загружаем по email
+            String email = principal.toString();
+            return userRepository.findUserByEmail(email).orElse(null);
+        }
+    }
+
+    @Override
+    public User getUserById(UUID userId) {
+        log.info("Loading user by ID: {}", userId);
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new BadRequestException("Пользователь не найден"));
     }
 
     private AuthResponse createAuthResponse(String token, User user) {

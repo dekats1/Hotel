@@ -104,7 +104,6 @@
                 <p>Управляйте настройками вашего аккаунта</p>
             </div>
 
-            <div class="settings-content">
                 <div class="settings-card">
                     <h2>Общие настройки</h2>
                     <p>Основные параметры приложения</p>
@@ -133,35 +132,18 @@
                                 </select>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="settings-card">
-                    <h2>Уведомления</h2>
-                    <p>Настройте получение уведомлений</p>
-                    <div class="settings-options">
                         <div class="setting-item">
                             <div class="setting-info">
-                                <h3>Email уведомления</h3>
-                                <p>Получать уведомления на email</p>
+                                <h3>Валюта</h3>
+                                <p>Выберите предпочитаемую валюту</p>
                             </div>
                             <div class="setting-control">
-                                <label class="switch">
-                                    <input type="checkbox" checked>
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <h3>Push уведомления</h3>
-                                <p>Получать уведомления в браузере</p>
-                            </div>
-                            <div class="setting-control">
-                                <label class="switch">
-                                    <input type="checkbox" checked>
-                                    <span class="slider"></span>
-                                </label>
+                                <select id="currencySetting">
+                                    <option value="BYN" selected>Белорусский рубль (BYN)</option>
+                                    <option value="USD">Доллар США (USD)</option>
+                                    <option value="EUR">Евро (EUR)</option>
+                                    <option value="RUB">Российский рубль (RUB)</option>
+                                </select>
                             </div>
                         </div>
                     </div>

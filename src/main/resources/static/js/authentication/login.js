@@ -8,23 +8,19 @@ const submitBtn = document.querySelector('.auth-btn-primary');
 // API Base URL
 const API_BASE_URL = 'http://localhost:8080/api';
 
-// JWT Token management
-const TOKEN_KEY = 'auth_token';
+// ⚠️ JWT Token management - МЫ БОЛЬШЕ НЕ ХРАНИМ ТОКЕН В LOCALSTORAGE
+// Оставим только ключ для данных пользователя
 const USER_KEY = 'user_data';
 
-// Получить JWT токен
-function getToken() {
-    return localStorage.getItem(TOKEN_KEY);
-}
+// ----------------------------------------------------------------
+// ⚠️ Удалены функции: getToken(), setToken().
+// Бэкенд теперь управляет JWT через HTTP-Only Cookies.
+// ----------------------------------------------------------------
 
-// Сохранить JWT токен
-function setToken(token) {
-    localStorage.setItem(TOKEN_KEY, token);
-}
-
-// Удалить JWT токен
-function removeToken() {
-    localStorage.removeItem(TOKEN_KEY);
+// Удалить данные аутентификации (включая удаление Cookie, если бы это было возможно)
+function removeAuthData() {
+    // 💡 Так как JWT хранится в HttpOnly Cookie, JS не может его удалить напрямую.
+    // На бэкенде должен быть реализован /logout, который отправит клиенту Cookie с maxAge=0.
     localStorage.removeItem(USER_KEY);
 }
 
@@ -39,10 +35,11 @@ function setUserData(userData) {
     localStorage.setItem(USER_KEY, JSON.stringify(userData));
 }
 
-// Store authentication data (упрощенная версия)
+// Store authentication data (упрощенная версия, сохраняем только данные пользователя)
 function storeAuthData(authResponse) {
-    if (authResponse && authResponse.token && authResponse.user) {
-        setToken(authResponse.token);
+    // 💡 JWT токен должен быть установлен бэкендом в HTTP-Only Cookie.
+    // На клиенте мы сохраняем только данные пользователя.
+    if (authResponse && authResponse.user) {
         setUserData(authResponse.user);
     }
 }
@@ -244,6 +241,8 @@ async function makeRequest(url, method, data) {
         headers: {
             'Content-Type': 'application/json',
         },
+        // 💡 ГЛАВНОЕ ИЗМЕНЕНИЕ: включаем Cookie в запросы
+        credentials: 'include'
     };
 
     if (data) {
@@ -305,6 +304,7 @@ async function loginUser(email, password) {
         password: password
     };
 
+    // 💡 Бэкенд должен отправить JWT в HttpOnly Cookie в ответ
     return await makeRequest(`${API_BASE_URL}/auth/login`, 'POST', loginData);
 }
 
@@ -349,8 +349,9 @@ loginForm.addEventListener('submit', async function(e) {
         // Make API call
         const authResponse = await loginUser(email, password);
 
-        if (authResponse && authResponse.token && authResponse.user) {
-            // Store authentication data
+        // 💡 Проверка token в ответе не нужна, но данные пользователя нужны
+        if (authResponse && authResponse.user) {
+            // Store authentication data (сохраняет только данные пользователя в localStorage)
             storeAuthData(authResponse);
 
             showNotification('Успешный вход в систему!', 'success');
@@ -360,6 +361,7 @@ loginForm.addEventListener('submit', async function(e) {
                 window.location.href = '/';
             }, 1500);
         } else {
+            // Если нет данных пользователя (authResponse.user)
             throw new Error('Неверный ответ от сервера');
         }
 
@@ -423,14 +425,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize theme
     initTheme();
 
-    const token = getToken();
+    // ⚠️ Удалена проверка токена: теперь бэкенд решает, авторизован ли пользователь
+    // при загрузке страницы, используя Cookie.
     const userData = getUserData();
 
-    if (token && userData) {
-        showNotification('Вы уже авторизованы. Перенаправляем на главную страницу...', 'info');
-        setTimeout(() => {
-            window.location.href = '/';
-        }, 2000);
+    if (userData) {
+        // Мы предполагаем, что если есть данные пользователя в LS, то Cookie тоже валиден
+        // и пользователь аутентифицирован. Если Cookie невалиден, Spring Security
+        // перенаправит на /login при попытке перейти на защищенную страницу.
+        showNotification('Вы уже входили в систему. Если Cookie валиден, вы будете аутентифицированы.', 'info');
     }
 });
 
@@ -476,7 +479,9 @@ async function debugLogin() {
             body: JSON.stringify({
                 email: 'test@test.com',
                 password: 'password'
-            })
+            }),
+            // 💡 Включаем credentials: 'include'
+            credentials: 'include'
         });
 
         console.log('Response status:', response.status);
