@@ -641,12 +641,8 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// 💡 ИЗМЕНЕНО: logout теперь вызывает removeAuthData()
 function logout() {
-    // 💡 Настоящий выход должен быть запросом к API, чтобы бэкенд очистил Cookie
-    // Но для упрощения, здесь только очистка клиента:
     removeAuthData();
-    // Предполагаем, что бэкенд настроен правильно и очистит Cookie при перезагрузке страницы
     window.location.href = '/login';
 }
 
@@ -694,11 +690,8 @@ function setupEventListeners() {
     });
 }
 
-// Initialize app
 document.addEventListener('DOMContentLoaded', function () {
-    // ⚠️ УДАЛЕНА: if (!checkAuth()) return;
 
-    // Сначала инициализируем UI, потом пытаемся загрузить данные
     initializeProfile();
     loadUserData();
     setupEventListeners();

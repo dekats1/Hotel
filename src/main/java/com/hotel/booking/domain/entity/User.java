@@ -1,9 +1,11 @@
 package com.hotel.booking.domain.entity;
 
-import com.hotel.booking.domain.enums.*;
+import com.hotel.booking.domain.enums.UserGender;
+import com.hotel.booking.domain.enums.UserRole;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.security.core.GrantedAuthority;
@@ -13,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,17 +33,14 @@ import java.util.List;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class User extends BaseEntity implements UserDetails {
 
-    // Роль пользователя
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false, columnDefinition = "user_role")
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "role", nullable = false)
     @Builder.Default
     private UserRole role = UserRole.USER;
 
-    // Персональные данные
     @NotBlank(message = "Имя обязательно")
     @Size(max = 100, message = "Имя не должно превышать 100 символов")
     @Column(name = "first_name", nullable = false, length = 100)
@@ -50,10 +50,6 @@ public class User extends BaseEntity implements UserDetails {
     @Size(max = 100, message = "Фамилия не должна превышать 100 символов")
     @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
-
-    @Size(max = 100, message = "Отчество не должно превышать 100 символов")
-    @Column(name = "middle_name", length = 100)
-    private String middleName;
 
     @NotBlank(message = "Email обязателен")
     @Email(message = "Некорректный формат email")
@@ -72,8 +68,7 @@ public class User extends BaseEntity implements UserDetails {
     private LocalDate birthDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "gender", nullable = false, columnDefinition = "user_gender")
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "gender", nullable = false)
     private UserGender gender;
 
     // Аутентификация
@@ -97,7 +92,10 @@ public class User extends BaseEntity implements UserDetails {
     private Boolean emailVerified = false;
 
     @Column(name = "last_login")
-    private Instant lastLogin;
+    private LocalDateTime lastLogin;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
     // Связи
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -149,9 +147,6 @@ public class User extends BaseEntity implements UserDetails {
     }
 
     public String getFullName() {
-        if (middleName != null && !middleName.isEmpty()) {
-            return lastName + " " + firstName + " " + middleName;
-        }
         return lastName + " " + firstName;
     }
 
@@ -172,6 +167,6 @@ public class User extends BaseEntity implements UserDetails {
     }
 
     public void updateLastLogin() {
-        this.lastLogin = Instant.now();
+        this.lastLogin = LocalDateTime.now();
     }
 }

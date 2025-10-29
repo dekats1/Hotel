@@ -3,6 +3,7 @@ package com.hotel.booking.domain.entity;
 import com.hotel.booking.domain.enums.BookingStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -16,7 +17,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class BookingHistory {
 
     @Id

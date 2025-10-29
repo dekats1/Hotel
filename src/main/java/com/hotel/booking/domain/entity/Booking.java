@@ -6,10 +6,12 @@ import com.hotel.booking.domain.enums.CurrencyType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +28,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @EntityListeners(BookingEntityListener.class)
 public class Booking extends BaseEntity {
 
@@ -52,7 +54,7 @@ public class Booking extends BaseEntity {
 
     @Column(name = "booking_date", nullable = false, updatable = false)
     @Builder.Default
-    private Instant bookingDate = Instant.now();
+    private LocalDateTime bookingDate = LocalDateTime.now();
 
     // Детали бронирования
     @Min(value = 1, message = "Количество гостей должно быть не менее 1")
@@ -91,7 +93,7 @@ public class Booking extends BaseEntity {
     private String specialRequests;
 
     @Column(name = "cancelled_at")
-    private Instant cancelledAt;
+    private LocalDateTime cancelledAt;
 
     @Column(name = "cancellation_reason", columnDefinition = "TEXT")
     private String cancellationReason;
@@ -157,7 +159,7 @@ public class Booking extends BaseEntity {
     @PrePersist
     protected void onCreate() {
         if (bookingDate == null) {
-            bookingDate = Instant.now();
+            bookingDate = LocalDateTime.now();
         }
         calculateTotalPrice();
     }
@@ -165,7 +167,7 @@ public class Booking extends BaseEntity {
     @PreUpdate
     protected void onUpdate() {
         if (status == BookingStatus.CANCELLED && cancelledAt == null) {
-            cancelledAt = Instant.now();
+            cancelledAt = LocalDateTime.now();
         }
     }
 }

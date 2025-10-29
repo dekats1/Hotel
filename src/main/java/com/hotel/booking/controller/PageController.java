@@ -38,7 +38,7 @@ public class PageController {
 
     @GetMapping("/profile")
     public String profilePage() {
-        return "redirect:/html/menu/profile.html";
+        return "forward:/html/menu/profile.html";
     }
 
     @GetMapping("/setting")
@@ -50,4 +50,7 @@ public class PageController {
     public String walletPage() {
         return "forward:/html/menu/wallet.html";
     }
+
+    @GetMapping("/admin")
+    public String adminPage() {return "forward:/html/menu/profileAdmin.html";}
 }

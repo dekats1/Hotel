@@ -26,15 +26,7 @@ public class AuthController {
     // Имя JWT Cookie
     private static final String JWT_COOKIE_NAME = "auth_jwt";
 
-    /**
-     * Создает и возвращает HTTP-only Cookie с JWT токеном.
-     * @param token JWT токен
-     * @return ResponseCookie
-     */
     private ResponseCookie createJwtCookie(String token, int maxAge) {
-        // Устанавливаем SameSite=Lax для базовой защиты от CSRF.
-        // httpOnly=true: Защита от XSS.
-        // secure=false: Для работы на localhost. В проде должно быть true!
         return ResponseCookie.from(JWT_COOKIE_NAME, token)
                 .httpOnly(true)
                 .secure(false)

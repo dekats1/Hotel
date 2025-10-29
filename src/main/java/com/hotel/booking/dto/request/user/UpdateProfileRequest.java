@@ -20,9 +20,6 @@ public class UpdateProfileRequest {
     @Size(max = 100, message = "Фамилия не должна превышать 100 символов")
     private String lastName;
 
-    @Size(max = 100, message = "Отчество не должно превышать 100 символов")
-    private String middleName;
-
     @NotBlank(message = "Email обязателен")
     @Email(message = "Некорректный формат email")
     private String email;

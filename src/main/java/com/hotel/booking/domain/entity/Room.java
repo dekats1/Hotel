@@ -4,6 +4,7 @@ import com.hotel.booking.domain.enums.RoomType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -19,7 +20,8 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
+@ToString
 public class Room extends BaseEntity {
 
     @NotBlank(message = "Номер комнаты обязателен")

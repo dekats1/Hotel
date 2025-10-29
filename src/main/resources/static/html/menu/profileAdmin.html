@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Админ-панель - Отель "Райский уголок"</title>
-    <link rel="stylesheet" href="../../css/menu/profileAdmin.css">
-    <link rel="stylesheet" href="../../css/index.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../../css/menu/profileAdmin.css"/>
+    <link rel="stylesheet" href="../../css/index.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
     <script>
-        // Apply theme immediately to prevent flash
         (function() {
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
@@ -17,547 +16,697 @@
     </script>
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <nav class="navbar">
-            <div class="nav-container">
-                <div class="nav-logo">
-                    <i class="fas fa-hotel"></i>
-                    <span>Райский уголок - Админ</span>
-                </div>
-                <div class="theme-toggle">
-                    <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">
-                        <i class="fas fa-sun" id="themeIcon"></i>
-                    </button>
-                </div>
-                <ul class="nav-menu">
-                    <li><a href="/home" class="nav-link">Главная</a></li>
-                    <li><a href="/profile" class="nav-link">Профиль</a></li>
-                </ul>
-                <div class="nav-auth">
-                    <div class="user-profile">
-                        <div class="user-info">
-                            <div class="user-avatar" id="userAvatar">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="user-details">
-                                <div class="user-name" id="userName">Администратор</div>
-                                <div class="user-role">Админ-панель</div>
-                            </div>
+<!-- Header -->
+<header class="header">
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-hotel"></i>
+                <span>Райский уголок - Админ</span>
+            </div>
+            <div class="theme-toggle">
+                <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">
+                    <i class="fas fa-sun" id="themeIcon"></i>
+                </button>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/home" class="nav-link">Главная</a></li>
+                <li><a href="/profile" class="nav-link">Профиль</a></li>
+            </ul>
+            <div class="nav-auth">
+                <div class="user-profile">
+                    <div class="user-info">
+                        <div class="user-avatar" id="userAvatar">
+                            <i class="fas fa-user"></i>
                         </div>
-                        <div class="user-menu">
-                            <button class="btn-auth btn-user" onclick="toggleUserMenu()">
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                            <div class="user-dropdown" id="userDropdown">
-                                <div class="dropdown-header">
-                                    <div class="user-avatar-small" id="userAvatarSmall">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div>
-                                        <div class="user-name-small" id="userNameSmall">Администратор</div>
-                                        <div class="user-email-small" id="userEmailSmall">admin@hotel.com</div>
-                                    </div>
-                                </div>
-                                <div class="dropdown-divider"></div>
-                                <a href="/profile" class="dropdown-item">
+                        <div class="user-details">
+                            <div class="user-name" id="userName">Администратор</div>
+                            <div class="user-role">Админ-панель</div>
+                        </div>
+                    </div>
+                    <div class="user-menu">
+                        <button class="btn-auth btn-user" onclick="toggleUserMenu()">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="user-dropdown" id="userDropdown">
+                            <div class="dropdown-header">
+                                <div class="user-avatar-small" id="userAvatarSmall">
                                     <i class="fas fa-user"></i>
-                                    Мой профиль
-                                </a>
-                                <a href="/home" class="dropdown-item">
-                                    <i class="fas fa-home"></i>
-                                    На главную
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a href="#" class="dropdown-item logout-item" onclick="logout()">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    Выйти
-                                </a>
+                                </div>
+                                <div>
+                                    <div class="user-name-small" id="userNameSmall">Администратор</div>
+                                    <div class="user-email-small" id="userEmailSmall">admin@hotel.com</div>
+                                </div>
                             </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="/profile" class="dropdown-item">
+                                <i class="fas fa-user"></i>
+                                Мой профиль
+                            </a>
+                            <a href="/home" class="dropdown-item">
+                                <i class="fas fa-home"></i>
+                                На главную
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item logout-item" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Выйти
+                            </a>
                         </div>
                     </div>
-                </div>
-                <div class="nav-toggle">
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                    <span class="bar"></span>
                 </div>
             </div>
-        </nav>
-    </header>
-
-    <!-- Main Content -->
-    <main class="admin-main">
-        <div class="admin-container">
-            <!-- Sidebar -->
-            <aside class="admin-sidebar">
-                <div class="sidebar-header">
-                    <h3>Админ-панель</h3>
-                </div>
-                <nav class="sidebar-nav">
-                    <a href="#dashboard" class="nav-item active" data-section="dashboard">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span>Панель управления</span>
-                    </a>
-                    <a href="#users" class="nav-item" data-section="users">
-                        <i class="fas fa-users"></i>
-                        <span>Пользователи</span>
-                    </a>
-                    <a href="#rooms" class="nav-item" data-section="rooms">
-                        <i class="fas fa-bed"></i>
-                        <span>Номера</span>
-                    </a>
-                    <a href="#reviews" class="nav-item" data-section="reviews">
-                        <i class="fas fa-star"></i>
-                        <span>Отзывы</span>
-                    </a>
-                    <a href="#bookings" class="nav-item" data-section="bookings">
-                        <i class="fas fa-calendar-check"></i>
-                        <span>Бронирования</span>
-                    </a>
-                </nav>
-            </aside>
-
-            <!-- Content Area -->
-            <div class="admin-content">
-                <!-- Dashboard Section -->
-                <section id="dashboard-section" class="content-section active">
-                    <div class="section-header">
-                        <h2>Панель управления</h2>
-                        <p>Обзор системы отеля</p>
-                    </div>
-                    
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 id="totalUsers">0</h3>
-                                <p>Пользователей</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-bed"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 id="totalRooms">0</h3>
-                                <p>Номеров</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-calendar-check"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 id="totalBookings">0</h3>
-                                <p>Бронирований</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-star"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 id="averageRating">0.0</h3>
-                                <p>Средняя оценка</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="dashboard-grid">
-                        <div class="dashboard-card">
-                            <h3>Последние бронирования</h3>
-                            <div id="recentBookings" class="recent-list">
-                                <!-- Заполняется через JS -->
-                            </div>
-                        </div>
-                        <div class="dashboard-card">
-                            <h3>Статистика по номерам</h3>
-                            <div id="roomStats" class="room-stats">
-                                <!-- Заполняется через JS -->
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Users Section -->
-                <section id="users-section" class="content-section">
-                    <div class="section-header">
-                        <h2>Управление пользователями</h2>
-                        <button class="btn btn-primary" onclick="openUserModal()">
-                            <i class="fas fa-plus"></i>
-                            Добавить пользователя
-                        </button>
-                    </div>
-                    
-                    <div class="filters-bar">
-                        <div class="search-box">
-                            <i class="fas fa-search"></i>
-                            <input type="text" id="userSearch" placeholder="Поиск пользователей...">
-                        </div>
-                        <select id="userRoleFilter">
-                            <option value="">Все роли</option>
-                            <option value="USER">Пользователь</option>
-                            <option value="ADMIN">Администратор</option>
-                        </select>
-                        <select id="userStatusFilter">
-                            <option value="">Все статусы</option>
-                            <option value="ACTIVE">Активные</option>
-                            <option value="INACTIVE">Неактивные</option>
-                        </select>
-                    </div>
-
-                    <div class="table-container">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Имя</th>
-                                    <th>Email</th>
-                                    <th>Роль</th>
-                                    <th>Статус</th>
-                                    <th>Дата регистрации</th>
-                                    <th>Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTableBody">
-                                <!-- Заполняется через JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- Rooms Section -->
-                <section id="rooms-section" class="content-section">
-                    <div class="section-header">
-                        <h2>Управление номерами</h2>
-                        <button class="btn btn-primary" onclick="openRoomModal()">
-                            <i class="fas fa-plus"></i>
-                            Добавить номер
-                        </button>
-                    </div>
-                    
-                    <div class="filters-bar">
-                        <div class="search-box">
-                            <i class="fas fa-search"></i>
-                            <input type="text" id="roomSearch" placeholder="Поиск номеров...">
-                        </div>
-                        <select id="roomTypeFilter">
-                            <option value="">Все типы</option>
-                            <option value="STANDARD">Стандарт</option>
-                            <option value="DELUXE">Делюкс</option>
-                            <option value="SUITE">Люкс</option>
-                        </select>
-                        <select id="roomStatusFilter">
-                            <option value="">Все статусы</option>
-                            <option value="AVAILABLE">Доступен</option>
-                            <option value="OCCUPIED">Занят</option>
-                            <option value="MAINTENANCE">На ремонте</option>
-                        </select>
-                    </div>
-
-                    <div class="table-container">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Номер</th>
-                                    <th>Тип</th>
-                                    <th>Цена за ночь</th>
-                                    <th>Статус</th>
-                                    <th>Вместимость</th>
-                                    <th>Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody id="roomsTableBody">
-                                <!-- Заполняется через JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- Reviews Section -->
-                <section id="reviews-section" class="content-section">
-                    <div class="section-header">
-                        <h2>Управление отзывами</h2>
-                    </div>
-                    
-                    <div class="filters-bar">
-                        <div class="search-box">
-                            <i class="fas fa-search"></i>
-                            <input type="text" id="reviewSearch" placeholder="Поиск отзывов...">
-                        </div>
-                        <select id="reviewRatingFilter">
-                            <option value="">Все оценки</option>
-                            <option value="5">5 звезд</option>
-                            <option value="4">4 звезды</option>
-                            <option value="3">3 звезды</option>
-                            <option value="2">2 звезды</option>
-                            <option value="1">1 звезда</option>
-                        </select>
-                        <select id="reviewStatusFilter">
-                            <option value="">Все статусы</option>
-                            <option value="APPROVED">Одобрены</option>
-                            <option value="PENDING">На модерации</option>
-                            <option value="REJECTED">Отклонены</option>
-                        </select>
-                    </div>
-
-                    <div class="table-container">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Пользователь</th>
-                                    <th>Номер</th>
-                                    <th>Оценка</th>
-                                    <th>Комментарий</th>
-                                    <th>Статус</th>
-                                    <th>Дата</th>
-                                    <th>Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody id="reviewsTableBody">
-                                <!-- Заполняется через JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- Bookings Section -->
-                <section id="bookings-section" class="content-section">
-                    <div class="section-header">
-                        <h2>Управление бронированиями</h2>
-                    </div>
-                    
-                    <div class="filters-bar">
-                        <div class="search-box">
-                            <i class="fas fa-search"></i>
-                            <input type="text" id="bookingSearch" placeholder="Поиск бронирований...">
-                        </div>
-                        <select id="bookingStatusFilter">
-                            <option value="">Все статусы</option>
-                            <option value="PENDING">Ожидает</option>
-                            <option value="CONFIRMED">Подтверждено</option>
-                            <option value="CHECKED_IN">Заселен</option>
-                            <option value="CHECKED_OUT">Выселен</option>
-                            <option value="CANCELLED">Отменено</option>
-                        </select>
-                        <input type="date" id="bookingDateFilter" placeholder="Фильтр по дате">
-                    </div>
-
-                    <div class="table-container">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Пользователь</th>
-                                    <th>Номер</th>
-                                    <th>Заезд</th>
-                                    <th>Выезд</th>
-                                    <th>Сумма</th>
-                                    <th>Статус</th>
-                                    <th>Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody id="bookingsTableBody">
-                                <!-- Заполняется через JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+            <div class="nav-toggle">
+                <span class="bar"></span><span class="bar"></span><span class="bar"></span>
             </div>
         </div>
-    </main>
+    </nav>
+</header>
 
-    <!-- User Modal -->
-    <div id="userModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="userModalTitle">Добавить пользователя</h3>
-                <button class="modal-close" onclick="closeUserModal()">
-                    <i class="fas fa-times"></i>
+<!-- Main Content -->
+<main class="admin-main">
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <h3>Админ-панель</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-item active" data-section="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Панель управления</span>
+                </a>
+                <a href="#users" class="nav-item" data-section="users">
+                    <i class="fas fa-users"></i>
+                    <span>Пользователи</span>
+                </a>
+                <a href="#rooms" class="nav-item" data-section="rooms">
+                    <i class="fas fa-bed"></i>
+                    <span>Номера</span>
+                </a>
+                <a href="#reviews" class="nav-item" data-section="reviews">
+                    <i class="fas fa-star"></i>
+                    <span>Отзывы</span>
+                </a>
+                <a href="#bookings" class="nav-item" data-section="bookings">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Бронирования</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Content Area -->
+        <div class="admin-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="content-section active">
+                <div class="section-header">
+                    <h2>Панель управления</h2>
+                    <p>Обзор системы отеля</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-content">
+                            <h3 id="totalUsers">0</h3>
+                            <p>Пользователей</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-bed"></i></div>
+                        <div class="stat-content">
+                            <h3 id="totalRooms">0</h3>
+                            <p>Номеров</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                        <div class="stat-content">
+                            <h3 id="totalBookings">0</h3>
+                            <p>Бронирований</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-star"></i></div>
+                        <div class="stat-content">
+                            <h3 id="averageRating">0.0</h3>
+                            <p>Средняя оценка</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Последние бронирования</h3>
+                        <div id="recentBookings" class="recent-list"></div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Статистика по номерам</h3>
+                        <div id="roomStats" class="room-stats"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Users Section -->
+            <section id="users-section" class="content-section">
+                <div class="section-header">
+                    <h2>Управление пользователями</h2>
+                    <button class="btn btn-primary" onclick="openUserCreateModal()">
+                        <i class="fas fa-plus"></i> Добавить пользователя
+                    </button>
+                </div>
+
+                <div class="filters-bar">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="userSearch" placeholder="Поиск пользователей..."/>
+                    </div>
+                    <select id="userRoleFilter">
+                        <option value="">Все роли</option>
+                        <option value="USER">Пользователь</option>
+                        <option value="ADMIN">Администратор</option>
+                    </select>
+                    <select id="userStatusFilter">
+                        <option value="">Все статусы</option>
+                        <option value="ACTIVE">Активные</option>
+                        <option value="INACTIVE">Неактивные</option>
+                    </select>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Имя</th>
+                            <th>Email</th>
+                            <th>Роль</th>
+                            <th>Статус</th>
+                            <th>Дата регистрации</th>
+                            <th>Действия</th>
+                        </tr>
+                        </thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Rooms Section -->
+            <section id="rooms-section" class="content-section">
+                <div class="section-header">
+                    <h2>Управление номерами</h2>
+                    <button class="btn btn-primary" onclick="openRoomModal()">
+                        <i class="fas fa-plus"></i> Добавить номер
+                    </button>
+                </div>
+
+                <div class="filters-bar">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="roomSearch" placeholder="Поиск номеров..."/>
+                    </div>
+                    <select id="roomTypeFilter">
+                        <option value="">Все типы</option>
+                        <option value="STANDARD">Стандарт</option>
+                        <option value="DELUXE">Делюкс</option>
+                        <option value="SUITE">Люкс</option>
+                        <option value="APARTMENT">Апартаменты</option>
+                        <option value="PENTHOUSE">Пентхаус</option>
+                    </select>
+                    <select id="roomStatusFilter">
+                        <option value="">Все статусы</option>
+                        <option value="ACTIVE">Активные</option>
+                        <option value="INACTIVE">Неактивные</option>
+                    </select>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Номер</th>
+                            <th>Тип</th>
+                            <th>Цена за ночь</th>
+                            <th>Статус</th>
+                            <th>Вместимость</th>
+                            <th>Действия</th>
+                        </tr>
+                        </thead>
+                        <tbody id="roomsTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Reviews Section -->
+            <section id="reviews-section" class="content-section">
+                <div class="section-header">
+                    <h2>Управление отзывами</h2>
+                </div>
+
+                <div class="filters-bar">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="reviewSearch" placeholder="Поиск отзывов..."/>
+                    </div>
+                    <select id="reviewRatingFilter">
+                        <option value="">Все оценки</option>
+                        <option value="5">5 звезд</option>
+                        <option value="4">4 звезды</option>
+                        <option value="3">3 звезды</option>
+                        <option value="2">2 звезды</option>
+                        <option value="1">1 звезда</option>
+                    </select>
+                    <select id="reviewStatusFilter">
+                        <option value="">Все статусы</option>
+                        <option value="APPROVED">Одобрены</option>
+                        <option value="PENDING">На модерации</option>
+                        <option value="REJECTED">Отклонены</option>
+                    </select>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Пользователь</th>
+                            <th>Номер</th>
+                            <th>Оценка</th>
+                            <th>Комментарий</th>
+                            <th>Статус</th>
+                            <th>Дата</th>
+                            <th>Действия</th>
+                        </tr>
+                        </thead>
+                        <tbody id="reviewsTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Bookings Section -->
+            <section id="bookings-section" class="content-section">
+                <div class="section-header">
+                    <h2>Управление бронированиями</h2>
+                </div>
+
+                <div class="filters-bar">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="bookingSearch" placeholder="Поиск бронирований..."/>
+                    </div>
+                    <select id="bookingStatusFilter">
+                        <option value="">Все статусы</option>
+                        <option value="PENDING">Ожидает</option>
+                        <option value="CONFIRMED">Подтверждено</option>
+                        <option value="CHECKED_IN">Заселен</option>
+                        <option value="CHECKED_OUT">Выселен</option>
+                        <option value="CANCELLED">Отменено</option>
+                    </select>
+                    <input type="date" id="bookingDateFilter" placeholder="Фильтр по дате"/>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Пользователь</th>
+                            <th>Номер</th>
+                            <th>Заезд</th>
+                            <th>Выезд</th>
+                            <th>Сумма</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                        </thead>
+                        <tbody id="bookingsTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+</main>
+
+<!-- User Create Modal -->
+<div id="userCreateModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Добавить пользователя</h3>
+            <button class="modal-close" onclick="closeUserCreateModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="userCreateForm" class="modal-body">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="createFirstName">Имя <span class="required">*</span></label>
+                    <input type="text" id="createFirstName" name="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="createLastName">Фамилия <span class="required">*</span></label>
+                    <input type="text" id="createLastName" name="lastName" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="createEmail">Email <span class="required">*</span></label>
+                <input type="email" id="createEmail" name="email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="createPhone">Телефон <span class="required">*</span></label>
+                <input type="tel" id="createPhone" name="phone"
+                       pattern="^\+?[1-9]\d{1,14}$"
+                       placeholder="+7 (xxx) xxx-xx-xx" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="createBirthDate">Дата рождения <span class="required">*</span></label>
+                    <input type="date" id="createBirthDate" name="birthDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="createGender">Пол <span class="required">*</span></label>
+                    <select id="createGender" name="gender" required>
+                        <option value="MALE">Мужской</option>
+                        <option value="FEMALE">Женский</option>
+                        <option value="OTHER">Другой</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="createRole">Роль <span class="required">*</span></label>
+                    <select id="createRole" name="role" required>
+                        <option value="USER">Пользователь</option>
+                        <option value="ADMIN">Администратор</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="createPassword">Пароль <span class="required">*</span></label>
+                <input type="password" id="createPassword" name="password"
+                       minlength="6" required>
+                <small class="form-hint">Минимум 6 символов</small>
+            </div>
+
+            <div class="form-group">
+                <label for="createConfirmPassword">Подтвердите пароль <span class="required">*</span></label>
+                <input type="password" id="createConfirmPassword" name="confirmPassword"
+                       minlength="6" required>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeUserCreateModal()">
+                    Отмена
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Создать пользователя
                 </button>
             </div>
-            <form id="userForm" class="modal-body">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="userFirstName">Имя *</label>
-                        <input type="text" id="userFirstName" name="firstName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="userLastName">Фамилия *</label>
-                        <input type="text" id="userLastName" name="lastName" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="userEmail">Email *</label>
-                    <input type="email" id="userEmail" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="userPhone">Телефон</label>
-                    <input type="tel" id="userPhone" name="phone">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="userRole">Роль *</label>
-                        <select id="userRole" name="role" required>
-                            <option value="USER">Пользователь</option>
-                            <option value="ADMIN">Администратор</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="userStatus">Статус *</label>
-                        <select id="userStatus" name="status" required>
-                            <option value="ACTIVE">Активный</option>
-                            <option value="INACTIVE">Неактивный</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="userPassword">Пароль *</label>
-                    <input type="password" id="userPassword" name="password" required>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Отмена</button>
-                    <button type="submit" class="btn btn-primary">Сохранить</button>
-                </div>
-            </form>
-        </div>
+        </form>
     </div>
+</div>
 
-    <!-- Room Modal -->
-    <div id="roomModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="roomModalTitle">Добавить номер</h3>
-                <button class="modal-close" onclick="closeRoomModal()">
-                    <i class="fas fa-times"></i>
+<!-- User Edit Modal -->
+<div id="userEditModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Редактировать пользователя</h3>
+            <button class="modal-close" onclick="closeUserEditModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="userEditForm" class="modal-body">
+            <input type="hidden" id="editUserId" name="userId">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="editFirstName">Имя <span class="required">*</span></label>
+                    <input type="text" id="editFirstName" name="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editLastName">Фамилия <span class="required">*</span></label>
+                    <input type="text" id="editLastName" name="lastName" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="editEmail">Email <span class="required">*</span></label>
+                <input type="email" id="editEmail" name="email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="editPhone">Телефон <span class="required">*</span></label>
+                <input type="tel" id="editPhone" name="phone"
+                       pattern="^\+?[1-9]\d{1,14}$" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="editBirthDate">Дата рождения <span class="required">*</span></label>
+                    <input type="date" id="editBirthDate" name="birthDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="editGender">Пол <span class="required">*</span></label>
+                    <select id="editGender" name="gender" required>
+                        <option value="MALE">Мужской</option>
+                        <option value="FEMALE">Женский</option>
+                        <option value="OTHER">Другой</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="editRole">Роль <span class="required">*</span></label>
+                    <select id="editRole" name="role" required>
+                        <option value="USER">Пользователь</option>
+                        <option value="ADMIN">Администратор</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editBalance">Баланс</label>
+                    <input type="number" id="editBalance" name="balance"
+                           min="0" step="0.01" readonly>
+                    <small class="form-hint">Только для просмотра</small>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="editIsActive" name="isActive">
+                        Активен
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="editEmailVerified" name="emailVerified">
+                        Email подтвержден
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="editLastLogin">Последний вход</label>
+                <input type="text" id="editLastLogin" name="lastLogin" readonly>
+                <small class="form-hint">Только для просмотра</small>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeUserEditModal()">
+                    Отмена
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Сохранить изменения
                 </button>
             </div>
-            <form id="roomForm" class="modal-body">
-                <div class="form-group">
-                    <label for="roomNumber">Номер комнаты *</label>
-                    <input type="text" id="roomNumber" name="roomNumber" required>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="roomType">Тип номера *</label>
-                        <select id="roomType" name="type" required>
-                            <option value="STANDARD">Стандарт</option>
-                            <option value="DELUXE">Делюкс</option>
-                            <option value="SUITE">Люкс</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="roomCapacity">Вместимость *</label>
-                        <input type="number" id="roomCapacity" name="capacity" min="1" max="10" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="roomPrice">Цена за ночь *</label>
-                        <input type="number" id="roomPrice" name="pricePerNight" min="0" step="0.01" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="roomStatus">Статус *</label>
-                        <select id="roomStatus" name="status" required>
-                            <option value="AVAILABLE">Доступен</option>
-                            <option value="OCCUPIED">Занят</option>
-                            <option value="MAINTENANCE">На ремонте</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="roomDescription">Описание</label>
-                    <textarea id="roomDescription" name="description" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="roomAmenities">Удобства (через запятую)</label>
-                    <input type="text" id="roomAmenities" name="amenities" placeholder="Wi-Fi, Кондиционер, Мини-бар">
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeRoomModal()">Отмена</button>
-                    <button type="submit" class="btn btn-primary">Сохранить</button>
-                </div>
-            </form>
-        </div>
+        </form>
     </div>
+</div>
 
-    <!-- Review Modal -->
-    <div id="reviewModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Просмотр отзыва</h3>
-                <button class="modal-close" onclick="closeReviewModal()">
-                    <i class="fas fa-times"></i>
+
+<!-- Room Modal -->
+<div id="roomModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="roomModalTitle">Добавить номер</h3>
+            <button class="modal-close" onclick="closeRoomModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="roomForm" class="modal-body">
+            <div class="form-group">
+                <label for="roomNumber">Номер комнаты *</label>
+                <input type="text" id="roomNumber" name="roomNumber" maxlength="20" required/>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="roomType">Тип номера *</label>
+                    <select id="roomType" name="type" required>
+                        <option value="STANDARD">Стандарт</option>
+                        <option value="DELUXE">Делюкс</option>
+                        <option value="SUITE">Люкс</option>
+                        <option value="APARTMENT">Апартаменты</option>
+                        <option value="PENTHOUSE">Пентхаус</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="roomCapacity">Вместимость *</label>
+                    <input type="number" id="roomCapacity" name="capacity" min="1" max="10" required/>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="roomBasePrice">Базовая цена за ночь *</label>
+                    <input type="number" id="roomBasePrice" name="basePrice" min="0.01" step="0.01" required/>
+                </div>
+                <div class="form-group">
+                    <label for="roomArea">Площадь (м²)</label>
+                    <input type="number" id="roomArea" name="areaSqm" min="0" step="0.01"/>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="roomFloor">Этаж (опционально)</label>
+                    <input type="number" id="roomFloor" name="floor" min="0"/>
+                </div>
+                <div class="form-group">
+                    <label for="roomActive">Статус активности</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="roomActive" name="isActive" checked/>
+                        <label for="roomActive">Активный номер</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="section-label">Удобства номера</label>
+                <div class="amenities-grid">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="roomHasWifi" name="hasWifi" checked/>
+                        <label for="roomHasWifi">Wi‑Fi</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="roomHasTv" name="hasTv" checked/>
+                        <label for="roomHasTv">Телевизор</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="roomHasMinibar" name="hasMinibar"/>
+                        <label for="roomHasMinibar">Мини‑бар</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="roomHasBalcony" name="hasBalcony"/>
+                        <label for="roomHasBalcony">Балкон</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="roomHasSeaView" name="hasSeaView"/>
+                        <label for="roomHasSeaView">Вид на море</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="roomNameRu">Название (русский)</label>
+                <input type="text" id="roomNameRu" name="nameRu" maxlength="200" placeholder="Название на русском"/>
+            </div>
+            <div class="form-group">
+                <label for="roomDescription">Описание (русский)</label>
+                <textarea id="roomDescription" name="descriptionRu" rows="3" placeholder="Описание на русском языке"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="roomNameEn">Название (английский)</label>
+                <input type="text" id="roomNameEn" name="nameEn" maxlength="200" placeholder="Название на английском"/>
+            </div>
+            <div class="form-group">
+                <label for="roomDescriptionEn">Описание (английский)</label>
+                <textarea id="roomDescriptionEn" name="descriptionEn" rows="3" placeholder="Описание на английском языке"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="section-label">Загрузка фотографий</label>
+                <div class="photo-upload-area" id="photoUploadArea" onclick="document.getElementById('roomPhotos').click()">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Перетащите фотографии сюда или кликните для выбора</p>
+                    <input type="file" id="roomPhotos" name="photos" multiple accept="image/*" style="display:none;"/>
+                    <button type="button" class="btn btn-outline" onclick="document.getElementById('roomPhotos').click()">Выбрать файлы</button>
+                </div>
+                <div id="photoPreview" class="photo-preview"></div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeRoomModal()">Отмена</button>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div id="reviewModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Просмотр отзыва</h3>
+            <button class="modal-close" onclick="closeReviewModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div id="reviewDetails"></div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-success" onclick="approveReview()">
+                    <i class="fas fa-check"></i> Одобрить
                 </button>
-            </div>
-            <div class="modal-body">
-                <div id="reviewDetails">
-                    <!-- Заполняется через JS -->
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-success" onclick="approveReview()">
-                        <i class="fas fa-check"></i>
-                        Одобрить
-                    </button>
-                    <button type="button" class="btn btn-danger" onclick="rejectReview()">
-                        <i class="fas fa-times"></i>
-                        Отклонить
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">Закрыть</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Booking Modal -->
-    <div id="bookingModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Детали бронирования</h3>
-                <button class="modal-close" onclick="closeBookingModal()">
-                    <i class="fas fa-times"></i>
+                <button type="button" class="btn btn-danger" onclick="rejectReview()">
+                    <i class="fas fa-times"></i> Отклонить
                 </button>
-            </div>
-            <div class="modal-body">
-                <div id="bookingDetails">
-                    <!-- Заполняется через JS -->
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-success" onclick="confirmBooking()">
-                        <i class="fas fa-check"></i>
-                        Подтвердить
-                    </button>
-                    <button type="button" class="btn btn-warning" onclick="checkInBooking()">
-                        <i class="fas fa-sign-in-alt"></i>
-                        Заселить
-                    </button>
-                    <button type="button" class="btn btn-info" onclick="checkOutBooking()">
-                        <i class="fas fa-sign-out-alt"></i>
-                        Выселить
-                    </button>
-                    <button type="button" class="btn btn-danger" onclick="cancelBooking()">
-                        <i class="fas fa-times"></i>
-                        Отменить
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="closeBookingModal()">Закрыть</button>
-                </div>
+                <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">Закрыть</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="loading-spinner">
-            <i class="fas fa-spinner fa-spin"></i>
-            <p>Загрузка...</p>
+<!-- Booking Modal -->
+<div id="bookingModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Детали бронирования</h3>
+            <button class="modal-close" onclick="closeBookingModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div id="bookingDetails"></div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-success" onclick="confirmBooking()">
+                    <i class="fas fa-check"></i> Подтвердить
+                </button>
+                <button type="button" class="btn btn-warning" onclick="checkInBooking()">
+                    <i class="fas fa-sign-in-alt"></i> Заселить
+                </button>
+                <button type="button" class="btn btn-info" onclick="checkOutBooking()">
+                    <i class="fas fa-sign-out-alt"></i> Выселить
+                </button>
+                <button type="button" class="btn btn-danger" onclick="cancelBooking()">
+                    <i class="fas fa-times"></i> Отменить
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="closeBookingModal()">Закрыть</button>
+            </div>
         </div>
     </div>
+</div>
 
-    <script src="../../js/menu/profileAdmin.js"></script>
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Загрузка...</p>
+    </div>
+</div>
+
+<script src="../../js/menu/profileAdmin.js"></script>
 </body>
 </html>
+

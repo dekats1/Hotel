@@ -1,3 +1,7 @@
 package com.hotel.booking.exception;
 
-class ResourceNotFoundException extends RuntimeException {}
+public class ResourceNotFoundException extends RuntimeException {
+    public ResourceNotFoundException(String user, String id, String string) {
+
+    }
+}

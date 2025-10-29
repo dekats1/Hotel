@@ -3,7 +3,6 @@ package com.hotel.booking.dto.response.auth;
 import lombok.*;
 
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

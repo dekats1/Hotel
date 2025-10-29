@@ -1,3 +1,3 @@
 package com.hotel.booking.service;
 
-class BookingService{}
+public interface BookingService{}

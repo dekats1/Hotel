@@ -1,5 +1,6 @@
 package com.hotel.booking.domain.enums;
 
+import jakarta.persistence.Enumerated;
 import lombok.Getter;
 
 @Getter

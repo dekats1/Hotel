@@ -6,27 +6,26 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Getter
-@Setter
+
 @Builder
-@NoArgsConstructor
+@Value
 @AllArgsConstructor
-public class UserProfileResponse {
-    private String id;
-    private String email;
-    private String firstName;
-    private String lastName;
-    private String middleName;
-    private String phone;
-    private LocalDate birthDate;
-    private UserGender gender;
-    private BigDecimal balance;
-    private String role;
-    private Boolean emailVerified;
-    private Boolean isActive;
+public class
+UserProfileResponse {
+    String id;
+    String email;
+    String firstName;
+    String lastName;
+    String phone;
+    LocalDate birthDate;
+    UserGender gender;
+    BigDecimal balance;
+    String role;
+    Boolean emailVerified;
+    Boolean isActive;
 
     // Статистика (можно добавить позже)
-    private Integer totalBookings;
-    private Double averageRating;
-    private Integer membershipYears;
+    Integer totalBookings;
+    Double averageRating;
+    Integer membershipYears;
 }

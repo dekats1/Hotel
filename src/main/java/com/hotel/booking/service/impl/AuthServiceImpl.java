@@ -1,12 +1,12 @@
 package com.hotel.booking.service.impl;
 
 import com.hotel.booking.domain.entity.User;
-import com.hotel.booking.domain.enums.UserRole;
 import com.hotel.booking.dto.request.auth.LoginRequest;
 import com.hotel.booking.dto.request.auth.RegisterRequest;
 import com.hotel.booking.dto.response.auth.AuthResponse;
-import com.hotel.booking.dto.response.auth.UserInfoResponse;
 import com.hotel.booking.exception.BadRequestException;
+import com.hotel.booking.mapper.AuthResponseMapper;
+import com.hotel.booking.mapper.UserMapper;
 import com.hotel.booking.repository.UserRepository;
 import com.hotel.booking.security.JwtTokenProvider;
 import com.hotel.booking.service.AuthService;
@@ -29,71 +29,44 @@ import java.util.UUID;
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
+    private final PasswordEncoder passwordEncoder; // ДОБАВЬТЕ ЭТО
+    private final UserMapper userMapper;
+    private final AuthResponseMapper authResponseMapper;
 
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         log.info("Registering user with email: {}", request.getEmail());
 
-        // Проверка email
-        if (userRepository.existsUserByEmail(request.getEmail())) {
-            throw new BadRequestException("Email уже используется");
-        }
+        validateRegistrationRequest(request);
 
-        // Проверка телефона
-        if (userRepository.existsUserByPhone(request.getPhone())) {
-            throw new BadRequestException("Телефон уже используется");
-        }
-
-        // Проверка паролей
-        if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new BadRequestException("Пароли не совпадают");
-        }
-
-        // Создание пользователя
-        User user = User.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .middleName(request.getMiddleName())
-                .email(request.getEmail())
-                .phone(request.getPhone())
-                .birthDate(request.getBirthDate())
-                .gender(request.getGender())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .role(UserRole.USER)
-                .isActive(true)
-                .emailVerified(true)
-                .build();
+        User user = userMapper.toEntity(request);
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword())); // ДОБАВЬТЕ ЭТУ СТРОКУ
 
         User savedUser = userRepository.save(user);
         log.info("User registered successfully with ID: {}", savedUser.getId());
 
-        // Генерация токена
         String token = tokenProvider.generateToken(savedUser.getId());
-
-        return createAuthResponse(token, savedUser);
+        return authResponseMapper.toAuthResponse(token, savedUser);
     }
 
     @Override
     public AuthResponse login(LoginRequest request) {
         try {
             log.info("Login attempt for email: {}", request.getEmail());
-
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
-
             log.info("Authentication successful!");
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             User user = (User) authentication.getPrincipal();
             String token = tokenProvider.generateToken(user.getId());
-
             log.info("Generated token for user: {}", user.getId());
-            return createAuthResponse(token, user);
+
+            return authResponseMapper.toAuthResponse(token, user);
         } catch (BadCredentialsException e) {
             log.error("Bad credentials for email: {}", request.getEmail());
             throw new BadRequestException("Неверный email или пароль");
@@ -111,7 +84,6 @@ public class AuthServiceImpl implements AuthService {
         if (principal instanceof User) {
             return (User) principal;
         } else {
-            // Если principal не User, загружаем по email
             String email = principal.toString();
             return userRepository.findUserByEmail(email).orElse(null);
         }
@@ -124,19 +96,17 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new BadRequestException("Пользователь не найден"));
     }
 
-    private AuthResponse createAuthResponse(String token, User user) {
-        UserInfoResponse userInfo = UserInfoResponse.builder()
-                .id(user.getId().toString())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .role(user.getRole().name())
-                .build();
+    private void validateRegistrationRequest(RegisterRequest request) {
+        if (userRepository.existsUserByEmail(request.getEmail())) {
+            throw new BadRequestException("Email уже используется");
+        }
 
-        return AuthResponse.builder()
-                .token(token)
-                .type("Bearer")
-                .user(userInfo)
-                .build();
+        if (userRepository.existsUserByPhone(request.getPhone())) {
+            throw new BadRequestException("Телефон уже используется");
+        }
+
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new BadRequestException("Пароли не совпадают");
+        }
     }
 }

@@ -16,9 +16,6 @@ public class RegisterRequest {
     @Size(max = 100)
     private String lastName;
 
-    @Size(max = 100)
-    private String middleName;
-
     @NotBlank(message = "Email обязателен")
     @Email
     private String email;

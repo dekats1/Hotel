@@ -3,16 +3,15 @@ package com.hotel.booking.dto.response.auth;
 
 import lombok.*;
 
-@Getter
-@Setter
+
 @Builder
-@NoArgsConstructor
+@Value
 @AllArgsConstructor
 
 public class UserInfoResponse {
-    private String id;
-    private String email;
-    private String firstName;
-    private String lastName;
-    private String role;
+    String id;
+    String email;
+    String firstName;
+    String lastName;
+    String role;
 }

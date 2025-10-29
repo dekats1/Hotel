@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "room_translations",
@@ -18,16 +19,15 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class RoomTranslation extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "language", nullable = false)
-    private LanguageCode language;
+    @Column(name = "language", nullable = false, length = 10)
+    private String language;  // Изменено с enum на String для гибкости
 
     @NotBlank(message = "Название номера обязательно")
     @Size(max = 200, message = "Название не должно превышать 200 символов")
@@ -37,7 +37,4 @@ public class RoomTranslation extends BaseEntity {
     @NotBlank(message = "Описание номера обязательно")
     @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
-
-    @Column(name = "amenities", columnDefinition = "TEXT")
-    private String amenities; // JSON или текст со списком удобств
 }

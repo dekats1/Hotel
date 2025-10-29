@@ -13,11 +13,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration; // 💡 НОВЫЙ ИМПОРТ
-import org.springframework.web.cors.CorsConfigurationSource; // 💡 НОВЫЙ ИМПОРТ
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource; // 💡 НОВЫЙ ИМПОРТ
-
-import java.util.Arrays; // 💡 НОВЫЙ ИМПОРТ
 
 @Configuration
 @EnableWebSecurity
@@ -36,15 +31,10 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // 💡 НОВЫЙ БИН: Конфигурация CORS
-
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 💡 ДОБАВЛЕНО: Применяем CORS конфигурацию
-
-
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -55,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers("/css/**", "/js/**", "/html/**", "/images/**").permitAll()
 
                         .requestMatchers("/api/users/**").authenticated()
+                        .requestMatchers("/api/admin").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/setting", "/wallet", "/booking","/profile").authenticated()
 
