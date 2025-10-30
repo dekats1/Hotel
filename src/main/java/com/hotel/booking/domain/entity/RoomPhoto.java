@@ -1,5 +1,6 @@
 package com.hotel.booking.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -9,25 +10,21 @@ import lombok.experimental.SuperBuilder;
 import java.time.Instant;
 
 @Entity
-@Table(name = "room_photos", indexes = {
-        @Index(name = "idx_room_photos_room", columnList = "room_id"),
-        @Index(name = "idx_room_photos_order", columnList = "room_id, display_order")
-})
+@Table(name = "room_photos")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@ToString
 public class RoomPhoto {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", updatable = false, nullable = false)
     private java.util.UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
+    @JsonBackReference("room-photos")  // Добавлено
     private Room room;
 
     @NotBlank(message = "URL фотографии обязателен")

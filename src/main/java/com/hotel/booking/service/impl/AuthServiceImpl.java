@@ -17,6 +17,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
-    private final PasswordEncoder passwordEncoder; // ДОБАВЬТЕ ЭТО
+    private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final AuthResponseMapper authResponseMapper;
 
@@ -43,7 +44,7 @@ public class AuthServiceImpl implements AuthService {
         validateRegistrationRequest(request);
 
         User user = userMapper.toEntity(request);
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword())); // ДОБАВЬТЕ ЭТУ СТРОКУ
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
         User savedUser = userRepository.save(user);
         log.info("User registered successfully with ID: {}", savedUser.getId());
@@ -56,17 +57,26 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse login(LoginRequest request) {
         try {
             log.info("Login attempt for email: {}", request.getEmail());
+
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
             log.info("Authentication successful!");
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            User user = (User) authentication.getPrincipal();
+            // ✅ ИСПРАВЛЕНО: Получаем email из UserDetails и загружаем User entity из БД
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            String email = userDetails.getUsername();
+
+            log.info("Loading user entity by email: {}", email);
+            User user = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new BadRequestException("Пользователь не найден"));
+
             String token = tokenProvider.generateToken(user.getId());
             log.info("Generated token for user: {}", user.getId());
 
             return authResponseMapper.toAuthResponse(token, user);
+
         } catch (BadCredentialsException e) {
             log.error("Bad credentials for email: {}", request.getEmail());
             throw new BadRequestException("Неверный email или пароль");
@@ -81,19 +91,21 @@ public class AuthServiceImpl implements AuthService {
         }
 
         Object principal = authentication.getPrincipal();
-        if (principal instanceof User) {
-            return (User) principal;
-        } else {
-            String email = principal.toString();
+
+        // ✅ ИСПРАВЛЕНО: Principal всегда будет UserDetails, получаем email
+        if (principal instanceof UserDetails) {
+            String email = ((UserDetails) principal).getUsername();
             return userRepository.findUserByEmail(email).orElse(null);
         }
+
+        return null;
     }
 
     @Override
     public User getUserById(UUID userId) {
         log.info("Loading user by ID: {}", userId);
         return userRepository.findById(userId)
-                .orElseThrow(() -> new BadRequestException("Пользователь не найден"));
+            .orElseThrow(() -> new BadRequestException("Пользователь не найден"));
     }
 
     private void validateRegistrationRequest(RegisterRequest request) {

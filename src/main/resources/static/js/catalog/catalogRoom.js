@@ -1,9 +1,7 @@
-// Catalog Rooms - Public listing with filters, sorting and details modal
-
-const API_BASE_URL = '/api';
+const API_BASE_URL = '/api/rooms';
 const ENDPOINTS = {
-    rooms: '/rooms', // GET list of rooms for public catalog
-    roomById: (id) => `/rooms/${id}` // GET single room with full details
+    getAllRooms: '/getAllRooms',
+    roomById: (id) => `/${id}`
 };
 
 let allRooms = [];
@@ -51,41 +49,38 @@ async function apiCall(endpoint, options = {}) {
 async function loadRooms() {
     showLoading(true);
     try {
-        // Try public endpoint first
-        let data;
-        try {
-            data = await apiCall(ENDPOINTS.rooms);
-        } catch (e) {
-            // Fallback (if backend exposes only admin list for now and user is logged as admin)
-            data = await apiCall('/admin' + ENDPOINTS.rooms);
+        let data = await apiCall(ENDPOINTS.getAllRooms);
+        console.log('Raw API response:', data);
+
+        // Проверяем структуру первого элемента
+        if (data && data.length > 0) {
+            console.log('First room structure:', data[0]);
+            console.log('Translations:', data[0].translations);
         }
-        allRooms = Array.isArray(data) ? data.filter(normalizeRoom) : [];
+
+        allRooms = Array.isArray(data) ? data.filter(r => r && r.isActive !== false) : [];
         filteredRooms = allRooms.slice();
         renderRooms();
     } catch (err) {
+        console.error('Error loading rooms:', err);
         notify(err.message, 'error');
     } finally {
         showLoading(false);
     }
 }
 
-function normalizeRoom(room) {
-    // keep only rooms available to show
-    return room && room.isActive !== false;
-}
-
 function bindFilters() {
     const form = document.getElementById('filtersForm');
     const reset = document.getElementById('btnReset');
-    form.addEventListener('submit', (e) => { e.preventDefault(); applyFilters(); });
-    reset.addEventListener('click', () => { resetFilters(); applyFilters(); });
+    if (form) form.addEventListener('submit', (e) => { e.preventDefault(); applyFilters(); });
+    if (reset) reset.addEventListener('click', () => { resetFilters(); applyFilters(); });
 
     ['searchQuery', 'typeFilter', 'priceMin', 'priceMax', 'capacityFilter', 'sortBy', 'fWifi', 'fTv', 'fMinibar', 'fBalcony', 'fSea']
-        .forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('change', debounce(applyFilters, 50));
-            if (el && el.tagName === 'INPUT' && el.type === 'text') el.addEventListener('input', debounce(applyFilters, 150));
-        });
+    .forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', debounce(applyFilters, 50));
+        if (el && el.tagName === 'INPUT' && el.type === 'text') el.addEventListener('input', debounce(applyFilters, 150));
+    });
 }
 
 function resetFilters() {
@@ -100,6 +95,21 @@ function resetFilters() {
     document.getElementById('fMinibar').checked = false;
     document.getElementById('fBalcony').checked = false;
     document.getElementById('fSea').checked = false;
+}
+
+// ИСПРАВЛЕНО: Безопасное получение перевода
+function getTranslation(room, lang = 'RU') {
+    if (!room || !room.translations || typeof room.translations !== 'object') {
+        return null;
+    }
+    return room.translations[lang] || room.translations['EN'] || null;
+}
+
+// ИСПРАВЛЕНО: Безопасное получение имени комнаты
+function getRoomName(room) {
+    const transRU = getTranslation(room, 'RU');
+    const transEN = getTranslation(room, 'EN');
+    return transRU?.name || transEN?.name || `Номер ${room.roomNumber || ''}`;
 }
 
 function applyFilters() {
@@ -120,12 +130,17 @@ function applyFilters() {
     let list = allRooms.slice();
 
     if (search) {
-        list = list.filter(r =>
-            ((r.translations?.RU?.name || r.translations?.EN?.name || '').toLowerCase().includes(search)) ||
-            ((r.roomNumber || '').toLowerCase().includes(search)) ||
-            ((getRoomTypeText(r.type) || '').toLowerCase().includes(search))
-        );
+        list = list.filter(r => {
+            const name = getRoomName(r).toLowerCase();
+            const roomNumber = (r.roomNumber || '').toLowerCase();
+            const typeText = getRoomTypeText(r.type).toLowerCase();
+
+            return name.includes(search) ||
+                roomNumber.includes(search) ||
+                typeText.includes(search);
+        });
     }
+
     if (type) list = list.filter(r => r.type === type);
     if (!Number.isNaN(pMin)) list = list.filter(r => (toNum(r.basePrice)) >= pMin);
     if (!Number.isNaN(pMax)) list = list.filter(r => (toNum(r.basePrice)) <= pMax);
@@ -144,7 +159,7 @@ function applyFilters() {
         case 'PRICE_ASC': list.sort((a, b) => toNum(a.basePrice) - toNum(b.basePrice)); break;
         case 'PRICE_DESC': list.sort((a, b) => toNum(b.basePrice) - toNum(a.basePrice)); break;
         case 'AREA_DESC': list.sort((a, b) => (toNum(b.areaSqm) - toNum(a.areaSqm))); break;
-        case 'RATING_DESC': list.sort((a, b) => (toNum(b.rating) - toNum(a.rating))); break;
+        case 'RATING_DESC': list.sort((a, b) => (toNum(b.averageRating) - toNum(a.averageRating))); break;
         default: break;
     }
 
@@ -156,6 +171,9 @@ function renderRooms() {
     const grid = document.getElementById('roomsGrid');
     const count = document.getElementById('roomsCount');
     const empty = document.getElementById('emptyState');
+
+    if (!grid || !count || !empty) return;
+
     count.textContent = `Найдено: ${filteredRooms.length}`;
 
     if (filteredRooms.length === 0) {
@@ -167,16 +185,17 @@ function renderRooms() {
 
     grid.innerHTML = filteredRooms.map(r => {
         const price = formatMoney(r.basePrice);
-        const name = r.translations?.RU?.name || r.translations?.EN?.name || `Номер ${escapeHtml(r.roomNumber || '')}`;
+        const name = getRoomName(r);
         const mainPhoto = (r.photos || []).find(p => p.isPrimary) || (r.photos || [])[0];
         const imgUrl = mainPhoto ? (mainPhoto.thumbnailUrl || mainPhoto.url) : '';
         const typeText = getRoomTypeText(r.type);
         const area = r.areaSqm ? `${r.areaSqm} м²` : '';
         const capacity = r.capacity ? `${r.capacity} гост.` : '';
+
         return `
         <article class="room-card">
             <div class="room-media">
-                ${imgUrl ? `<img alt="${escapeHtml(name)}" src="${imgUrl}">` : ''}
+                ${imgUrl ? `<img alt="${escapeHtml(name)}" src="${imgUrl}">` : '<div class="no-image">Нет фото</div>'}
                 <div class="badge-price">${price} ₽/ночь</div>
             </div>
             <div class="room-body">
@@ -202,30 +221,36 @@ function renderRooms() {
 }
 
 function goToBooking(roomId) {
-    window.location.href = `/menu/booking.html?roomId=${encodeURIComponent(roomId)}`;
+    openBookingModal(roomId);
 }
-
 async function openRoomDetails(roomId) {
     showLoading(true);
     try {
-        let data;
-        try {
-            data = await apiCall(ENDPOINTS.roomById(roomId));
-        } catch {
-            data = await apiCall('/admin' + ENDPOINTS.roomById(roomId));
+        // Ищем комнату в уже загруженных данных
+        const room = allRooms.find(r => r.id === roomId);
+
+        if (!room) {
+            throw new Error('Комната не найдена');
         }
-        fillRoomModal(data);
+
+        console.log('Room details:', room);
+        fillRoomModal(room);
         document.getElementById('roomModal').classList.add('show');
     } catch (e) {
-        notify(e.message, 'error');
+        console.error('Error opening room details:', e);
+        notify('Не удалось открыть детали комнаты: ' + e.message, 'error');
     } finally {
         showLoading(false);
     }
 }
 
+
 function fillRoomModal(room) {
-    const name = room.translations?.RU?.name || room.translations?.EN?.name || `Номер ${room.roomNumber || ''}`;
-    const desc = room.translations?.RU?.description || room.translations?.EN?.description || '';
+    const transRU = getTranslation(room, 'RU');
+    const transEN = getTranslation(room, 'EN');
+    const name = transRU?.name || transEN?.name || `Номер ${room.roomNumber || ''}`;
+    const desc = transRU?.description || transEN?.description || '';
+
     document.getElementById('modalTitle').textContent = 'Информация о номере';
     document.getElementById('roomName').textContent = name;
     document.getElementById('roomDescription').textContent = desc;
@@ -259,21 +284,45 @@ function fillRoomModal(room) {
     });
 
     const btnBook = document.getElementById('btnBook');
-    btnBook.onclick = () => goToBooking(room.id);
+    if (btnBook) btnBook.onclick = () => goToBooking(room.id);
 }
 
 // utils
 function getRoomTypeText(type) {
-    const map = { STANDARD: 'Стандарт', DELUXE: 'Делюкс', SUITE: 'Люкс', APARTMENT: 'Апартаменты', PENTHOUSE: 'Пентхаус' };
+    const map = {
+        STANDARD: 'Стандарт',
+        DELUXE: 'Делюкс',
+        SUITE: 'Люкс',
+        APARTMENT: 'Апартаменты',
+        PENTHOUSE: 'Пентхаус'
+    };
     return map[type] || type || '';
 }
-function escapeHtml(s) {
-    return String(s).replace(/[&<>"'`=\/]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#x60;', '=': '&#x3D;', '/': '&#x2F;' }[c]));
-}
-function toNum(v) { const n = typeof v === 'number' ? v : parseFloat(v); return Number.isNaN(n) ? 0 : n; }
-function formatMoney(v) { const n = toNum(v); return n.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
 
-function debounce(fn, t) { let id; return (...a) => { clearTimeout(id); id = setTimeout(() => fn.apply(null, a), t); }; }
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"'`=\/]/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
+        "'": '&#39;', '`': '&#x60;', '=': '&#x3D;', '/': '&#x2F;'
+    }[c]));
+}
+
+function toNum(v) {
+    const n = typeof v === 'number' ? v : parseFloat(v);
+    return Number.isNaN(n) ? 0 : n;
+}
+
+function formatMoney(v) {
+    const n = toNum(v);
+    return n.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function debounce(fn, t) {
+    let id;
+    return (...a) => {
+        clearTimeout(id);
+        id = setTimeout(() => fn.apply(null, a), t);
+    };
+}
 
 function showLoading(show) {
     const overlay = document.getElementById('loadingOverlay');
@@ -281,15 +330,268 @@ function showLoading(show) {
 }
 
 function notify(message, type = 'info') {
-    // simple lightweight notification (reuses style from admin if present)
     const exist = document.querySelectorAll('.notification');
     exist.forEach(n => n.remove());
     const n = document.createElement('div');
     n.className = `notification notification-${type}`;
-    n.style.cssText = `position:fixed;top:20px;right:20px;background:${type==='success'?'#10b981':type==='error'?'#ef4444':type==='warning'?'#f59e0b':'#3b82f6'};color:#fff;padding:1rem 1.25rem;border-radius:12px;box-shadow:var(--shadow-lg);z-index:10000`;
-    n.innerHTML = `<div class="notification-content"><i class="fas fa-info-circle"></i><span>${message}</span><button class="notification-close" onclick="this.parentElement.parentElement.remove()"><i class="fas fa-times"></i></button></div>`;
+    n.style.cssText = `position:fixed;top:20px;right:20px;background:${type==='success'?'#10b981':type==='error'?'#ef4444':type==='warning'?'#f59e0b':'#3b82f6'};color:#fff;padding:1rem 1.25rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.1);z-index:10000`;
+    n.innerHTML = `<div class="notification-content"><i class="fas fa-info-circle"></i><span>${message}</span><button class="notification-close" onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:#fff;cursor:pointer;margin-left:10px"><i class="fas fa-times"></i></button></div>`;
     document.body.appendChild(n);
     setTimeout(() => { if (n.parentElement) n.remove(); }, 4000);
 }
+
+
+// ========== МОДАЛЬНОЕ ОКНО БРОНИРОВАНИЯ ==========
+function openBookingModal(roomId) {
+    const room = allRooms.find(r => r.id === roomId);
+
+    if (!room) {
+        notify('Комната не найдена', 'error');
+        return;
+    }
+
+    // Заполняем данные комнаты
+    const modal = document.getElementById('bookingModal');
+    if (!modal) {
+        console.error('Booking modal not found');
+        return;
+    }
+
+    // Сохраняем ID комнаты и цену
+    modal.dataset.roomId = roomId;
+    modal.dataset.pricePerNight = room.basePrice;
+
+    const name = getRoomName(room);
+    document.getElementById('bookingRoomName').textContent = name;
+    document.getElementById('bookingRoomPrice').textContent = `${formatMoney(room.basePrice)} ₽/ночь`;
+
+    // Устанавливаем минимальные даты
+    const today = new Date().toISOString().split('T')[0];
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+
+    const checkInInput = document.getElementById('checkInDate');
+    const checkOutInput = document.getElementById('checkOutDate');
+
+    checkInInput.min = today;
+    checkInInput.value = today;
+    checkOutInput.min = tomorrow;
+    checkOutInput.value = tomorrow;
+
+    // Сбрасываем форму
+    document.getElementById('guestsCount').value = '1';
+    document.getElementById('currency').value = 'EUR';
+    document.getElementById('specialRequests').value = '';  // НОВОЕ
+
+    // Пересчитываем цену
+    calculateTotalPrice();
+
+    // Показываем модальное окно
+    modal.classList.add('show');
+}
+
+function closeBookingModal() {
+    const modal = document.getElementById('bookingModal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
+function calculateTotalPrice() {
+    const modal = document.getElementById('bookingModal');
+    const pricePerNight = parseFloat(modal.dataset.pricePerNight || 0);
+
+    const checkInDate = document.getElementById('checkInDate').value;
+    const checkOutDate = document.getElementById('checkOutDate').value;
+
+    if (!checkInDate || !checkOutDate) {
+        document.getElementById('totalNights').textContent = '0';
+        document.getElementById('totalPrice').textContent = '0 ₽';
+        return;
+    }
+
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+
+    const nights = Math.max(0, Math.floor((checkOut - checkIn) / (1000 * 60 * 60 * 24)));
+    const totalPrice = nights * pricePerNight;
+
+    document.getElementById('totalNights').textContent = nights;
+    document.getElementById('totalPrice').textContent = `${formatMoney(totalPrice)} ₽`;
+}
+
+async function submitBooking() {
+    console.log('=== SUBMIT BOOKING STARTED ===');
+
+    const modal = document.getElementById('bookingModal');
+    const roomId = modal.dataset.roomId;
+    const pricePerNight = parseFloat(modal.dataset.pricePerNight || 0);
+
+    const checkInDate = document.getElementById('checkInDate').value;
+    const checkOutDate = document.getElementById('checkOutDate').value;
+    const guestsCount = parseInt(document.getElementById('guestsCount').value);
+    const currency = document.getElementById('currency').value;
+    const specialRequests = document.getElementById('specialRequests').value.trim();
+
+    console.log('Form values:', { checkInDate, checkOutDate, guestsCount, currency });
+
+    // Валидация
+    if (!checkInDate || !checkOutDate) {
+        console.warn('Validation failed: dates missing');
+        notify('Выберите даты заезда и выезда', 'warning');
+        return;
+    }
+
+    if (new Date(checkInDate) >= new Date(checkOutDate)) {
+        console.warn('Validation failed: checkout date invalid');
+        notify('Дата выезда должна быть позже даты заезда', 'warning');
+        return;
+    }
+
+    if (!guestsCount || guestsCount < 1) {
+        console.warn('Validation failed: invalid guest count');
+        notify('Укажите количество гостей', 'warning');
+        return;
+    }
+
+    // Вычисляем общую цену
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+    const nights = Math.floor((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+    const totalPrice = nights * pricePerNight;
+
+    console.log('Calculated:', { nights, totalPrice });
+
+    // Формируем запрос
+    const bookingRequest = {
+        roomId: roomId,
+        checkInDate: checkInDate,
+        checkOutDate: checkOutDate,
+        guestsCount: guestsCount,
+        pricePerNight: pricePerNight,
+        totalPrice: totalPrice,
+        currency: currency,
+        specialRequests: specialRequests || null
+    };
+
+    console.log('Booking request:', JSON.stringify(bookingRequest, null, 2));
+
+    showLoading(true);
+
+    try {
+        const url = '/api/booking/addBooking';
+        console.log('Sending POST to:', url);
+
+        // ✅ УПРОЩЕНО: токен передаётся автоматически через cookie!
+        const response = await fetch(url, {
+            method: 'POST',
+            credentials: 'include',  // ✅ ВАЖНО: включает автоматическую отправку cookie
+            headers: {
+                'Content-Type': 'application/json'
+                // Authorization НЕ НУЖЕН - токен в HttpOnly cookie!
+            },
+            body: JSON.stringify(bookingRequest)
+        });
+
+        console.log('Response status:', response.status);
+
+        if (!response.ok) {
+            let errorData;
+            const contentType = response.headers.get('content-type');
+
+            if (contentType && contentType.includes('application/json')) {
+                errorData = await response.json();
+            } else {
+                const text = await response.text();
+                errorData = { message: text || `Ошибка ${response.status}` };
+            }
+
+            console.error('Error response:', errorData);
+            throw new Error(errorData.message || `Ошибка: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('✅ Booking created:', result);
+
+        notify('Бронирование успешно создано!', 'success');
+        closeBookingModal();
+
+        setTimeout(() => {
+            console.log('Redirecting to mybookings...');
+            window.location.href = '/menu/mybookings.html';
+        }, 1500);
+
+    } catch (error) {
+        console.error('=== BOOKING ERROR ===');
+        console.error('Error:', error.message);
+
+        if (error.message.includes('401') || error.message.includes('403')) {
+            notify('Для бронирования необходимо войти в систему', 'warning');
+            setTimeout(() => {
+                window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+            }, 1500);
+        } else {
+            notify('Ошибка при создании бронирования: ' + error.message, 'error');
+        }
+    } finally {
+        console.log('=== SUBMIT BOOKING FINISHED ===');
+        showLoading(false);
+    }
+}
+
+
+// ✅ УЛУЧШЕННАЯ функция для получения cookie
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+        const cookieValue = parts.pop().split(';').shift();
+        console.log(`Cookie "${name}" found:`, cookieValue ? cookieValue.substring(0, 50) + '...' : 'empty');
+        return cookieValue;
+    }
+    console.log(`Cookie "${name}" NOT found`);
+    return null;
+}
+
+
+
+
+
+// Привязка событий для модального окна бронирования
+document.addEventListener('DOMContentLoaded', () => {
+    // Закрытие по клику на фон
+    const bookingModal = document.getElementById('bookingModal');
+    if (bookingModal) {
+        bookingModal.addEventListener('click', (e) => {
+            if (e.target === bookingModal) {
+                closeBookingModal();
+            }
+        });
+    }
+
+    // Пересчёт цены при изменении дат
+    const checkInDate = document.getElementById('checkInDate');
+    const checkOutDate = document.getElementById('checkOutDate');
+
+    if (checkInDate) {
+        checkInDate.addEventListener('change', () => {
+            // Обновляем минимальную дату выезда
+            const nextDay = new Date(checkInDate.value);
+            nextDay.setDate(nextDay.getDate() + 1);
+            checkOutDate.min = nextDay.toISOString().split('T')[0];
+
+            // Если выезд раньше заезда, обновляем его
+            if (checkOutDate.value && new Date(checkOutDate.value) <= new Date(checkInDate.value)) {
+                checkOutDate.value = nextDay.toISOString().split('T')[0];
+            }
+
+            calculateTotalPrice();
+        });
+    }
+
+    if (checkOutDate) {
+        checkOutDate.addEventListener('change', calculateTotalPrice);
+    }
+});
+
 
 

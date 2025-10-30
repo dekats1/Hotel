@@ -2,44 +2,47 @@ package com.hotel.booking.dto.response.admin;
 
 import com.hotel.booking.domain.enums.BookingStatus;
 import com.hotel.booking.domain.enums.CurrencyType;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Value
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AdminBookingDetailsResponse {
-    UUID id;
+    private UUID id;
 
-    // Информация о пользователе (для админа)
-    UUID userId;
-    String userEmail;
+    // User info
+    private UUID userId;
+    private String userEmail;
+    private String userFullName;
+    private String userPhone;
 
-    // Информация о номере
-    UUID roomId;
-    String roomNumber;
+    // Room info
+    private UUID roomId;
+    private String roomNumber;
+    private String roomType;
 
-    // Даты
-    LocalDate checkInDate;
-    LocalDate checkOutDate;
-    LocalDateTime bookingDate;
-    int guestsCount;
-    int totalNights;
+    // Booking details
+    private LocalDate checkInDate;
+    private LocalDate checkOutDate;
+    private Integer totalNights;
 
-    // Финансы
-    BigDecimal pricePerNight;
-    BigDecimal totalPrice;
-    CurrencyType currency;
+    private Integer guestsCount;
+    private BigDecimal pricePerNight;
+    private BigDecimal totalPrice;
+    private CurrencyType currency;
 
-    // Статус
-    BookingStatus status;
-
-    String specialRequests;
-    LocalDateTime createdAt;
-    LocalDateTime cancelledAt;
-    String cancellationReason;
+    private String specialRequests;
+    private BookingStatus status;
+    private LocalDateTime bookingDate;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

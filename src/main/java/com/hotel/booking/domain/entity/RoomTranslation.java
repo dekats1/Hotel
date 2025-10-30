@@ -1,5 +1,6 @@
 package com.hotel.booking.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.hotel.booking.domain.enums.LanguageCode;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -8,13 +9,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "room_translations",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"room_id", "language"}),
-        indexes = {
-                @Index(name = "idx_room_translations_room", columnList = "room_id"),
-                @Index(name = "idx_room_translations_lang", columnList = "language")
-        }
-)
+@Table(name = "room_translations")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,6 +19,7 @@ public class RoomTranslation extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
+    @JsonBackReference("room-translations")  // Добавлено
     private Room room;
 
     @Column(name = "language", nullable = false, length = 10)

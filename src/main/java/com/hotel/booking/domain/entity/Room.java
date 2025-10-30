@@ -1,8 +1,12 @@
 package com.hotel.booking.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.hotel.booking.domain.enums.RoomType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -10,19 +14,16 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+
 @Entity
-@Table(name = "rooms", indexes = {
-        @Index(name = "idx_rooms_type", columnList = "type"),
-        @Index(name = "idx_rooms_active", columnList = "is_active"),
-        @Index(name = "idx_rooms_price", columnList = "base_price")
-})
+@Table(name = "rooms")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@ToString
 public class Room extends BaseEntity {
+
 
     @NotBlank(message = "Номер комнаты обязателен")
     @Size(max = 20)
@@ -76,30 +77,33 @@ public class Room extends BaseEntity {
     @Builder.Default
     private Boolean isActive = true;
 
-    // Связи
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("room-translations")  // Добавлено
     @Builder.Default
-    private List<RoomTranslation> translations = new ArrayList<>();
+    private Set<RoomTranslation> translations = new HashSet<>();
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("displayOrder ASC")
+    @JsonManagedReference("room-photos")  // Добавлено
     @Builder.Default
-    private List<RoomPhoto> photos = new ArrayList<>();
+    private Set<RoomPhoto> photos = new HashSet<>();
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
+    @JsonIgnore  // Обычно бронирования не нужны в JSON комнаты
     @Builder.Default
-    private List<Booking> bookings = new ArrayList<>();
+    private Set<Booking> bookings = new HashSet<>();
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
+    @JsonIgnore  // Обычно отзывы не нужны в JSON комнаты
     @Builder.Default
-    private List<Review> reviews = new ArrayList<>();
+    private Set<Review> reviews = new HashSet<>();
 
     // Вспомогательные методы
     public RoomPhoto getPrimaryPhoto() {
         return photos.stream()
-                .filter(RoomPhoto::getIsPrimary)
-                .findFirst()
-                .orElse(photos.isEmpty() ? null : photos.get(0));
+            .filter(RoomPhoto::getIsPrimary)
+            .findFirst()
+            .orElse(photos.isEmpty() ? null : photos.iterator().next());
     }
 
     public Double getAverageRating() {
@@ -107,17 +111,17 @@ public class Room extends BaseEntity {
             return null;
         }
         return reviews.stream()
-                .filter(Review::getIsVisible)
-                .filter(Review::getIsApproved)
-                .mapToInt(Review::getRating)
-                .average()
-                .orElse(0.0);
+            .filter(Review::getIsVisible)
+            .filter(Review::getIsApproved)
+            .mapToInt(Review::getRating)
+            .average()
+            .orElse(0.0);
     }
 
     public long getReviewCount() {
         return reviews.stream()
-                .filter(Review::getIsVisible)
-                .filter(Review::getIsApproved)
-                .count();
+            .filter(Review::getIsVisible)
+            .filter(Review::getIsApproved)
+            .count();
     }
 }

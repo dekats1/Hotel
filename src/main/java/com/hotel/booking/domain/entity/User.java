@@ -169,4 +169,8 @@ public class User extends BaseEntity implements UserDetails {
     public void updateLastLogin() {
         this.lastLogin = LocalDateTime.now();
     }
+
+    public Collection<Object> getRoles() {
+        return List.of("ADMIN", "USER");
+    }
 }
