@@ -1,49 +1,31 @@
-// DOM Elements
 const loginForm = document.getElementById('loginForm');
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 const rememberCheckbox = document.getElementById('remember');
 const submitBtn = document.querySelector('.auth-btn-primary');
 
-// API Base URL
 const API_BASE_URL = 'http://localhost:8080/api';
-
-// ⚠️ JWT Token management - МЫ БОЛЬШЕ НЕ ХРАНИМ ТОКЕН В LOCALSTORAGE
-// Оставим только ключ для данных пользователя
 const USER_KEY = 'user_data';
 
-// ----------------------------------------------------------------
-// ⚠️ Удалены функции: getToken(), setToken().
-// Бэкенд теперь управляет JWT через HTTP-Only Cookies.
-// ----------------------------------------------------------------
-
-// Удалить данные аутентификации (включая удаление Cookie, если бы это было возможно)
 function removeAuthData() {
-    // 💡 Так как JWT хранится в HttpOnly Cookie, JS не может его удалить напрямую.
-    // На бэкенде должен быть реализован /logout, который отправит клиенту Cookie с maxAge=0.
     localStorage.removeItem(USER_KEY);
 }
 
-// Получить данные пользователя
 function getUserData() {
     const userData = localStorage.getItem(USER_KEY);
     return userData ? JSON.parse(userData) : null;
 }
 
-// Сохранить данные пользователя
 function setUserData(userData) {
     localStorage.setItem(USER_KEY, JSON.stringify(userData));
 }
 
-// Store authentication data (упрощенная версия, сохраняем только данные пользователя)
 function storeAuthData(authResponse) {
-    // 💡 JWT токен должен быть установлен бэкендом в HTTP-Only Cookie.
-    // На клиенте мы сохраняем только данные пользователя.
     if (authResponse && authResponse.user) {
         setUserData(authResponse.user);
     }
 }
-// Form validation
+
 function validateEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -53,47 +35,34 @@ function validatePassword(password) {
     return password.length >= 6;
 }
 
-function showError(inputId, message) {
+function updateInputState(inputId, state, message = '') {
     const input = document.getElementById(inputId);
     const errorElement = document.getElementById(inputId + 'Error');
 
-    input.classList.add('error');
-    input.classList.remove('success');
-    errorElement.textContent = message;
-    errorElement.classList.add('show');
-}
-
-function clearError(inputId) {
-    const input = document.getElementById(inputId);
-    const errorElement = document.getElementById(inputId + 'Error');
-
-    input.classList.remove('error');
-    input.classList.remove('success');
+    input.classList.remove('error', 'success');
     errorElement.classList.remove('show');
+
+    if (state === 'success') {
+        input.classList.add('success');
+    } else if (state === 'error') {
+        input.classList.add('error');
+        errorElement.textContent = message;
+        errorElement.classList.add('show');
+    }
 }
 
-function showSuccess(inputId) {
-    const input = document.getElementById(inputId);
-    const errorElement = document.getElementById(inputId + 'Error');
-
-    input.classList.add('success');
-    input.classList.remove('error');
-    errorElement.classList.remove('show');
-}
-
-// Real-time validation
 emailInput.addEventListener('input', function() {
     const email = this.value.trim();
 
     if (email === '') {
-        clearError('email');
+        updateInputState('email', 'neutral');
         return;
     }
 
     if (validateEmail(email)) {
-        showSuccess('email');
+        updateInputState('email', 'success');
     } else {
-        showError('email', 'Введите корректный email адрес');
+        updateInputState('email', 'error', 'Введите корректный email адрес');
     }
 });
 
@@ -101,34 +70,30 @@ passwordInput.addEventListener('input', function() {
     const password = this.value;
 
     if (password === '') {
-        clearError('password');
+        updateInputState('password', 'neutral');
         return;
     }
 
     if (validatePassword(password)) {
-        showSuccess('password');
+        updateInputState('password', 'success');
     } else {
-        showError('password', 'Пароль должен содержать минимум 6 символов');
+        updateInputState('password', 'error', 'Пароль должен содержать минимум 6 символов');
     }
 });
 
-// Password toggle functionality
 function togglePassword() {
     const passwordInput = document.getElementById('password');
     const passwordIcon = document.getElementById('passwordIcon');
 
     if (passwordInput.type === 'password') {
         passwordInput.type = 'text';
-        passwordIcon.classList.remove('fa-eye');
-        passwordIcon.classList.add('fa-eye-slash');
+        passwordIcon.classList.replace('fa-eye', 'fa-eye-slash');
     } else {
         passwordInput.type = 'password';
-        passwordIcon.classList.remove('fa-eye-slash');
-        passwordIcon.classList.add('fa-eye');
+        passwordIcon.classList.replace('fa-eye-slash', 'fa-eye');
     }
 }
 
-// Loading state
 function setLoadingState(isLoading) {
     const btnText = submitBtn.querySelector('.btn-text');
     const btnLoading = submitBtn.querySelector('.btn-loading');
@@ -146,13 +111,10 @@ function setLoadingState(isLoading) {
     }
 }
 
-// Show notification
 function showNotification(message, type = 'info') {
-    // Remove existing notifications
     const existingNotifications = document.querySelectorAll('.notification');
     existingNotifications.forEach(notification => notification.remove());
 
-    // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
@@ -165,7 +127,6 @@ function showNotification(message, type = 'info') {
         </div>
     `;
 
-    // Add styles
     notification.style.cssText = `
         position: fixed;
         top: 20px;
@@ -180,10 +141,8 @@ function showNotification(message, type = 'info') {
         max-width: 400px;
     `;
 
-    // Add to document
     document.body.appendChild(notification);
 
-    // Auto remove after 5 seconds
     setTimeout(() => {
         if (notification.parentElement) {
             notification.style.animation = 'slideOutRight 0.3s ease';
@@ -192,7 +151,6 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Add notification styles
 const notificationStyles = document.createElement('style');
 notificationStyles.textContent = `
     .notification-content {
@@ -234,14 +192,12 @@ notificationStyles.textContent = `
 `;
 document.head.appendChild(notificationStyles);
 
-// Исправленная API Request function
 async function makeRequest(url, method, data) {
     const options = {
         method: method,
         headers: {
             'Content-Type': 'application/json',
         },
-        // 💡 ГЛАВНОЕ ИЗМЕНЕНИЕ: включаем Cookie в запросы
         credentials: 'include'
     };
 
@@ -252,28 +208,23 @@ async function makeRequest(url, method, data) {
     try {
         const response = await fetch(url, options);
 
-        // Проверяем, есть ли контент для парсинга
         const contentType = response.headers.get('content-type');
         const hasJson = contentType && contentType.includes('application/json');
-        const hasContent = response.status !== 204; // No Content
+        const hasContent = response.status !== 204;
 
         if (!response.ok) {
             let errorMessage = `HTTP error! status: ${response.status}`;
 
-            // Пытаемся получить сообщение об ошибке из ответа
             if (hasJson && hasContent) {
                 try {
                     const errorData = await response.json();
                     errorMessage = errorData.message || errorMessage;
                 } catch (e) {
-                    // Если не удалось распарсить JSON, используем текстовое сообщение
                     if (hasContent) {
                         try {
                             const text = await response.text();
                             errorMessage = text || errorMessage;
-                        } catch (textError) {
-                            // Игнорируем ошибку чтения текста
-                        }
+                        } catch (textError) {}
                     }
                 }
             }
@@ -281,14 +232,11 @@ async function makeRequest(url, method, data) {
             throw new Error(errorMessage);
         }
 
-        // Если ответ успешный и есть JSON контент - парсим его
         if (hasJson && hasContent) {
             return await response.json();
         } else if (hasContent) {
-            // Если есть контент, но не JSON - возвращаем текст
             return await response.text();
         } else {
-            // Если нет контента (например, 204 No Content) - возвращаем null
             return null;
         }
     } catch (error) {
@@ -297,44 +245,39 @@ async function makeRequest(url, method, data) {
     }
 }
 
-// Login function
 async function loginUser(email, password) {
     const loginData = {
         email: email,
         password: password
     };
 
-    // 💡 Бэкенд должен отправить JWT в HttpOnly Cookie в ответ
     return await makeRequest(`${API_BASE_URL}/auth/login`, 'POST', loginData);
 }
 
-// Form submission
 loginForm.addEventListener('submit', async function(e) {
     e.preventDefault();
 
     const email = emailInput.value.trim();
     const password = passwordInput.value;
 
-    // Clear previous errors
-    clearError('email');
-    clearError('password');
+    updateInputState('email', 'neutral');
+    updateInputState('password', 'neutral');
 
-    // Validate form
     let isValid = true;
 
     if (!email) {
-        showError('email', 'Введите email адрес');
+        updateInputState('email', 'error', 'Введите email адрес');
         isValid = false;
     } else if (!validateEmail(email)) {
-        showError('email', 'Введите корректный email адрес');
+        updateInputState('email', 'error', 'Введите корректный email адрес');
         isValid = false;
     }
 
     if (!password) {
-        showError('password', 'Введите пароль');
+        updateInputState('password', 'error', 'Введите пароль');
         isValid = false;
     } else if (!validatePassword(password)) {
-        showError('password', 'Пароль должен содержать минимум 6 символов');
+        updateInputState('password', 'error', 'Пароль должен содержать минимум 6 символов');
         isValid = false;
     }
 
@@ -342,33 +285,26 @@ loginForm.addEventListener('submit', async function(e) {
         return;
     }
 
-    // Set loading state
     setLoadingState(true);
 
     try {
-        // Make API call
         const authResponse = await loginUser(email, password);
 
-        // 💡 Проверка token в ответе не нужна, но данные пользователя нужны
         if (authResponse && authResponse.user) {
-            // Store authentication data (сохраняет только данные пользователя в localStorage)
             storeAuthData(authResponse);
 
             showNotification('Успешный вход в систему!', 'success');
 
-            // Redirect to home page after a short delay
             setTimeout(() => {
                 window.location.href = '/';
             }, 1500);
         } else {
-            // Если нет данных пользователя (authResponse.user)
             throw new Error('Неверный ответ от сервера');
         }
 
     } catch (error) {
         console.error('Login error:', error);
 
-        // Более конкретные сообщения об ошибках
         if (error.message.includes('401') || error.message.includes('Unauthorized')) {
             showNotification('Неверный email или пароль', 'error');
         } else if (error.message.includes('Network Error')) {
@@ -383,7 +319,6 @@ loginForm.addEventListener('submit', async function(e) {
     }
 });
 
-// Social login handlers
 document.querySelector('.social-google')?.addEventListener('click', function() {
     showNotification('Функция входа через Google будет добавлена позже', 'info');
 });
@@ -392,13 +327,11 @@ document.querySelector('.social-facebook')?.addEventListener('click', function()
     showNotification('Функция входа через Facebook будет добавлена позже', 'info');
 });
 
-// Forgot password handler
 document.querySelector('.forgot-link')?.addEventListener('click', function(e) {
     e.preventDefault();
     showNotification('Функция восстановления пароля будет добавлена позже', 'info');
 });
 
-// Theme management
 function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
@@ -420,25 +353,15 @@ function toggleTheme() {
     setTheme(newTheme);
 }
 
-// Check if user is already logged in
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize theme
     initTheme();
 
-    // ⚠️ Удалена проверка токена: теперь бэкенд решает, авторизован ли пользователь
-    // при загрузке страницы, используя Cookie.
     const userData = getUserData();
 
     if (userData) {
-        // Мы предполагаем, что если есть данные пользователя в LS, то Cookie тоже валиден
-        // и пользователь аутентифицирован. Если Cookie невалиден, Spring Security
-        // перенаправит на /login при попытке перейти на защищенную страницу.
         showNotification('Вы уже входили в систему. Если Cookie валиден, вы будете аутентифицированы.', 'info');
     }
-});
 
-// Add smooth animations
-document.addEventListener('DOMContentLoaded', function() {
     const authCard = document.querySelector('.auth-card');
     if (authCard) {
         authCard.style.opacity = '0';
@@ -452,7 +375,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Add keyboard navigation
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && e.target.classList.contains('form-input')) {
         const inputs = Array.from(document.querySelectorAll('.form-input'));
@@ -466,7 +388,6 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// Функция для отладки (можно удалить после тестирования)
 async function debugLogin() {
     console.log('Testing login API...');
 
@@ -480,7 +401,6 @@ async function debugLogin() {
                 email: 'test@test.com',
                 password: 'password'
             }),
-            // 💡 Включаем credentials: 'include'
             credentials: 'include'
         });
 
@@ -504,5 +424,4 @@ async function debugLogin() {
     }
 }
 
-// Добавьте в глобальную область видимости для отладки
 window.debugLogin = debugLogin;

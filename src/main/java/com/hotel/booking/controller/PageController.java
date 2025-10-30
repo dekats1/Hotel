@@ -53,4 +53,7 @@ public class PageController {
 
     @GetMapping("/admin")
     public String adminPage() {return "forward:/html/menu/profileAdmin.html";}
+
+    @GetMapping("catalog")
+    public String catalogPage() {return "forward:/html/catalog/catalogRoom.html";}
 }
