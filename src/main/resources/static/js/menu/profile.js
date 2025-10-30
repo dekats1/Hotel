@@ -1,4 +1,6 @@
-// Profile Management JavaScript
+// ==============================================
+// PROFILE.JS - Управление профилем пользователя
+// ==============================================
 
 // DOM Elements
 const navToggle = document.querySelector('.nav-toggle');
@@ -10,21 +12,17 @@ const passwordModal = document.getElementById('passwordModal');
 const passwordForm = document.getElementById('passwordForm');
 
 const API_BASE_URL = '/api';
+const USER_DATA_KEY = 'user_data';
 
-// User data
 let currentUser = null;
 
-// ----------------------------------------------------------------
-// ⚠️ JWT Token management - УДАЛЕНО: JS больше не управляет токеном.
-// ----------------------------------------------------------------
-// Удалили: getAuthToken, authToken, checkAuth.
-// Теперь аутентификация полностью управляется бэкендом через Cookie.
+// ==============================================
+// STORAGE FUNCTIONS
+// ==============================================
 
-// Получение данных пользователя из localStorage
 function getUserDataFromStorage() {
     try {
-        // Мы сохраняем только нечувствительные данные, чтобы показать их сразу
-        const userData = localStorage.getItem('user_data');
+        const userData = localStorage.getItem(USER_DATA_KEY);
         return userData ? JSON.parse(userData) : null;
     } catch (error) {
         console.error('Error parsing user data from storage:', error);
@@ -32,16 +30,14 @@ function getUserDataFromStorage() {
     }
 }
 
-// Сохранение данных пользователя в localStorage
 function saveUserDataToStorage(userData) {
     try {
-        localStorage.setItem('user_data', JSON.stringify(userData));
+        localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
     } catch (error) {
         console.error('Error saving user data to storage:', error);
     }
 }
 
-// Обновление данных пользователя в localStorage
 function updateUserDataInStorage(updatedData) {
     try {
         const currentData = getUserDataFromStorage();
@@ -54,7 +50,152 @@ function updateUserDataInStorage(updatedData) {
     }
 }
 
-// Initialize profile page
+function removeAuthData() {
+    localStorage.removeItem(USER_DATA_KEY);
+}
+
+// ==============================================
+// API FUNCTIONS
+// ==============================================
+
+async function apiCall(endpoint, options = {}) {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        credentials: 'include', // ✅ ВАЖНО: включаем Cookie
+        headers: {
+            'Content-Type': 'application/json',
+            ...(options.headers || {})
+        },
+        ...options
+    });
+
+    if (response.status === 401) {
+        removeAuthData();
+        showNotification('Сессия истекла или требуется авторизация', 'error');
+        setTimeout(() => {
+            //window.location.href = '/login';
+        }, 1000);
+        throw new Error('Требуется авторизация');
+    }
+
+    if (response.status === 403) {
+        showNotification('Доступ запрещен', 'error');
+        throw new Error('Доступ запрещен');
+    }
+
+    if (!response.ok) {
+        const contentType = response.headers.get('content-type');
+        let errorText = `Ошибка: ${response.status}`;
+
+        if (contentType && contentType.includes('application/json')) {
+            try {
+                const errorData = await response.json();
+                errorText = errorData.message || errorText;
+            } catch (e) {
+                errorText = await response.text() || errorText;
+            }
+        } else {
+            errorText = await response.text() || errorText;
+        }
+
+        throw new Error(errorText);
+    }
+
+    if (response.status === 204) {
+        return null;
+    }
+
+    return await response.json();
+}
+
+async function loadUserData() {
+
+    currentUser = getUserDataFromStorage();
+    if (currentUser) {
+        updateUserInterface();
+    }
+
+    try {
+        // Загружаем свежие данные с сервера
+        const data = await apiCall('/users/profile');
+        currentUser = transformUserData(data);
+
+        // Обновляем localStorage
+        const userBasicData = {
+            id: currentUser.id,
+            email: currentUser.email,
+            firstName: currentUser.firstName,
+            lastName: currentUser.lastName,
+            role: data.role || 'USER'
+        };
+        saveUserDataToStorage(userBasicData);
+
+        updateUserInterface();
+
+    } catch (error) {
+        console.error('Failed to load user data:', error);
+
+        // Если ошибка 401 - перенаправляем на логин
+        if (error.message.includes('Требуется авторизация')) {
+            console.warn('Authentication required, redirecting to login...');
+            removeAuthData();
+            //window.location.href = '/login';
+        } else {
+            showNotification('Ошибка загрузки данных профиля: ' + error.message, 'error');
+        }
+    }
+}
+
+function transformUserData(apiData) {
+    return {
+        id: apiData.id,
+        name: `${apiData.firstName} ${apiData.lastName}`,
+        firstName: apiData.firstName,
+        lastName: apiData.lastName,
+        middleName: apiData.middleName || '',
+        email: apiData.email,
+        phone: apiData.phone,
+        birthDate: apiData.birthDate,
+        gender: apiData.gender?.toLowerCase() || 'male',
+        wallet: apiData.balance ? Number(apiData.balance) : 0,
+        avatar: apiData.avatarUrl || '👤',
+        stats: {
+            bookings: apiData.totalBookings || 0,
+            rating: apiData.averageRating || 4.9,
+            yearsWithUs: apiData.membershipYears || 1
+        }
+    };
+}
+
+async function updateProfileOnBackend(profileData) {
+    const requestData = {
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        middleName: profileData.middleName,
+        email: profileData.email,
+        phone: profileData.phone,
+        birthDate: profileData.birthDate,
+        gender: profileData.gender.toUpperCase()
+    };
+
+    const data = await apiCall('/users/profile', {
+        method: 'PUT',
+        body: JSON.stringify(requestData)
+    });
+
+    return transformUserData(data);
+}
+
+async function changePasswordOnBackend(passwordData) {
+    await apiCall('/users/change-password', {
+        method: 'POST',
+        body: JSON.stringify(passwordData)
+    });
+}
+
+// ==============================================
+// INITIALIZE
+// ==============================================
+
 function initializeProfile() {
     // Mobile navigation
     if (navToggle) {
@@ -94,170 +235,10 @@ function initializeProfile() {
     setupNotificationToggles();
 }
 
-// ⚠️ УДАЛЕНА: getAuthHeaders() больше не нужна, т.к. токен в Cookie.
-// function getAuthHeaders() { ... }
+// ==============================================
+// NAVIGATION
+// ==============================================
 
-// 💡 ИЗМЕНЕНО: apiCall теперь включает Cookie и не использует заголовок Authorization
-async function apiCall(endpoint, options = {}) {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        // 💡 ГЛАВНОЕ ИЗМЕНЕНИЕ: включаем Cookie в запросы
-        credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json',
-            // Заголовок Authorization: Bearer {token} УДАЛЕН
-            ...options.headers // Если нужно добавить другие заголовки
-        },
-        ...options,
-        // Переносим headers выше, чтобы они были правильно обработаны
-        headers: {
-            'Content-Type': 'application/json',
-            ...(options.headers || {})
-        }
-    });
-
-    if (response.status === 401) {
-        // При 401 или 403 сбрасываем локальные данные и перенаправляем.
-        // Бэкенд должен позаботиться об очистке HTTP-only Cookie.
-        removeAuthData(); // 💡 Используем новую функцию
-        showNotification('Сессия истекла или требуется авторизация', 'error');
-        setTimeout(() => {
-            window.location.href = '/login';
-        }, 1000);
-        throw new Error('Требуется авторизация');
-    }
-
-    if (response.status === 403) {
-        showNotification('Доступ запрещен', 'error');
-        throw new Error('Доступ запрещен');
-    }
-
-    if (!response.ok) {
-        // Пытаемся получить сообщение об ошибке
-        const contentType = response.headers.get('content-type');
-        let errorText = `Ошибка: ${response.status}`;
-
-        if (contentType && contentType.includes('application/json')) {
-            try {
-                const errorData = await response.json();
-                errorText = errorData.message || errorText;
-            } catch (e) {
-                // Если не удалось распарсить JSON, попробуем текст
-                errorText = await response.text() || errorText;
-            }
-        } else {
-            errorText = await response.text() || errorText;
-        }
-
-        throw new Error(errorText);
-    }
-
-    // Если ответ 204 No Content, возвращаем null
-    if (response.status === 204) {
-        return null;
-    }
-
-    return await response.json();
-}
-
-// ⚠️ УДАЛЕНА: checkAuth() больше не имеет смысла без доступа к токену.
-// function checkAuth() { ... }
-
-// 💡 НОВАЯ/ИЗМЕНЕННАЯ ФУНКЦИЯ: Очистка локальных данных (Cookie очищается бэкендом)
-function removeAuthData() {
-    // 💡 При выходе бэкенд должен отправить HttpOnly Cookie с Max-Age=0.
-    localStorage.removeItem('user_data');
-    // Удаляем устаревшие ключи токена на всякий случай
-    localStorage.removeItem('auth_token');
-    sessionStorage.removeItem('auth_token');
-}
-
-async function loadUserData() {
-    // 💡 Клиентская проверка аутентификации невозможна.
-    // Просто пробуем загрузить данные. Если не сработает, apiCall перенаправит.
-
-    // Предварительная загрузка данных из localStorage (для быстрого отображения)
-    currentUser = getUserDataFromStorage();
-    if (currentUser) {
-        updateUserInterface();
-    }
-
-    try {
-        const data = await apiCall('/users/profile');
-
-        // 💡 Ответ от /profile содержит полную информацию,
-        // включая те же поля, которые использовались для storeAuthData.
-        currentUser = transformUserData(data);
-
-        // Сохраняем основные данные пользователя в localStorage
-        const userBasicData = {
-            id: currentUser.id,
-            email: currentUser.email,
-            firstName: currentUser.firstName,
-            lastName: currentUser.lastName,
-            role: data.role || 'USER' // Сохраняем роль
-        };
-        saveUserDataToStorage(userBasicData);
-
-        updateUserInterface();
-    } catch (error) {
-        console.error('Failed to load user data:', error);
-        // Если ошибка произошла, но это не 401 (т.к. 401 уже перенаправил)
-        if (!error.message.includes('Требуется авторизация')) {
-            showNotification('Ошибка загрузки данных профиля. ' + error.message, 'error');
-        }
-    }
-}
-
-function transformUserData(apiData) {
-    return {
-        id: apiData.id,
-        name: `${apiData.firstName} ${apiData.lastName}`,
-        firstName: apiData.firstName,
-        lastName: apiData.lastName,
-        middleName: apiData.middleName || '',
-        email: apiData.email,
-        phone: apiData.phone,
-        birthDate: apiData.birthDate,
-        gender: apiData.gender?.toLowerCase() || 'male',
-        wallet: apiData.balance ? Number(apiData.balance) : 0,
-        // 💡 Аватар должен быть загружен/установлен отдельно, здесь заглушка
-        avatar: apiData.avatarUrl || '👤',
-        stats: {
-            bookings: apiData.totalBookings || 0,
-            rating: apiData.averageRating || 4.9,
-            yearsWithUs: apiData.membershipYears || 1
-        }
-    };
-}
-
-async function updateProfileOnBackend(profileData) {
-    const requestData = {
-        firstName: profileData.firstName,
-        lastName: profileData.lastName,
-        middleName: profileData.middleName,
-        email: profileData.email,
-        phone: profileData.phone,
-        birthDate: profileData.birthDate,
-        gender: profileData.gender.toUpperCase()
-    };
-
-    const data = await apiCall('/users/profile', {
-        method: 'PUT',
-        body: JSON.stringify(requestData)
-    });
-
-    return transformUserData(data);
-}
-
-async function changePasswordOnBackend(passwordData) {
-    // 💡 Запрос отправит Cookie
-    await apiCall('/users/change-password', {
-        method: 'POST',
-        body: JSON.stringify(passwordData)
-    });
-}
-
-// Mobile navigation
 function toggleMobileMenu() {
     navMenu.classList.toggle('active');
     navToggle.classList.toggle('active');
@@ -268,7 +249,6 @@ function closeMobileMenu() {
     navToggle.classList.remove('active');
 }
 
-// User menu
 function toggleUserMenu() {
     const dropdown = document.getElementById('userDropdown');
     if (dropdown) {
@@ -276,7 +256,6 @@ function toggleUserMenu() {
     }
 }
 
-// Tab switching
 function switchTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -288,7 +267,10 @@ function switchTab(tabName) {
     if (activeContent) activeContent.classList.add('active');
 }
 
-// Edit personal information
+// ==============================================
+// PROFILE EDITING
+// ==============================================
+
 function editPersonalInfo() {
     const form = document.getElementById('personalForm');
     const inputs = form.querySelectorAll('input, select, textarea');
@@ -335,7 +317,6 @@ function cancelEdit() {
     }
 }
 
-// Handle personal form submission
 async function handlePersonalFormSubmit(e) {
     e.preventDefault();
 
@@ -364,7 +345,6 @@ async function handlePersonalFormSubmit(e) {
         const updatedUser = await updateProfileOnBackend(updatedData);
         Object.assign(currentUser, updatedUser);
 
-        // Обновляем данные в localStorage
         const updatedBasicData = {
             firstName: updatedData.firstName,
             lastName: updatedData.lastName,
@@ -380,7 +360,10 @@ async function handlePersonalFormSubmit(e) {
     }
 }
 
-// Avatar handling
+// ==============================================
+// AVATAR MANAGEMENT
+// ==============================================
+
 function changeProfilePhoto() {
     if (avatarInput) {
         avatarInput.click();
@@ -412,7 +395,6 @@ function handleAvatarChange(event) {
 
         currentUser.avatar = e.target.result;
 
-        // Сохраняем аватар в localStorage
         const userData = getUserDataFromStorage();
         if (userData) {
             userData.avatar = e.target.result;
@@ -425,7 +407,10 @@ function handleAvatarChange(event) {
     reader.readAsDataURL(file);
 }
 
-// Password management
+// ==============================================
+// PASSWORD MANAGEMENT
+// ==============================================
+
 function changePassword() {
     if (passwordModal) {
         passwordModal.classList.add('show');
@@ -507,7 +492,10 @@ function updatePasswordStrength() {
     }
 }
 
-// Additional features
+// ==============================================
+// ADDITIONAL FEATURES
+// ==============================================
+
 function setup2FA() {
     showNotification('Функция двухфакторной аутентификации будет добавлена позже', 'info');
 }
@@ -527,11 +515,13 @@ function setupNotificationToggles() {
     });
 }
 
-// Update UI
+// ==============================================
+// UPDATE UI
+// ==============================================
+
 function updateUserInterface() {
     if (!currentUser) return;
 
-    // Update profile header
     const profileName = document.getElementById('profileName');
     const profileEmail = document.getElementById('profileEmail');
     const profileAvatar = document.getElementById('profileAvatar');
@@ -544,10 +534,8 @@ function updateUserInterface() {
     if (userName) userName.textContent = currentUser.name;
     if (userWallet) userWallet.textContent = currentUser.wallet ? currentUser.wallet.toLocaleString() + '₽' : '0₽';
 
-    // Update avatars
     const updateAvatar = (element) => {
         if (!element) return;
-
         if (currentUser.avatar && currentUser.avatar.startsWith('data:')) {
             element.innerHTML = `<img src="${currentUser.avatar}" alt="Avatar">`;
         } else {
@@ -561,7 +549,6 @@ function updateUserInterface() {
     }
     updateAvatar(userAvatar);
 
-    // Update stats
     if (currentUser.stats) {
         const statNumbers = document.querySelectorAll('.stat-number');
         if (statNumbers.length >= 3) {
@@ -594,7 +581,10 @@ function updateFormFields() {
     });
 }
 
-// Utilities
+// ==============================================
+// UTILITIES
+// ==============================================
+
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -641,12 +631,24 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-function logout() {
-    removeAuthData();
-    window.location.href = '/login';
+async function logout() {
+    try {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+    } catch (error) {
+        console.error('Logout error:', error);
+    } finally {
+        removeAuthData();
+        window.location.href = '/login';
+    }
 }
 
-// Theme management
+// ==============================================
+// THEME MANAGEMENT
+// ==============================================
+
 function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
@@ -668,7 +670,10 @@ function toggleTheme() {
     setTheme(newTheme);
 }
 
-// Event listeners
+// ==============================================
+// EVENT LISTENERS
+// ==============================================
+
 function setupEventListeners() {
     document.addEventListener('click', function (e) {
         const dropdown = document.getElementById('userDropdown');
@@ -690,10 +695,40 @@ function setupEventListeners() {
     });
 }
 
+
+function checkAuthOnPageLoad() {
+    const userData = getUserDataFromStorage();
+
+    // Если нет данных пользователя в localStorage
+    if (!userData || !userData.email) {
+        console.warn('No user data found, redirecting to login...');
+        removeAuthData();
+        window.location.href = '/login';
+        return false;
+    }
+
+    console.log('User data found:', userData);
+    return true;
+}
+
+// ==============================================
+// INITIALIZE ON DOM LOAD
+// ==============================================
+
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('🚀 Profile page loaded');
+
+    // ✅ ВАЖНО: Проверяем авторизацию ДО загрузки данных
+    if (!checkAuthOnPageLoad()) {
+        return; // Останавливаем инициализацию, если не авторизован
+    }
 
     initializeProfile();
     loadUserData();
     setupEventListeners();
     initTheme();
+
+    console.log('✅ Profile initialized successfully');
 });
+
+console.log('Profile script initialized successfully');

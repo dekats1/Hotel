@@ -73,7 +73,6 @@ public class JwtTokenProvider {
         return false;
     }
 
-    // Дополнительный метод для получения времени истечения
     public Date getExpirationDateFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())

@@ -12,6 +12,7 @@ import com.hotel.booking.mapper.UserMapper;
 import com.hotel.booking.repository.UserRepository;
 import com.hotel.booking.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -26,6 +28,52 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+
+    // ========================================
+    // ✅ НОВЫЕ МЕТОДЫ для работы с email
+    // ========================================
+
+    @Override
+    public UserProfileResponse getUserProfileByEmail(String email) {
+        log.info("Getting profile for user with email: {}", email);
+        User user = findUserByEmail(email);
+        return userMapper.toUserProfileResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public UserProfileResponse updateProfileByEmail(String email, UpdateProfileRequest request) {
+        log.info("Updating profile for user with email: {}", email);
+        User user = findUserByEmail(email);
+        return updateProfile(user.getId(), request);
+    }
+
+    @Override
+    @Transactional
+    public void changePasswordByEmail(String email, ChangePasswordRequest request) {
+        log.info("Changing password for user with email: {}", email);
+        User user = findUserByEmail(email);
+        changePassword(user.getId(), request);
+    }
+
+    @Override
+    public BigDecimal getWalletBalanceByEmail(String email) {
+        log.info("Getting wallet balance for user with email: {}", email);
+        User user = findUserByEmail(email);
+        return user.getBalance();
+    }
+
+    @Override
+    @Transactional
+    public UserSettingsResponse updateUserSettingsByEmail(String email, UserSettingsRequest request) {
+        log.info("Updating settings for user with email: {}", email);
+        User user = findUserByEmail(email);
+        return updateUserSettings(user.getId(), request);
+    }
+
+    // ========================================
+    // Существующие методы для работы с UUID
+    // ========================================
 
     @Override
     public UserProfileResponse getUserProfile(UUID userId) {
@@ -37,7 +85,6 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserProfileResponse updateProfile(UUID userId, UpdateProfileRequest request) {
         User user = findUserById(userId);
-
         validateProfileUpdate(user, request);
 
         user.setFirstName(request.getFirstName());
@@ -85,14 +132,23 @@ public class UserServiceImpl implements UserService {
     public UserSettingsResponse updateUserSettings(UUID userId, UserSettingsRequest request) {
         User user = findUserById(userId);
         // Здесь можно добавить логику сохранения настроек
-        System.out.println("User currency preference: " + request.getCurrency());
-        System.out.println("User language preference: " + request.getLanguage());
+        log.info("User currency preference: {}", request.getCurrency());
+        log.info("User language preference: {}", request.getLanguage());
         return new UserSettingsResponse();
     }
+
+    // ========================================
+    // Private helper methods
+    // ========================================
 
     private User findUserById(UUID userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId.toString()));
+    }
+
+    private User findUserByEmail(String email) {
+        return userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
     }
 
     private void validateProfileUpdate(User user, UpdateProfileRequest request) {

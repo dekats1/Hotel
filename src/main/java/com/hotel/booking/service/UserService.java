@@ -11,6 +11,13 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public interface UserService {
+
+    UserProfileResponse getUserProfileByEmail(String email);
+    UserProfileResponse updateProfileByEmail(String email, UpdateProfileRequest request);
+    void changePasswordByEmail(String email, ChangePasswordRequest request);
+    BigDecimal getWalletBalanceByEmail(String email);
+    UserSettingsResponse updateUserSettingsByEmail(String email, UserSettingsRequest request);
+
     UserProfileResponse getUserProfile(UUID userId);
     UserProfileResponse updateProfile(UUID userId, UpdateProfileRequest request);
     void changePassword(UUID userId, ChangePasswordRequest request);

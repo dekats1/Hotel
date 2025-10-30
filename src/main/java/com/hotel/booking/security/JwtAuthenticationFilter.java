@@ -25,76 +25,94 @@ import java.util.UUID;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtProvider;
-    private final CustomUserDetailsService userDetailsService;  // ✅ ИЗМЕНЕНО
+    private final CustomUserDetailsService userDetailsService;
 
     private static final String JWT_COOKIE_NAME = "auth_jwt";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-        HttpServletResponse response,
-        FilterChain filterChain) throws ServletException, IOException {
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+
+        // ✅ ДОБАВЛЕНО: Логируем все cookies
+        log.debug("Processing request: {} {}", request.getMethod(), request.getRequestURI());
+        if (request.getCookies() != null) {
+            log.debug("Available cookies: {}",
+                    Arrays.stream(request.getCookies())
+                            .map(Cookie::getName)
+                            .toList());
+        } else {
+            log.debug("No cookies in request");
+        }
 
         String token = resolveToken(request);
 
-        if (token != null && jwtProvider.validateToken(token)) {
-            try {
-                String userId = jwtProvider.getUserIdFromToken(token);
-                log.debug("Extracted user ID from token: {}", userId);
+        if (token != null) {
+            log.debug("Token found, validating...");
 
-                if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                    // ✅ ИСПОЛЬЗУЕМ loadUserById
-                    UserDetails userDetails = userDetailsService.loadUserById(
-                        UUID.fromString(userId));
+            if (jwtProvider.validateToken(token)) {
+                try {
+                    String userId = jwtProvider.getUserIdFromToken(token);
+                    log.info("✅ Extracted user ID from token: {}", userId);
 
-                    UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities()
+                    if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                        UserDetails userDetails = userDetailsService.loadUserById(
+                                UUID.fromString(userId));
+
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities()
+                                );
+
+                        authentication.setDetails(
+                                new WebAuthenticationDetailsSource().buildDetails(request)
                         );
 
-                    authentication.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                    );
-
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                    log.debug("✅ Authenticated user: {}", userDetails.getUsername());
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        log.info("✅ User authenticated successfully: {}", userDetails.getUsername());
+                    }
+                } catch (Exception e) {
+                    log.error("❌ Error loading user: {}", e.getMessage(), e);
+                    SecurityContextHolder.clearContext();
                 }
-            } catch (Exception e) {
-                log.error("❌ Error loading user: {}", e.getMessage());
-                SecurityContextHolder.clearContext();
+            } else {
+                log.warn("❌ Token validation failed");
             }
+        } else {
+            log.warn("❌ No JWT token found in request");
         }
 
         filterChain.doFilter(request, response);
     }
 
     private String resolveToken(HttpServletRequest request) {
-        // 1. Поиск токена в Cookie
+        // Проверяем Cookie
         if (request.getCookies() != null) {
             String tokenFromCookie = Arrays.stream(request.getCookies())
-                .filter(cookie -> JWT_COOKIE_NAME.equals(cookie.getName()))
-                .findFirst()
-                .map(Cookie::getValue)
-                .orElse(null);
+                    .filter(cookie -> JWT_COOKIE_NAME.equals(cookie.getName()))
+                    .findFirst()
+                    .map(Cookie::getValue)
+                    .orElse(null);
 
             if (tokenFromCookie != null && !tokenFromCookie.isBlank()) {
-                log.debug("✅ Token from Cookie");
+                log.info("✅ Token found in Cookie: {}...", tokenFromCookie.substring(0, Math.min(20, tokenFromCookie.length())));
                 return tokenFromCookie;
             }
         }
 
-        // 2. Поиск в заголовке Authorization
+        // Проверяем Authorization header
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String tokenFromHeader = authHeader.substring(7);
             if (!tokenFromHeader.trim().isEmpty()) {
-                log.debug("✅ Token from Authorization header");
+                log.info("✅ Token found in Authorization header");
                 return tokenFromHeader;
             }
         }
 
+        log.warn("❌ No token found in Cookie or Authorization header");
         return null;
     }
 }

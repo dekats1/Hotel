@@ -1,6 +1,5 @@
 package com.hotel.booking.controller;
 
-import com.hotel.booking.domain.entity.User;
 import com.hotel.booking.dto.request.user.ChangePasswordRequest;
 import com.hotel.booking.dto.request.user.UpdateProfileRequest;
 import com.hotel.booking.dto.request.user.UserSettingsRequest;
@@ -9,12 +8,16 @@ import com.hotel.booking.dto.response.user.UserSettingsResponse;
 import com.hotel.booking.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+
+@Slf4j
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -24,65 +27,88 @@ public class UserController {
 
     @GetMapping("/profile")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UserProfileResponse> getProfile(@AuthenticationPrincipal User user) {
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+    public ResponseEntity<UserProfileResponse> getProfile(Authentication authentication) {
+        log.info("📋 Getting profile for authenticated user");
 
-        try {
-            UserProfileResponse profile = userService.getUserProfile(user.getId());
-            return ResponseEntity.ok(profile);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        // ✅ ИСПРАВЛЕНО: Получаем email из Authentication
+        String email = getUserEmailFromAuthentication(authentication);
+        log.info("User email: {}", email);
+
+        UserProfileResponse profile = userService.getUserProfileByEmail(email);
+        return ResponseEntity.ok(profile);
     }
 
     @PutMapping("/profile")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserProfileResponse> updateProfile(
-            @AuthenticationPrincipal User user,
+            Authentication authentication,
             @Valid @RequestBody UpdateProfileRequest request) {
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
 
-        UserProfileResponse updatedProfile = userService.updateProfile(user.getId(), request);
+        log.info("📝 Updating profile for authenticated user");
+        String email = getUserEmailFromAuthentication(authentication);
+
+        UserProfileResponse updatedProfile = userService.updateProfileByEmail(email, request);
         return ResponseEntity.ok(updatedProfile);
     }
 
     @PostMapping("/change-password")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> changePassword(
-            @AuthenticationPrincipal User user,
+    public ResponseEntity<String> changePassword(
+            Authentication authentication,
             @Valid @RequestBody ChangePasswordRequest request) {
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
 
-        userService.changePassword(user.getId(), request);
-        return ResponseEntity.ok().body("Пароль успешно изменен");
+        log.info("🔐 Changing password for authenticated user");
+        String email = getUserEmailFromAuthentication(authentication);
+
+        userService.changePasswordByEmail(email, request);
+        return ResponseEntity.ok("Пароль успешно изменен");
     }
 
     @GetMapping("/wallet")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> getWalletBalance(@AuthenticationPrincipal User user) {
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+    public ResponseEntity<BigDecimal> getWalletBalance(Authentication authentication) {
+        log.info("💰 Getting wallet balance for authenticated user");
+        String email = getUserEmailFromAuthentication(authentication);
 
-        return ResponseEntity.ok(userService.getWalletBalance(user.getId()));
+        return ResponseEntity.ok(userService.getWalletBalanceByEmail(email));
     }
 
     @PutMapping("/settings")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserSettingsResponse> updateSettings(
-            @AuthenticationPrincipal User user,
+            Authentication authentication,
             @Valid @RequestBody UserSettingsRequest request) {
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+        log.info("⚙️ Updating settings for authenticated user");
+        String email = getUserEmailFromAuthentication(authentication);
+
+        UserSettingsResponse response = userService.updateUserSettingsByEmail(email, request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Вспомогательный метод для извлечения email из Authentication
+     */
+    private String getUserEmailFromAuthentication(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("User is not authenticated");
         }
 
-        UserSettingsResponse response = userService.updateUserSettings(user.getId(), request);
-        return ResponseEntity.ok(response);
+        Object principal = authentication.getPrincipal();
+
+        // Если principal - это UserDetails
+        if (principal instanceof UserDetails) {
+            String email = ((UserDetails) principal).getUsername();
+            log.debug("Extracted email from UserDetails: {}", email);
+            return email;
+        }
+
+        // Если principal - это строка (маловероятно, но на всякий случай)
+        if (principal instanceof String) {
+            log.debug("Extracted email from String principal: {}", principal);
+            return (String) principal;
+        }
+
+        throw new IllegalStateException("Unable to extract email from authentication principal");
     }
 }

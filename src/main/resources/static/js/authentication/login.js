@@ -1,125 +1,225 @@
+// ==============================================
+// LOGIN.JS - Авторизация с HttpOnly JWT Cookie
+// ==============================================
+
+// DOM Elements
 const loginForm = document.getElementById('loginForm');
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 const rememberCheckbox = document.getElementById('remember');
 const submitBtn = document.querySelector('.auth-btn-primary');
 
-const API_BASE_URL = 'http://localhost:8080/api';
-const USER_KEY = 'user_data';
+// API Base URL
+const API_BASE_URL = '/api';
 
-function removeAuthData() {
-    localStorage.removeItem(USER_KEY);
-}
+// LocalStorage ключ для данных пользователя (БЕЗ ТОКЕНА)
+const USER_DATA_KEY = 'user_data';
 
-function getUserData() {
-    const userData = localStorage.getItem(USER_KEY);
-    return userData ? JSON.parse(userData) : null;
-}
+// ==============================================
+// STORAGE FUNCTIONS (БЕЗ ТОКЕНА)
+// ==============================================
 
-function setUserData(userData) {
-    localStorage.setItem(USER_KEY, JSON.stringify(userData));
-}
-
+/**
+ * Сохранить данные пользователя в localStorage
+ * JWT токен находится в HttpOnly Cookie и недоступен из JS
+ */
 function storeAuthData(authResponse) {
-    if (authResponse && authResponse.user) {
-        setUserData(authResponse.user);
-    }
-}
-
-function validateEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-function validatePassword(password) {
-    return password.length >= 6;
-}
-
-function updateInputState(inputId, state, message = '') {
-    const input = document.getElementById(inputId);
-    const errorElement = document.getElementById(inputId + 'Error');
-
-    input.classList.remove('error', 'success');
-    errorElement.classList.remove('show');
-
-    if (state === 'success') {
-        input.classList.add('success');
-    } else if (state === 'error') {
-        input.classList.add('error');
-        errorElement.textContent = message;
-        errorElement.classList.add('show');
-    }
-}
-
-emailInput.addEventListener('input', function() {
-    const email = this.value.trim();
-
-    if (email === '') {
-        updateInputState('email', 'neutral');
+    if (!authResponse || !authResponse.user) {
+        console.error('Invalid auth response:', authResponse);
         return;
     }
 
-    if (validateEmail(email)) {
-        updateInputState('email', 'success');
-    } else {
-        updateInputState('email', 'error', 'Введите корректный email адрес');
-    }
-});
+    const userData = {
+        id: authResponse.user.id,
+        email: authResponse.user.email,
+        firstName: authResponse.user.firstName,
+        lastName: authResponse.user.lastName,
+        role: authResponse.user.role,
+        // Добавьте другие нечувствительные данные при необходимости
+    };
 
-passwordInput.addEventListener('input', function() {
-    const password = this.value;
-
-    if (password === '') {
-        updateInputState('password', 'neutral');
-        return;
-    }
-
-    if (validatePassword(password)) {
-        updateInputState('password', 'success');
-    } else {
-        updateInputState('password', 'error', 'Пароль должен содержать минимум 6 символов');
-    }
-});
-
-function togglePassword() {
-    const passwordInput = document.getElementById('password');
-    const passwordIcon = document.getElementById('passwordIcon');
-
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        passwordIcon.classList.replace('fa-eye', 'fa-eye-slash');
-    } else {
-        passwordInput.type = 'password';
-        passwordIcon.classList.replace('fa-eye-slash', 'fa-eye');
+    try {
+        localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+        console.log('User data stored successfully');
+    } catch (error) {
+        console.error('Error storing user data:', error);
     }
 }
 
-function setLoadingState(isLoading) {
-    const btnText = submitBtn.querySelector('.btn-text');
-    const btnLoading = submitBtn.querySelector('.btn-loading');
-
-    if (isLoading) {
-        submitBtn.classList.add('loading');
-        submitBtn.disabled = true;
-        btnText.style.opacity = '0';
-        btnLoading.style.display = 'flex';
-    } else {
-        submitBtn.classList.remove('loading');
-        submitBtn.disabled = false;
-        btnText.style.opacity = '1';
-        btnLoading.style.display = 'none';
+/**
+ * Получить данные пользователя из localStorage
+ */
+function getUserData() {
+    try {
+        const userData = localStorage.getItem(USER_DATA_KEY);
+        return userData ? JSON.parse(userData) : null;
+    } catch (error) {
+        console.error('Error parsing user data:', error);
+        return null;
     }
 }
 
+/**
+ * Удалить данные пользователя из localStorage
+ * JWT Cookie удаляется через /api/auth/logout
+ */
+function removeAuthData() {
+    try {
+        localStorage.removeItem(USER_DATA_KEY);
+        console.log('User data removed from storage');
+    } catch (error) {
+        console.error('Error removing user data:', error);
+    }
+}
+
+// ==============================================
+// API FUNCTIONS
+// ==============================================
+
+/**
+ * Авторизация пользователя
+ * JWT токен автоматически устанавливается в HttpOnly Cookie бэкендом
+ */
+async function loginUser(credentials) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include', // ✅ ВАЖНО: отправляем и получаем cookies
+            body: JSON.stringify(credentials)
+        });
+
+        // Обработка ошибок
+        if (!response.ok) {
+            let errorMessage = 'Ошибка авторизации';
+
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                // Если не JSON, пытаемся получить текст
+                errorMessage = await response.text() || errorMessage;
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        // Получаем данные пользователя
+        const data = await response.json();
+        console.log('Login successful:', data);
+
+        // ✅ JWT токен уже установлен в HttpOnly Cookie бэкендом
+        // Сохраняем только user_data в localStorage
+        storeAuthData(data);
+
+        return data;
+
+    } catch (error) {
+        console.error('Login error:', error);
+        throw error;
+    }
+}
+
+/**
+ * Регистрация нового пользователя
+ */
+async function registerUser(userData) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include', // ✅ ВАЖНО: получаем cookies
+            body: JSON.stringify(userData)
+        });
+
+        if (!response.ok) {
+            let errorMessage = 'Ошибка регистрации';
+
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                errorMessage = await response.text() || errorMessage;
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        console.log('Registration successful:', data);
+
+        // ✅ JWT токен уже установлен в HttpOnly Cookie
+        storeAuthData(data);
+
+        return data;
+
+    } catch (error) {
+        console.error('Registration error:', error);
+        throw error;
+    }
+}
+
+/**
+ * Выход из системы
+ * Удаляет JWT Cookie на бэкенде
+ */
+async function logoutUser() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+            method: 'POST',
+            credentials: 'include' // ✅ Отправляем Cookie для удаления
+        });
+
+        if (!response.ok) {
+            console.warn('Logout request failed, but continuing...');
+        }
+
+        console.log('Logout successful');
+
+    } catch (error) {
+        console.error('Logout error:', error);
+        // Продолжаем выход даже при ошибке
+    } finally {
+        // Удаляем локальные данные
+        removeAuthData();
+
+        // Перенаправляем на страницу входа
+        window.location.href = '/login';
+    }
+}
+
+// ==============================================
+// UI FUNCTIONS
+// ==============================================
+
+/**
+ * Показать уведомление
+ */
 function showNotification(message, type = 'info') {
+    // Удалить существующие уведомления
     const existingNotifications = document.querySelectorAll('.notification');
     existingNotifications.forEach(notification => notification.remove());
 
+    // Создать элемент уведомления
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
+
+    // Определить иконку
+    const iconMap = {
+        success: 'check-circle',
+        error: 'exclamation-circle',
+        warning: 'exclamation-triangle',
+        info: 'info-circle'
+    };
+    const icon = iconMap[type] || 'info-circle';
+
     notification.innerHTML = `
         <div class="notification-content">
-            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            <i class="fas fa-${icon}"></i>
             <span>${message}</span>
             <button class="notification-close" onclick="this.parentElement.parentElement.remove()">
                 <i class="fas fa-times"></i>
@@ -127,22 +227,33 @@ function showNotification(message, type = 'info') {
         </div>
     `;
 
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        z-index: 10000;
-        animation: slideInRight 0.3s ease;
-        max-width: 400px;
-    `;
+    // Стили уведомления
+    const bgColors = {
+        success: '#10b981',
+        error: '#ef4444',
+        warning: '#f59e0b',
+        info: '#3b82f6'
+    };
 
+    Object.assign(notification.style, {
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        background: bgColors[type] || bgColors.info,
+        color: 'white',
+        padding: '1rem 1.5rem',
+        borderRadius: '12px',
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+        zIndex: '10000',
+        animation: 'slideInRight 0.3s ease',
+        maxWidth: '400px',
+        minWidth: '300px'
+    });
+
+    // Добавить в DOM
     document.body.appendChild(notification);
 
+    // Автоматически удалить через 5 секунд
     setTimeout(() => {
         if (notification.parentElement) {
             notification.style.animation = 'slideOutRight 0.3s ease';
@@ -151,277 +262,246 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-const notificationStyles = document.createElement('style');
-notificationStyles.textContent = `
-    .notification-content {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-    
-    .notification-close {
-        background: none;
-        border: none;
-        color: white;
-        cursor: pointer;
-        padding: 0;
-        margin-left: auto;
-    }
-    
-    @keyframes slideInRight {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes slideOutRight {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(notificationStyles);
-
-async function makeRequest(url, method, data) {
-    const options = {
-        method: method,
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-    };
-
-    if (data) {
-        options.body = JSON.stringify(data);
-    }
-
-    try {
-        const response = await fetch(url, options);
-
-        const contentType = response.headers.get('content-type');
-        const hasJson = contentType && contentType.includes('application/json');
-        const hasContent = response.status !== 204;
-
-        if (!response.ok) {
-            let errorMessage = `HTTP error! status: ${response.status}`;
-
-            if (hasJson && hasContent) {
-                try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.message || errorMessage;
-                } catch (e) {
-                    if (hasContent) {
-                        try {
-                            const text = await response.text();
-                            errorMessage = text || errorMessage;
-                        } catch (textError) {}
-                    }
-                }
-            }
-
-            throw new Error(errorMessage);
-        }
-
-        if (hasJson && hasContent) {
-            return await response.json();
-        } else if (hasContent) {
-            return await response.text();
-        } else {
-            return null;
-        }
-    } catch (error) {
-        console.error('API request failed:', error);
-        throw error;
+/**
+ * Показать/скрыть загрузку на кнопке
+ */
+function setButtonLoading(button, isLoading) {
+    if (isLoading) {
+        button.disabled = true;
+        button.dataset.originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Вход...';
+    } else {
+        button.disabled = false;
+        button.innerHTML = button.dataset.originalText || 'Войти';
     }
 }
 
-async function loginUser(email, password) {
-    const loginData = {
-        email: email,
-        password: password
-    };
-
-    return await makeRequest(`${API_BASE_URL}/auth/login`, 'POST', loginData);
+/**
+ * Валидация email
+ */
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
 }
 
-loginForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-
-    updateInputState('email', 'neutral');
-    updateInputState('password', 'neutral');
-
-    let isValid = true;
-
-    if (!email) {
-        updateInputState('email', 'error', 'Введите email адрес');
-        isValid = false;
-    } else if (!validateEmail(email)) {
-        updateInputState('email', 'error', 'Введите корректный email адрес');
-        isValid = false;
+/**
+ * Валидация формы
+ */
+function validateLoginForm(email, password) {
+    if (!email || !password) {
+        showNotification('Пожалуйста, заполните все поля', 'error');
+        return false;
     }
 
-    if (!password) {
-        updateInputState('password', 'error', 'Введите пароль');
-        isValid = false;
-    } else if (!validatePassword(password)) {
-        updateInputState('password', 'error', 'Пароль должен содержать минимум 6 символов');
-        isValid = false;
+    if (!isValidEmail(email)) {
+        showNotification('Пожалуйста, введите корректный email', 'error');
+        return false;
     }
 
-    if (!isValid) {
-        return;
+    if (password.length < 6) {
+        showNotification('Пароль должен содержать минимум 6 символов', 'error');
+        return false;
     }
 
-    setLoadingState(true);
+    return true;
+}
 
-    try {
-        const authResponse = await loginUser(email, password);
+/**
+ * Перенаправление после успешного входа
+ */
+function redirectAfterLogin(userData) {
+    // Проверяем роль пользователя
+    const role = userData.user?.role || userData.role;
 
-        if (authResponse && authResponse.user) {
-            storeAuthData(authResponse);
+    // Перенаправление в зависимости от роли
+    if (role === 'ADMIN') {
+        window.location.href = '/admin';
+    } else {
+        window.location.href = '/';
+    }
+}
 
-            showNotification('Успешный вход в систему!', 'success');
+// ==============================================
+// EVENT HANDLERS
+// ==============================================
 
+/**
+ * Обработчик отправки формы логина
+ */
+if (loginForm) {
+    loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Получить данные формы
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        // Валидация
+        if (!validateLoginForm(email, password)) {
+            return;
+        }
+
+        const credentials = { email, password };
+
+        // Показать загрузку
+        setButtonLoading(submitBtn, true);
+
+        try {
+            // Отправить запрос на авторизацию
+            const authData = await loginUser(credentials);
+
+            // Показать успешное уведомление
+            showNotification('Вход выполнен успешно!', 'success');
+
+            // Подождать немного для показа уведомления
             setTimeout(() => {
-                window.location.href = '/';
-            }, 1500);
-        } else {
-            throw new Error('Неверный ответ от сервера');
+                redirectAfterLogin(authData);
+            }, 1000);
+
+        } catch (error) {
+            // Показать ошибку
+            showNotification(error.message, 'error');
+            setButtonLoading(submitBtn, false);
         }
+    });
+}
 
-    } catch (error) {
-        console.error('Login error:', error);
+// ==============================================
+// PASSWORD VISIBILITY TOGGLE
+// ==============================================
 
-        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-            showNotification('Неверный email или пароль', 'error');
-        } else if (error.message.includes('Network Error')) {
-            showNotification('Ошибка сети. Проверьте подключение к интернету.', 'error');
-        } else if (error.message.includes('400')) {
-            showNotification('Ошибка в данных запроса', 'error');
-        } else {
-            showNotification(error.message || 'Ошибка входа. Попробуйте еще раз.', 'error');
+const passwordToggle = document.querySelector('.password-toggle');
+if (passwordToggle) {
+    passwordToggle.addEventListener('click', function() {
+        const type = passwordInput.type === 'password' ? 'text' : 'password';
+        passwordInput.type = type;
+
+        const icon = this.querySelector('i');
+        if (icon) {
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
         }
-
-        setLoadingState(false);
-    }
-});
-
-document.querySelector('.social-google')?.addEventListener('click', function() {
-    showNotification('Функция входа через Google будет добавлена позже', 'info');
-});
-
-document.querySelector('.social-facebook')?.addEventListener('click', function() {
-    showNotification('Функция входа через Facebook будет добавлена позже', 'info');
-});
-
-document.querySelector('.forgot-link')?.addEventListener('click', function(e) {
-    e.preventDefault();
-    showNotification('Функция восстановления пароля будет добавлена позже', 'info');
-});
-
-function initTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    setTheme(savedTheme);
+    });
 }
 
-function setTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+// ==============================================
+// REMEMBER ME FUNCTIONALITY
+// ==============================================
 
-    const themeIcon = document.getElementById('themeIcon');
-    if (themeIcon) {
-        themeIcon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
-    }
-}
-
-function toggleTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-}
-
+// Загрузить сохраненный email при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    initTheme();
+    const savedEmail = localStorage.getItem('remembered_email');
+    if (savedEmail && emailInput) {
+        emailInput.value = savedEmail;
+        if (rememberCheckbox) {
+            rememberCheckbox.checked = true;
+        }
+    }
+});
 
+// Сохранить email при выборе "Запомнить меня"
+if (rememberCheckbox) {
+    rememberCheckbox.addEventListener('change', function() {
+        if (this.checked && emailInput.value) {
+            localStorage.setItem('remembered_email', emailInput.value.trim());
+        } else {
+            localStorage.removeItem('remembered_email');
+        }
+    });
+}
+
+// ==============================================
+// REDIRECT IF ALREADY LOGGED IN
+// ==============================================
+
+/**
+ * Проверить, авторизован ли пользователь
+ * (только по наличию данных в localStorage)
+ */
+function checkIfLoggedIn() {
     const userData = getUserData();
 
     if (userData) {
-        showNotification('Вы уже входили в систему. Если Cookie валиден, вы будете аутентифицированы.', 'info');
-    }
+        console.log('User already logged in, redirecting...');
 
-    const authCard = document.querySelector('.auth-card');
-    if (authCard) {
-        authCard.style.opacity = '0';
-        authCard.style.transform = 'translateY(30px)';
-
-        setTimeout(() => {
-            authCard.style.transition = 'all 0.6s ease';
-            authCard.style.opacity = '1';
-            authCard.style.transform = 'translateY(0)';
-        }, 100);
-    }
-});
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && e.target.classList.contains('form-input')) {
-        const inputs = Array.from(document.querySelectorAll('.form-input'));
-        const currentIndex = inputs.indexOf(e.target);
-
-        if (currentIndex < inputs.length - 1) {
-            inputs[currentIndex + 1].focus();
+        // Перенаправление в зависимости от роли
+        if (userData.role === 'ADMIN') {
+            window.location.href = '/profileAdmin';
         } else {
-            loginForm.dispatchEvent(new Event('submit'));
+            window.location.href = '/';
         }
-    }
-});
-
-async function debugLogin() {
-    console.log('Testing login API...');
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                email: 'test@test.com',
-                password: 'password'
-            }),
-            credentials: 'include'
-        });
-
-        console.log('Response status:', response.status);
-        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-        const text = await response.text();
-        console.log('Response text:', text);
-
-        try {
-            const json = JSON.parse(text);
-            console.log('Response JSON:', json);
-            return json;
-        } catch (e) {
-            console.log('Response is not JSON');
-            return text;
-        }
-    } catch (error) {
-        console.error('Debug request failed:', error);
-        throw error;
     }
 }
 
-window.debugLogin = debugLogin;
+// Проверить при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    // Если мы на странице логина, проверим авторизацию
+    if (window.location.pathname === '/login') {
+        checkIfLoggedIn();
+    }
+});
+
+// ==============================================
+// CSS ANIMATIONS FOR NOTIFICATIONS
+// ==============================================
+
+// Добавить стили анимаций, если их еще нет
+if (!document.querySelector('#notification-animations')) {
+    const style = document.createElement('style');
+    style.id = 'notification-animations';
+    style.textContent = `
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 0;
+            margin-left: auto;
+            font-size: 1.1rem;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .notification-close:hover {
+            opacity: 1;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// ==============================================
+// EXPORT FUNCTIONS (если используете модули)
+// ==============================================
+
+// Если используете ES6 модули, можете экспортировать функции:
+// export { loginUser, registerUser, logoutUser, getUserData, showNotification };
+
+console.log('Login script initialized successfully');

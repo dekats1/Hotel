@@ -1,4 +1,6 @@
-// Settings Management JavaScript
+// ==============================================
+// SETTING.JS - Управление настройками пользователя
+// ==============================================
 
 // DOM Elements
 const navToggle = document.querySelector('.nav-toggle');
@@ -7,106 +9,124 @@ const navLinks = document.querySelectorAll('.nav-link');
 const userDropdown = document.getElementById('userDropdown');
 
 const API_BASE_URL = '/api';
+const USER_DATA_KEY = 'user_data';
 
-// User data
 let currentUser = null;
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // 💡 Инициализируем UI/настройки перед попыткой загрузки данных
-    initializeSettings();
-    loadUserData();
-    setupEventListeners();
-    initializeTheme();
-});
+// ==============================================
+// STORAGE FUNCTIONS
+// ==============================================
 
-// Initialize settings page
-function initializeSettings() {
-    // Set up mobile navigation
-    if (navToggle) {
-        navToggle.addEventListener('click', toggleMobileMenu);
+function getUserDataFromStorage() {
+    try {
+        const userData = localStorage.getItem(USER_DATA_KEY);
+        return userData ? JSON.parse(userData) : null;
+    } catch (error) {
+        console.error('Error parsing user data from storage:', error);
+        return null;
     }
+}
 
-    navLinks.forEach(link => {
-        link.addEventListener('click', closeMobileMenu);
+function saveUserDataToStorage(userData) {
+    try {
+        localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+    } catch (error) {
+        console.error('Error saving user data to storage:', error);
+    }
+}
+
+function removeAuthData() {
+    localStorage.removeItem(USER_DATA_KEY);
+}
+
+// ==============================================
+// API FUNCTIONS
+// ==============================================
+
+async function apiCall(endpoint, options = {}) {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+            ...(options.headers || {})
+        },
+        ...options
     });
 
-    // Set up settings controls
-    setupSettingsControls();
-}
-
-// Load user data from localStorage/backend
-function loadUserData() {
-    // 1. Попытка загрузить данные из localStorage (для быстрого отображения)
-    const userDataJson = localStorage.getItem('user_data');
-
-    if (userDataJson) {
-        try {
-            currentUser = JSON.parse(userDataJson);
-            updateUserInterface();
-        } catch (error) {
-            console.error('Error parsing user data from storage:', error);
-        }
+    if (response.status === 401) {
+        removeAuthData();
+        showNotification('Сессия истекла. Пожалуйста, войдите снова.', 'error');
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, 1000);
+        throw new Error('Требуется авторизация');
     }
 
-    // 2. Всегда пытаемся загрузить актуальные данные с бэкенда
-    loadUserDataFromBackend();
+    if (response.status === 403) {
+        showNotification('Доступ запрещен', 'error');
+        throw new Error('Доступ запрещен');
+    }
 
-    // 💡 УДАЛЕНО: Создание демо-пользователя, если нет данных.
-    // На странице настроек пользователь должен быть аутентифицирован.
-}
+    if (!response.ok) {
+        const contentType = response.headers.get('content-type');
+        let errorText = `Ошибка: ${response.status}`;
 
-// 💡 ИЗМЕНЕНО: Load user data from backend API (используем Cookie)
-async function loadUserDataFromBackend() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/users/profile`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            // 💡 ГЛАВНОЕ ИЗМЕНЕНИЕ: включаем Cookie
-            credentials: 'include'
-        });
-
-        if (response.status === 401) {
-            // Если Cookie невалиден/отсутствует, перенаправляем
-            removeAuthData();
-            showNotification('Сессия истекла. Пожалуйста, войдите снова.', 'error');
-            setTimeout(() => {
-                window.location.href = '/login';
-            }, 1000);
-            return;
-        }
-
-        if (response.ok) {
-            const userData = await response.json();
-            currentUser = transformUserData(userData);
-
-            // Сохраняем актуальные данные в localStorage
-            const userBasicData = {
-                name: currentUser.name,
-                firstName: currentUser.firstName,
-                lastName: currentUser.lastName,
-                email: currentUser.email,
-                wallet: currentUser.wallet,
-                avatar: currentUser.avatar,
-            };
-            localStorage.setItem('user_data', JSON.stringify(userBasicData));
-
-            updateUserInterface();
+        if (contentType && contentType.includes('application/json')) {
+            try {
+                const errorData = await response.json();
+                errorText = errorData.message || errorText;
+            } catch (e) {
+                errorText = await response.text() || errorText;
+            }
         } else {
-            console.error('Backend returned non-OK status:', response.status);
-            showNotification('Ошибка загрузки данных профиля.', 'error');
+            errorText = await response.text() || errorText;
         }
+
+        throw new Error(errorText);
+    }
+
+    if (response.status === 204) {
+        return null;
+    }
+
+    return await response.json();
+}
+
+async function loadUserData() {
+    // Предварительная загрузка из localStorage
+    currentUser = getUserDataFromStorage();
+    if (currentUser) {
+        updateUserInterface();
+    }
+
+    try {
+        const data = await apiCall('/users/profile');
+        currentUser = transformUserData(data);
+
+        // Сохраняем основные данные
+        const userBasicData = {
+            id: currentUser.id,
+            email: currentUser.email,
+            firstName: currentUser.firstName,
+            lastName: currentUser.lastName,
+            role: data.role || 'USER',
+            wallet: currentUser.wallet,
+            avatar: currentUser.avatar
+        };
+        saveUserDataToStorage(userBasicData);
+
+        updateUserInterface();
     } catch (error) {
-        console.error('Failed to load user data from backend:', error);
-        showNotification('Ошибка сети. Не удалось загрузить данные профиля.', 'error');
+        console.error('Failed to load user data:', error);
+        if (!error.message.includes('Требуется авторизация')) {
+            showNotification('Ошибка загрузки данных профиля: ' + error.message, 'error');
+        }
     }
 }
 
-// Transform backend user data to frontend format
 function transformUserData(apiData) {
     return {
+        id: apiData.id,
         name: `${apiData.firstName} ${apiData.lastName}`,
         firstName: apiData.firstName,
         lastName: apiData.lastName,
@@ -125,100 +145,69 @@ function transformUserData(apiData) {
     };
 }
 
-// ⚠️ УДАЛЕНО: getAuthToken() больше не нужен.
+async function saveUserSettings(settings) {
+    try {
+        await apiCall('/users/settings', {
+            method: 'PUT',
+            body: JSON.stringify(settings)
+        });
 
-// 💡 НОВАЯ ФУНКЦИЯ: Очистка локальных данных
-function removeAuthData() {
-    localStorage.removeItem('user_data');
-    sessionStorage.removeItem('user_data');
-    // Удаляем устаревшие ключи токена на всякий случай
-    localStorage.removeItem('auth_token');
-    sessionStorage.removeItem('auth_token');
-}
-
-// Update user interface with current user data
-function updateUserInterface() {
-    if (!currentUser) return;
-
-    // Update navigation
-    updateNavigationForLoggedInUser(currentUser);
-}
-
-// Update navigation for logged in user
-function updateNavigationForLoggedInUser(user) {
-    const navAuth = document.querySelector('.nav-auth');
-    if (navAuth) {
-        // ... (HTML structure for user profile and dropdown remains the same) ...
-        navAuth.innerHTML = `
-            <div class="user-profile">
-                <div class="user-info">
-                    <div class="user-avatar">${user.avatar || '👤'}</div>
-                    <div class="user-details">
-                        <div class="user-name">${user.name || user.firstName + ' ' + user.lastName || 'Пользователь'}</div>
-                        <div class="user-wallet">
-                            <i class="fas fa-wallet"></i>
-                            <span id="walletAmount">${formatCurrency(user.wallet || 0)}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="user-menu">
-                    <button class="btn-auth btn-user" onclick="toggleUserMenu()">
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <div class="user-dropdown" id="userDropdown">
-                        <div class="dropdown-header">
-                            <div class="user-avatar-small">${user.avatar || '👤'}</div>
-                            <div>
-                                <div class="user-name-small">${user.name || user.firstName + ' ' + user.lastName || 'Пользователь'}</div>
-                                <div class="user-email-small">${user.email || ''}</div>
-                            </div>
-                        </div>
-                        <div class="dropdown-divider"></div>
-                        <a href="/profile" class="dropdown-item">
-                            <i class="fas fa-user"></i>
-                            Мой профиль
-                        </a>
-                        <a href="/booking" class="dropdown-item">
-                            <i class="fas fa-calendar"></i>
-                            Мои бронирования
-                        </a>
-                        <a href="/wallet" class="dropdown-item">
-                            <i class="fas fa-wallet"></i>
-                            Кошелек
-                        </a>
-                        <a href="/setting" class="dropdown-item active">
-                            <i class="fas fa-cog"></i>
-                            Настройки
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item logout-item" onclick="logout()">
-                            <i class="fas fa-sign-out-alt"></i>
-                            Выйти
-                        </a>
-                    </div>
-                </div>
-            </div>
-        `;
+        showNotification('Настройки успешно сохранены', 'success');
+    } catch (error) {
+        console.error('Failed to save settings:', error);
+        showNotification('Ошибка сохранения настроек: ' + error.message, 'error');
     }
 }
 
-// Format currency based on selected currency
-function formatCurrency(amount) {
-    const currency = localStorage.getItem('currency') || 'BYN';
-    const currencies = {
-        'BYN': 'Br',
-        'USD': '$',
-        'EUR': '€',
-        'RUB': '₽'
-    };
+// ==============================================
+// INITIALIZE
+// ==============================================
 
-    const symbol = currencies[currency] || 'Br';
-    return `${amount.toLocaleString()}${symbol}`;
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Settings page loaded');
+
+    checkAuthOnPageLoad();
+    initializeSettings();
+    loadUserData();
+    setupEventListeners();
+    initializeTheme();
+
+    console.log('✅ Settings initialized successfully');
+});
+
+function checkAuthOnPageLoad() {
+    const userData = getUserDataFromStorage();
+
+    if (!userData || !userData.email) {
+        console.warn('No user data found, redirecting to login...');
+        removeAuthData();
+        window.location.href = '/login';
+        return false;
+    }
+
+    return true;
 }
 
-// Setup settings controls
+function initializeSettings() {
+    // Mobile navigation
+    if (navToggle) {
+        navToggle.addEventListener('click', toggleMobileMenu);
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', closeMobileMenu);
+    });
+
+    // Setup settings controls
+    setupSettingsControls();
+}
+
+// ==============================================
+// SETTINGS CONTROLS
+// ==============================================
+
 function setupSettingsControls() {
-    // Theme toggle
+    // Theme setting
     const themeToggleSetting = document.getElementById('themeToggleSetting');
     if (themeToggleSetting) {
         const currentTheme = document.documentElement.getAttribute('data-theme');
@@ -237,46 +226,76 @@ function setupSettingsControls() {
         const savedLanguage = localStorage.getItem('language') || 'ru';
         languageSetting.value = savedLanguage;
 
-        languageSetting.addEventListener('change', function() {
+        languageSetting.addEventListener('change', async function() {
             const language = this.value;
             localStorage.setItem('language', language);
-            applyLanguageSettings(language);
+
+            // Сохраняем на сервере
+            await saveUserSettings({ language });
+
             showNotification('Язык интерфейса изменен', 'success');
         });
     }
 
-    // Currency setting - ADDED NEW CURRENCY SETTING
+    // Currency setting
     const currencySetting = document.getElementById('currencySetting');
     if (currencySetting) {
         const savedCurrency = localStorage.getItem('currency') || 'BYN';
         currencySetting.value = savedCurrency;
 
-        currencySetting.addEventListener('change', function() {
+        currencySetting.addEventListener('change', async function() {
             const currency = this.value;
             localStorage.setItem('currency', currency);
+
+            // Сохраняем на сервере
+            await saveUserSettings({ currency });
+
             applyCurrencySettings(currency);
             showNotification(`Валюта изменена на ${getCurrencyName(currency)}`, 'success');
         });
     }
+
+    // Notification settings
+    setupNotificationToggles();
 }
 
-// Apply language settings
-function applyLanguageSettings(language) {
-    console.log('Language changed to:', language);
+function setupNotificationToggles() {
+    const toggles = document.querySelectorAll('.notification-toggle');
+
+    toggles.forEach(toggle => {
+        const settingName = toggle.dataset.setting;
+        const savedValue = localStorage.getItem(settingName);
+
+        if (savedValue !== null) {
+            toggle.checked = savedValue === 'true';
+        }
+
+        toggle.addEventListener('change', async function() {
+            const isEnabled = this.checked;
+            localStorage.setItem(settingName, isEnabled.toString());
+
+            const settingLabel = this.closest('.settings-item')?.querySelector('label')?.textContent || 'Настройка';
+            showNotification(`${settingLabel} ${isEnabled ? 'включена' : 'отключена'}`, 'info');
+
+            // Сохраняем на сервере
+            const settings = {};
+            settings[settingName] = isEnabled;
+            await saveUserSettings(settings);
+        });
+    });
 }
 
-// Apply currency settings
+// ==============================================
+// CURRENCY & LANGUAGE
+// ==============================================
+
 function applyCurrencySettings(currency) {
     // Update wallet display
-    const walletAmount = document.getElementById('walletAmount');
-    if (walletAmount && currentUser) {
-        walletAmount.textContent = formatCurrency(currentUser.wallet || 0);
+    if (currentUser) {
+        updateAllCurrencyDisplays();
     }
-
-    updateAllCurrencyDisplays();
 }
 
-// Get currency name for display
 function getCurrencyName(currencyCode) {
     const currencyNames = {
         'BYN': 'Белорусский рубль',
@@ -287,29 +306,42 @@ function getCurrencyName(currencyCode) {
     return currencyNames[currencyCode] || currencyCode;
 }
 
-// Update all currency displays on the page
-function updateAllCurrencyDisplays() {
-    if (currentUser) {
-        const walletElements = document.querySelectorAll('.user-wallet span, #walletAmount');
-        walletElements.forEach(element => {
-            element.textContent = formatCurrency(currentUser.wallet || 0);
-        });
-    }
+function formatCurrency(amount) {
+    const currency = localStorage.getItem('currency') || 'BYN';
+    const currencies = {
+        'BYN': 'Br',
+        'USD': '$',
+        'EUR': '€',
+        'RUB': '₽'
+    };
+
+    const symbol = currencies[currency] || 'Br';
+    return `${amount.toLocaleString()}${symbol}`;
 }
 
-// Mobile navigation toggle
+function updateAllCurrencyDisplays() {
+    if (!currentUser) return;
+
+    const walletElements = document.querySelectorAll('.user-wallet span, #walletAmount');
+    walletElements.forEach(element => {
+        element.textContent = formatCurrency(currentUser.wallet || 0);
+    });
+}
+
+// ==============================================
+// NAVIGATION
+// ==============================================
+
 function toggleMobileMenu() {
     navMenu.classList.toggle('active');
     navToggle.classList.toggle('active');
 }
 
-// Close mobile menu
 function closeMobileMenu() {
     navMenu.classList.remove('active');
     navToggle.classList.remove('active');
 }
 
-// Toggle user menu
 function toggleUserMenu() {
     const dropdown = document.getElementById('userDropdown');
     if (dropdown) {
@@ -317,57 +349,99 @@ function toggleUserMenu() {
     }
 }
 
-// 💡 ИЗМЕНЕНО: Logout function (нужен API вызов для очистки Cookie на сервере)
+// ==============================================
+// UPDATE UI
+// ==============================================
+
+function updateUserInterface() {
+    if (!currentUser) return;
+
+    updateNavigationForLoggedInUser(currentUser);
+}
+
+function updateNavigationForLoggedInUser(user) {
+    const navAuth = document.querySelector('.nav-auth');
+    if (!navAuth) return;
+
+    navAuth.innerHTML = `
+        <div class="user-profile">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">${user.avatar || '👤'}</div>
+                <div class="user-details">
+                    <div class="user-name" id="userName">${user.name || 'Пользователь'}</div>
+                    <div class="user-wallet">
+                        <i class="fas fa-wallet"></i>
+                        <span id="walletAmount">${formatCurrency(user.wallet || 0)}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="user-menu">
+                <button class="btn-auth btn-user" onclick="toggleUserMenu()">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-header">
+                        <div class="user-avatar-small">${user.avatar || '👤'}</div>
+                        <div>
+                            <div class="user-name-small">${user.name || 'Пользователь'}</div>
+                            <div class="user-email-small">${user.email || ''}</div>
+                        </div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a href="/profile" class="dropdown-item">
+                        <i class="fas fa-user"></i>
+                        Мой профиль
+                    </a>
+                    <a href="/booking" class="dropdown-item">
+                        <i class="fas fa-calendar"></i>
+                        Мои бронирования
+                    </a>
+                    <a href="/wallet" class="dropdown-item">
+                        <i class="fas fa-wallet"></i>
+                        Кошелек
+                    </a>
+                    <a href="/setting" class="dropdown-item active">
+                        <i class="fas fa-cog"></i>
+                        Настройки
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item logout-item" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Выйти
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// ==============================================
+// LOGOUT
+// ==============================================
+
 async function logout() {
     try {
-        // 💡 Отправляем запрос на сервер, чтобы очистить HTTP-only Cookie
         await fetch(`${API_BASE_URL}/auth/logout`, {
             method: 'POST',
-            credentials: 'include' // Чтобы отправить Cookie
+            credentials: 'include'
         });
 
         showNotification('Вы вышли из системы', 'info');
-        removeAuthData(); // Очищаем локальные данные
-
     } catch (error) {
-        console.error('Logout failed but proceeding with client clear:', error);
-        // В случае сбоя сети, все равно очищаем клиент и перенаправляем
-        showNotification('Ошибка выхода из системы. Очистка клиента...', 'error');
+        console.error('Logout error:', error);
+        showNotification('Ошибка выхода из системы', 'error');
+    } finally {
         removeAuthData();
-    }
-
-    // Redirect to home page
-    setTimeout(() => {
-        window.location.href = '/';
-    }, 1000);
-}
-
-// Header scroll effect
-function handleHeaderScroll() {
-    const header = document.querySelector('.header');
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-
-    if (!header) return;
-
-    if (window.scrollY > 100) {
-        if (currentTheme === 'dark') {
-            header.style.background = 'rgba(15, 23, 42, 0.98)';
-            header.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.3)';
-        } else {
-            header.style.background = 'rgba(255, 255, 255, 0.98)';
-            header.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.1)';
-        }
-    } else {
-        if (currentTheme === 'dark') {
-            header.style.background = 'rgba(15, 23, 42, 0.95)';
-        } else {
-            header.style.background = 'rgba(255, 255, 255, 0.95)';
-        }
-        header.style.boxShadow = 'none';
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, 1000);
     }
 }
 
-// Theme management
+// ==============================================
+// THEME MANAGEMENT
+// ==============================================
+
 function initializeTheme() {
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
@@ -397,7 +471,6 @@ function toggleTheme() {
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
 
-    // Add animation to theme button
     const themeBtn = document.getElementById('themeToggle');
     if (themeBtn) {
         themeBtn.style.transform = 'scale(0.8)';
@@ -407,7 +480,38 @@ function toggleTheme() {
     }
 }
 
-// Setup event listeners
+// ==============================================
+// HEADER SCROLL EFFECT
+// ==============================================
+
+function handleHeaderScroll() {
+    const header = document.querySelector('.header');
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+
+    if (!header) return;
+
+    if (window.scrollY > 100) {
+        if (currentTheme === 'dark') {
+            header.style.background = 'rgba(15, 23, 42, 0.98)';
+            header.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.3)';
+        } else {
+            header.style.background = 'rgba(255, 255, 255, 0.98)';
+            header.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.1)';
+        }
+    } else {
+        if (currentTheme === 'dark') {
+            header.style.background = 'rgba(15, 23, 42, 0.95)';
+        } else {
+            header.style.background = 'rgba(255, 255, 255, 0.95)';
+        }
+        header.style.boxShadow = 'none';
+    }
+}
+
+// ==============================================
+// EVENT LISTENERS
+// ==============================================
+
 function setupEventListeners() {
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
@@ -421,13 +525,14 @@ function setupEventListeners() {
     window.addEventListener('scroll', handleHeaderScroll);
 }
 
-// Notification system
+// ==============================================
+// NOTIFICATION SYSTEM
+// ==============================================
+
 function showNotification(message, type = 'info') {
-    // Remove existing notifications
     const existingNotifications = document.querySelectorAll('.notification');
     existingNotifications.forEach(notification => notification.remove());
 
-    // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
@@ -440,25 +545,22 @@ function showNotification(message, type = 'info') {
         </div>
     `;
 
-    // Add styles
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        z-index: 10000;
-        animation: slideInRight 0.3s ease;
-        max-width: 400px;
-    `;
+    Object.assign(notification.style, {
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        background: type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6',
+        color: 'white',
+        padding: '1rem 1.5rem',
+        borderRadius: '12px',
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+        zIndex: '10000',
+        animation: 'slideInRight 0.3s ease',
+        maxWidth: '400px'
+    });
 
-    // Add to document
     document.body.appendChild(notification);
 
-    // Auto remove after 5 seconds
     setTimeout(() => {
         if (notification.parentElement) {
             notification.style.animation = 'slideOutRight 0.3s ease';
@@ -467,44 +569,56 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Add notification styles (for animation)
-const notificationStyles = document.createElement('style');
-notificationStyles.textContent = `
-    .notification-content {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-    
-    .notification-close {
-        background: none;
-        border: none;
-        color: white;
-        cursor: pointer;
-        padding: 0;
-        margin-left: auto;
-    }
-    
-    @keyframes slideInRight {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
+// Add notification styles
+if (!document.querySelector('#notification-styles')) {
+    const notificationStyles = document.createElement('style');
+    notificationStyles.id = 'notification-styles';
+    notificationStyles.textContent = `
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
-        to {
-            transform: translateX(0);
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 0;
+            margin-left: auto;
+            font-size: 1.1rem;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+        
+        .notification-close:hover {
             opacity: 1;
         }
-    }
-    
-    @keyframes slideOutRight {
-        from {
-            transform: translateX(0);
-            opacity: 1;
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
-        to {
-            transform: translateX(100%);
-            opacity: 0;
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
         }
-    }
-`;
-document.head.appendChild(notificationStyles);
+    `;
+    document.head.appendChild(notificationStyles);
+}
+
+console.log('Settings script initialized successfully');
