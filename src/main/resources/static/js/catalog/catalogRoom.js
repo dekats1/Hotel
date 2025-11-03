@@ -11,6 +11,9 @@ let currentTheme = localStorage.getItem('theme') || 'light';
 document.addEventListener('DOMContentLoaded', async () => {
     initializeThemeToggle();
     bindFilters();
+
+    applyUrlParams();
+
     await loadRooms();
 });
 
@@ -350,7 +353,6 @@ function openBookingModal(roomId) {
         return;
     }
 
-    // Заполняем данные комнаты
     const modal = document.getElementById('bookingModal');
     if (!modal) {
         console.error('Booking modal not found');
@@ -365,22 +367,30 @@ function openBookingModal(roomId) {
     document.getElementById('bookingRoomName').textContent = name;
     document.getElementById('bookingRoomPrice').textContent = `${formatMoney(room.basePrice)} ₽/ночь`;
 
+    // ✅ НОВОЕ: Получаем даты из sessionStorage (если были переданы с главной)
+    const savedCheckIn = sessionStorage.getItem('searchCheckIn');
+    const savedCheckOut = sessionStorage.getItem('searchCheckOut');
+    const savedGuests = sessionStorage.getItem('searchGuests');
+
     // Устанавливаем минимальные даты
     const today = new Date().toISOString().split('T')[0];
     const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
     const checkInInput = document.getElementById('checkInDate');
     const checkOutInput = document.getElementById('checkOutDate');
+    const guestsInput = document.getElementById('guestsCount');
 
     checkInInput.min = today;
-    checkInInput.value = today;
     checkOutInput.min = tomorrow;
-    checkOutInput.value = tomorrow;
 
-    // Сбрасываем форму
-    document.getElementById('guestsCount').value = '1';
+    // ✅ НОВОЕ: Используем сохранённые значения или значения по умолчанию
+    checkInInput.value = savedCheckIn || today;
+    checkOutInput.value = savedCheckOut || tomorrow;
+    guestsInput.value = savedGuests || '1';
+
+    // Сбрасываем другие поля
     document.getElementById('currency').value = 'EUR';
-    document.getElementById('specialRequests').value = '';  // НОВОЕ
+    document.getElementById('specialRequests').value = '';
 
     // Пересчитываем цену
     calculateTotalPrice();
@@ -388,6 +398,7 @@ function openBookingModal(roomId) {
     // Показываем модальное окно
     modal.classList.add('show');
 }
+
 
 function closeBookingModal() {
     const modal = document.getElementById('bookingModal');
@@ -517,7 +528,7 @@ async function submitBooking() {
 
         setTimeout(() => {
             console.log('Redirecting to mybookings...');
-            window.location.href = '/menu/mybookings.html';
+            window.location.href = '/booking';
         }, 1500);
 
     } catch (error) {
@@ -527,7 +538,7 @@ async function submitBooking() {
         if (error.message.includes('401') || error.message.includes('403')) {
             notify('Для бронирования необходимо войти в систему', 'warning');
             setTimeout(() => {
-                window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+               // window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
             }, 1500);
         } else {
             notify('Ошибка при создании бронирования: ' + error.message, 'error');
@@ -538,18 +549,59 @@ async function submitBooking() {
     }
 }
 
+function applyUrlParams() {
+    const urlParams = new URLSearchParams(window.location.search);
 
-// ✅ УЛУЧШЕННАЯ функция для получения cookie
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) {
-        const cookieValue = parts.pop().split(';').shift();
-        console.log(`Cookie "${name}" found:`, cookieValue ? cookieValue.substring(0, 50) + '...' : 'empty');
-        return cookieValue;
+    console.log('URL params:', Object.fromEntries(urlParams));
+
+    const checkIn = urlParams.get('checkIn');
+    const checkOut = urlParams.get('checkOut');
+    const guests = urlParams.get('guests');
+    const roomType = urlParams.get('type');
+
+    if (roomType) {
+        const typeFilter = document.getElementById('typeFilter');
+        if (typeFilter) {
+            typeFilter.value = roomType;
+            console.log('Applied room type filter:', roomType);
+        }
     }
-    console.log(`Cookie "${name}" NOT found`);
-    return null;
+
+    if (guests) {
+        const capacityFilter = document.getElementById('capacityFilter');
+        if (capacityFilter) {
+            // Преобразуем количество гостей в опцию фильтра
+            if (parseInt(guests) >= 5) {
+                capacityFilter.value = '5';
+            } else {
+                capacityFilter.value = guests;
+            }
+            console.log('Applied capacity filter:', guests);
+        }
+    }
+
+    // Сохраняем даты в sessionStorage для использования в модальном окне
+    if (checkIn) {
+        sessionStorage.setItem('searchCheckIn', checkIn);
+        console.log('Saved checkIn date:', checkIn);
+    }
+
+    if (checkOut) {
+        sessionStorage.setItem('searchCheckOut', checkOut);
+        console.log('Saved checkOut date:', checkOut);
+    }
+
+    if (guests) {
+        sessionStorage.setItem('searchGuests', guests);
+        console.log('Saved guests count:', guests);
+    }
+
+    // Применяем фильтры после установки значений
+    if (roomType || guests) {
+        setTimeout(() => {
+            applyFilters();
+        }, 100);
+    }
 }
 
 

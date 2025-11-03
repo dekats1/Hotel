@@ -4,8 +4,8 @@ import lombok.Getter;
 
 @Getter
 public enum CurrencyType {
-    USD("Доллар США", "$"),
-    EUR("Белорусский рубль", "BYN");
+    BYN("Белорусский рубль", "Br"),
+    USD("Доллар США", "$");
 
     private final String displayName;
     private final String symbol;

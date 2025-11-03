@@ -77,47 +77,59 @@
     </div>
 </section>
 
-<!-- Search Section -->
+<!-- Секция поиска на главной странице -->
 <section class="search-section">
     <div class="container">
-        <div class="search-card">
-            <h2 class="search-title">Найти идеальный номер</h2>
-            <form class="search-form" id="searchForm">
-                <div class="form-group">
-                    <label for="checkin">Дата заезда</label>
-                    <input type="date" id="checkin" name="checkin" required>
-                </div>
-                <div class="form-group">
-                    <label for="checkout">Дата выезда</label>
-                    <input type="date" id="checkout" name="checkout" required>
-                </div>
-                <div class="form-group">
-                    <label for="guests">Количество гостей</label>
-                    <select id="guests" name="guests" required>
-                        <option value="1">1 гость</option>
-                        <option value="2" selected>2 гостя</option>
-                        <option value="3">3 гостя</option>
-                        <option value="4">4 гостя</option>
-                        <option value="5+">5+ гостей</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="room-type">Тип номера</label>
-                    <select id="room-type" name="room-type">
-                        <option value="">Любой</option>
-                        <option value="standard">Стандарт</option>
-                        <option value="deluxe">Делюкс</option>
-                        <option value="suite">Люкс</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-search">
-                    <i class="fas fa-search"></i>
-                    Найти номера
-                </button>
-            </form>
-        </div>
+        <h1>Найдите идеальный номер</h1>
+        <form id="searchForm" class="search-form">
+            <div class="form-group">
+                <label for="checkIn">
+                    <i class="fas fa-calendar-check"></i> Дата заезда
+                </label>
+                <input type="date" id="checkIn" name="checkIn" required>
+            </div>
+
+            <div class="form-group">
+                <label for="checkOut">
+                    <i class="fas fa-calendar-times"></i> Дата выезда
+                </label>
+                <input type="date" id="checkOut" name="checkOut" required>
+            </div>
+
+            <div class="form-group">
+                <label for="guests">
+                    <i class="fas fa-users"></i> Гости
+                </label>
+                <select id="guests" name="guests">
+                    <option value="1">1 гость</option>
+                    <option value="2" selected>2 гостя</option>
+                    <option value="3">3 гостя</option>
+                    <option value="4">4 гостя</option>
+                    <option value="5">5+ гостей</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="roomType">
+                    <i class="fas fa-bed"></i> Тип номера
+                </label>
+                <select id="roomType" name="roomType">
+                    <option value="">Все типы</option>
+                    <option value="STANDARD">Стандарт</option>
+                    <option value="DELUXE">Делюкс</option>
+                    <option value="SUITE">Люкс</option>
+                    <option value="APARTMENT">Апартаменты</option>
+                    <option value="PENTHOUSE">Пентхаус</option>
+                </select>
+            </div>
+
+            <button type="submit" id="searchBtn" class="btn btn-primary">
+                <i class="fas fa-search"></i> Найти номера
+            </button>
+        </form>
     </div>
 </section>
+
 
 <!-- Features Section -->
 <section id="services" class="features">

@@ -19,6 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -28,11 +31,11 @@ public class BookingServiceImpl implements BookingService {
   private final BookingRepository bookingRepository;
   private final RoomRepository roomRepository;
   private final UserRepository userRepository;
-  private final BookingMapper bookingMapper;  // ✅ ДОБАВЛЕНО
+  private final BookingMapper bookingMapper;
 
   @Override
   @Transactional
-  public BookingResponse addBooking(CreateBookingRequest dto) {  // ✅ ИЗМЕНЕНО: возвращаем DTO
+  public BookingResponse addBooking(CreateBookingRequest dto) {
     log.info("=== ADD BOOKING ===");
 
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -40,11 +43,11 @@ public class BookingServiceImpl implements BookingService {
     log.info("User email: {}", userEmail);
 
     User user = userRepository.findUserByEmail(userEmail)
-        .orElseThrow(() -> new RuntimeException("User not found: " + userEmail));
+            .orElseThrow(() -> new RuntimeException("User not found: " + userEmail));
     log.info("User found: {}", user.getId());
 
     Room room = roomRepository.findById(dto.getRoomId())
-        .orElseThrow(() -> new RuntimeException("Room not found: " + dto.getRoomId()));
+            .orElseThrow(() -> new RuntimeException("Room not found: " + dto.getRoomId()));
     log.info("Room found: {}", room.getRoomNumber());
 
     Booking booking = new Booking();
@@ -61,9 +64,50 @@ public class BookingServiceImpl implements BookingService {
     booking.setSpecialRequests(dto.getSpecialRequests());
 
     Booking saved = bookingRepository.save(booking);
-    log.info("✅ Booking created: {}", saved.getId());
+    log.info("Booking created: {}", saved.getId());
 
-    // ✅ КОНВЕРТИРУЕМ В DTO
     return bookingMapper.toResponse(saved);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<BookingResponse> getMyBookings() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    String userEmail = authentication.getName();
+    log.info("Loading bookings for user: {}", userEmail);
+
+    List<Booking> bookings = bookingRepository.findByUserEmail(userEmail);
+    log.info("Found {} bookings", bookings.size());
+
+    return bookings.stream()
+            .map(bookingMapper::toResponse)
+            .collect(Collectors.toList());
+  }
+
+  @Override
+  @Transactional
+  public void cancelBooking(UUID bookingId) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    String userEmail = authentication.getName();
+    log.info("Cancelling booking {} for user: {}", bookingId, userEmail);
+
+    Booking booking = bookingRepository.findBookingById(bookingId)
+            .orElseThrow(() -> new RuntimeException("Booking not found: " + bookingId));
+
+    // Проверка, что бронирование принадлежит пользователю
+    if (!booking.getUser().getEmail().equals(userEmail)) {
+      throw new RuntimeException("Access denied: this booking does not belong to you");
+    }
+
+    // Проверка, что бронирование можно отменить
+    if (booking.getStatus() == BookingStatus.CANCELLED) {
+      throw new RuntimeException("Booking is already cancelled");
+    }
+
+    booking.setStatus(BookingStatus.CANCELLED);
+    booking.setCancelledAt(LocalDateTime.now());
+    bookingRepository.save(booking);
+
+    log.info("Booking {} cancelled successfully", bookingId);
   }
 }

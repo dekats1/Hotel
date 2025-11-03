@@ -1,4 +1,6 @@
-// Wallet Management JavaScript
+// ==============================================
+// WALLET.JS - Управление кошельком с интеграцией API
+// ==============================================
 
 // DOM Elements
 const navToggle = document.querySelector('.nav-toggle');
@@ -6,24 +8,227 @@ const navMenu = document.querySelector('.nav-menu');
 const navLinks = document.querySelectorAll('.nav-link');
 const userDropdown = document.getElementById('userDropdown');
 
-// Wallet data
+const API_BASE_URL = '/api';
+const USER_DATA_KEY = 'user_data';
+
 let currentUser = null;
 let transactions = [];
-let paymentMethods = [];
+let currentPage = 0;
+const TRANSACTIONS_PER_PAGE = 20;
 
-// Initialize when DOM is loaded
+// ==============================================
+// STORAGE FUNCTIONS
+// ==============================================
+
+function getUserDataFromStorage() {
+    try {
+        const userData = localStorage.getItem(USER_DATA_KEY);
+        return userData ? JSON.parse(userData) : null;
+    } catch (error) {
+        console.error('Error parsing user data from storage:', error);
+        return null;
+    }
+}
+
+function saveUserDataToStorage(userData) {
+    try {
+        localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+    } catch (error) {
+        console.error('Error saving user data to storage:', error);
+    }
+}
+
+function removeAuthData() {
+    localStorage.removeItem(USER_DATA_KEY);
+}
+
+// ==============================================
+// API FUNCTIONS
+// ==============================================
+
+async function apiCall(endpoint, options = {}) {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+            ...(options.headers || {})
+        },
+        ...options
+    });
+
+    if (response.status === 401) {
+        removeAuthData();
+        showNotification('Сессия истекла. Пожалуйста, войдите снова.', 'error');
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, 1000);
+        throw new Error('Требуется авторизация');
+    }
+
+    if (response.status === 403) {
+        showNotification('Доступ запрещен', 'error');
+        throw new Error('Доступ запрещен');
+    }
+
+    if (!response.ok) {
+        const contentType = response.headers.get('content-type');
+        let errorText = `Ошибка: ${response.status}`;
+
+        if (contentType && contentType.includes('application/json')) {
+            try {
+                const errorData = await response.json();
+                errorText = errorData.message || errorText;
+            } catch (e) {
+                errorText = await response.text() || errorText;
+            }
+        } else {
+            errorText = await response.text() || errorText;
+        }
+
+        throw new Error(errorText);
+    }
+
+    if (response.status === 204) {
+        return null;
+    }
+
+    return await response.json();
+}
+
+// ==============================================
+// WALLET API
+// ==============================================
+
+async function loadWalletBalance() {
+    try {
+        const data = await apiCall('/wallet/balance');
+        return data.balance;
+    } catch (error) {
+        console.error('Failed to load wallet balance:', error);
+        showNotification('Ошибка загрузки баланса: ' + error.message, 'error');
+        return 0;
+    }
+}
+
+async function loadUserProfile() {
+    try {
+        const data = await apiCall('/users/profile');
+
+        currentUser = {
+            id: data.id,
+            name: `${data.firstName} ${data.lastName}`,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            wallet: data.balance ? Number(data.balance) : 0,
+            avatar: data.avatarUrl || '👤'
+        };
+
+        const userBasicData = {
+            id: data.id,
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            wallet: currentUser.wallet,
+            avatar: currentUser.avatar
+        };
+        saveUserDataToStorage(userBasicData);
+
+        updateUserInterface();
+    } catch (error) {
+        console.error('Failed to load user profile:', error);
+        if (!error.message.includes('Требуется авторизация')) {
+            showNotification('Ошибка загрузки профиля: ' + error.message, 'error');
+        }
+    }
+}
+
+async function loadTransactions(page = 0, size = TRANSACTIONS_PER_PAGE) {
+    try {
+        const data = await apiCall(`/wallet/transactions?page=${page}&size=${size}`);
+        transactions = data;
+        displayTransactions(transactions);
+        currentPage = page;
+    } catch (error) {
+        console.error('Failed to load transactions:', error);
+        showNotification('Ошибка загрузки транзакций: ' + error.message, 'error');
+    }
+}
+
+async function depositFunds(depositRequest) {
+    try {
+        const data = await apiCall('/wallet/deposit', {
+            method: 'POST',
+            body: JSON.stringify(depositRequest)
+        });
+
+        showNotification(`Пополнение на ${formatMoney(depositRequest.amount)} выполнено успешно!`, 'success');
+
+        // Обновляем баланс и транзакции
+        await loadUserProfile();
+        await loadTransactions();
+
+        return data;
+    } catch (error) {
+        console.error('Failed to deposit funds:', error);
+        showNotification('Ошибка пополнения: ' + error.message, 'error');
+        throw error;
+    }
+}
+
+async function withdrawFunds(withdrawRequest) {
+    try {
+        const data = await apiCall('/wallet/withdraw', {
+            method: 'POST',
+            body: JSON.stringify(withdrawRequest)
+        });
+
+        showNotification(`Заявка на вывод ${formatMoney(withdrawRequest.amount)} отправлена!`, 'success');
+
+        // Обновляем баланс и транзакции
+        await loadUserProfile();
+        await loadTransactions();
+
+        return data;
+    } catch (error) {
+        console.error('Failed to withdraw funds:', error);
+        showNotification('Ошибка вывода средств: ' + error.message, 'error');
+        throw error;
+    }
+}
+
+// ==============================================
+// INITIALIZE
+// ==============================================
+
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Wallet page loaded');
+
+    checkAuthOnPageLoad();
     initializeWallet();
-    loadUserData();
+    loadUserProfile();
     loadTransactions();
-    loadPaymentMethods();
     setupEventListeners();
     initializeTheme();
+
+    console.log('✅ Wallet initialized successfully');
 });
 
-// Initialize wallet page
+function checkAuthOnPageLoad() {
+    const userData = getUserDataFromStorage();
+
+    if (!userData || !userData.email) {
+        console.warn('No user data found, redirecting to login...');
+        removeAuthData();
+        window.location.href = '/login';
+        return false;
+    }
+
+    return true;
+}
+
 function initializeWallet() {
-    // Set up mobile navigation
+    // Mobile navigation
     if (navToggle) {
         navToggle.addEventListener('click', toggleMobileMenu);
     }
@@ -32,196 +237,120 @@ function initializeWallet() {
         link.addEventListener('click', closeMobileMenu);
     });
 
-    // Set up amount buttons
+    // Setup components
     setupAmountButtons();
-    
-    // Set up payment options
     setupPaymentOptions();
 }
 
-// Load user data from localStorage
-function loadUserData() {
-    const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
-    
-    if (userData) {
-        currentUser = JSON.parse(userData);
-        updateUserInterface();
-    } else {
-        // Create demo user if no data exists
-        currentUser = {
-            name: 'Иван Иванов',
-            firstName: 'Иван',
-            lastName: 'Иванов',
-            email: 'ivan.ivanov@example.com',
-            wallet: 15000,
-            bonus: 2500,
-            avatar: '👤'
-        };
-        updateUserInterface();
-    }
-}
+// ==============================================
+// UI UPDATE FUNCTIONS
+// ==============================================
 
-// Update user interface with current user data
 function updateUserInterface() {
     if (!currentUser) return;
 
-    // Update navigation
     updateNavigationForLoggedInUser(currentUser);
+    updateWalletBalances();
+    updateMonthlyStats();
+}
 
-    // Update wallet balances
+function updateWalletBalances() {
+    if (!currentUser) return;
+
     const mainBalance = document.getElementById('mainBalance');
-    const bonusBalance = document.getElementById('bonusBalance');
     const userWallet = document.getElementById('userWallet');
     const availableBalance = document.getElementById('availableBalance');
 
-    if (mainBalance) mainBalance.textContent = currentUser.wallet ? currentUser.wallet.toLocaleString() + '₽' : '0₽';
-    if (bonusBalance) bonusBalance.textContent = currentUser.bonus ? currentUser.bonus.toLocaleString() + '₽' : '0₽';
-    if (userWallet) userWallet.textContent = currentUser.wallet ? currentUser.wallet.toLocaleString() + '₽' : '0₽';
-    if (availableBalance) availableBalance.textContent = currentUser.wallet ? currentUser.wallet.toLocaleString() + '₽' : '0₽';
+    const balanceText = formatMoney(currentUser.wallet) + '₽';
 
-    // Calculate monthly spent
+    if (mainBalance) mainBalance.textContent = balanceText;
+    if (userWallet) userWallet.textContent = balanceText;
+    if (availableBalance) availableBalance.textContent = balanceText;
+}
+
+function updateMonthlyStats() {
     const monthlySpent = calculateMonthlySpent();
     const monthlySpentElement = document.getElementById('monthlySpent');
     if (monthlySpentElement) {
-        monthlySpentElement.textContent = '-' + monthlySpent.toLocaleString() + '₽';
+        monthlySpentElement.textContent = '-' + formatMoney(monthlySpent) + '₽';
     }
 }
 
-// Calculate monthly spent amount
 function calculateMonthlySpent() {
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
     return transactions
         .filter(transaction => {
-            const transactionDate = new Date(transaction.date);
-            return transactionDate.getMonth() === currentMonth && 
-                   transactionDate.getFullYear() === currentYear &&
-                   transaction.type === 'expense';
+            const transactionDate = new Date(transaction.createdAt);
+            return transactionDate.getMonth() === currentMonth &&
+                transactionDate.getFullYear() === currentYear &&
+                (transaction.type === 'PAYMENT' || transaction.type === 'WITHDRAWAL');
         })
-        .reduce((total, transaction) => total + transaction.amount, 0);
+        .reduce((total, transaction) => total + Number(transaction.amount), 0);
 }
 
-// Update navigation for logged in user
 function updateNavigationForLoggedInUser(user) {
     const navAuth = document.querySelector('.nav-auth');
-    if (navAuth) {
-        navAuth.innerHTML = `
-            <div class="user-profile">
-                <div class="user-info">
-                    <div class="user-avatar">${user.avatar || '👤'}</div>
-                    <div class="user-details">
-                        <div class="user-name">${user.name || user.firstName + ' ' + user.lastName || 'Пользователь'}</div>
-                        <div class="user-wallet">
-                            <i class="fas fa-wallet"></i>
-                            <span>${user.wallet ? user.wallet.toLocaleString() + '₽' : '0₽'}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="user-menu">
-                    <button class="btn-auth btn-user" onclick="toggleUserMenu()">
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <div class="user-dropdown" id="userDropdown">
-                        <div class="dropdown-header">
-                            <div class="user-avatar-small">${user.avatar || '👤'}</div>
-                            <div>
-                                <div class="user-name-small">${user.name || user.firstName + ' ' + user.lastName || 'Пользователь'}</div>
-                                <div class="user-email-small">${user.email || ''}</div>
-                            </div>
-                        </div>
-                        <div class="dropdown-divider"></div>
-                       <a href="/profile" class="dropdown-item">
-                            <i class="fas fa-user"></i>
-                            Мой профиль
-                        </a>
-                        <a href="/booking" class="dropdown-item">
-                            <i class="fas fa-calendar"></i>
-                            Мои бронирования
-                        </a>
-                        <a href="/wallet" class="dropdown-item">
-                            <i class="fas fa-wallet"></i>
-                            Кошелек
-                        </a>
-                        <a href="/setting" class="dropdown-item">
-                            <i class="fas fa-cog"></i>
-                            Настройки
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item logout-item" onclick="logout()">
-                            <i class="fas fa-sign-out-alt"></i>
-                            Выйти
-                        </a>
+    if (!navAuth) return;
+
+    navAuth.innerHTML = `
+        <div class="user-profile">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">${user.avatar || '👤'}</div>
+                <div class="user-details">
+                    <div class="user-name" id="userName">${user.name || 'Пользователь'}</div>
+                    <div class="user-wallet">
+                        <i class="fas fa-wallet"></i>
+                        <span id="navWalletAmount">${formatMoney(user.wallet)}₽</span>
                     </div>
                 </div>
             </div>
-        `;
-    }
+            <div class="user-menu">
+                <button class="btn-auth btn-user" onclick="toggleUserMenu()">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-header">
+                        <div class="user-avatar-small">${user.avatar || '👤'}</div>
+                        <div>
+                            <div class="user-name-small">${user.name || 'Пользователь'}</div>
+                            <div class="user-email-small">${user.email || ''}</div>
+                        </div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a href="/profile" class="dropdown-item">
+                        <i class="fas fa-user"></i>
+                        Мой профиль
+                    </a>
+                    <a href="/booking" class="dropdown-item">
+                        <i class="fas fa-calendar"></i>
+                        Мои бронирования
+                    </a>
+                    <a href="/wallet" class="dropdown-item active">
+                        <i class="fas fa-wallet"></i>
+                        Кошелек
+                    </a>
+                    <a href="/setting" class="dropdown-item">
+                        <i class="fas fa-cog"></i>
+                        Настройки
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item logout-item" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Выйти
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
-// Load demo transactions
-function loadTransactions() {
-    transactions = [
-        {
-            id: 1,
-            type: 'expense',
-            title: 'Бронирование номера',
-            description: 'Отель "Райский уголок" - Люкс',
-            amount: 8500,
-            date: new Date('2024-01-15'),
-            icon: 'fas fa-bed'
-        },
-        {
-            id: 2,
-            type: 'income',
-            title: 'Пополнение счета',
-            description: 'Перевод с карты **** 1234',
-            amount: 10000,
-            date: new Date('2024-01-14'),
-            icon: 'fas fa-plus'
-        },
-        {
-            id: 3,
-            type: 'bonus',
-            title: 'Бонус за отзыв',
-            description: 'Начислен бонус за отзыв об отеле',
-            amount: 500,
-            date: new Date('2024-01-13'),
-            icon: 'fas fa-gift'
-        },
-        {
-            id: 4,
-            type: 'expense',
-            title: 'Дополнительные услуги',
-            description: 'СПА-процедуры и массаж',
-            amount: 2500,
-            date: new Date('2024-01-12'),
-            icon: 'fas fa-spa'
-        },
-        {
-            id: 5,
-            type: 'income',
-            title: 'Возврат средств',
-            description: 'Отмена бронирования',
-            amount: 3500,
-            date: new Date('2024-01-10'),
-            icon: 'fas fa-undo'
-        },
-        {
-            id: 6,
-            type: 'bonus',
-            title: 'Бонус за регистрацию',
-            description: 'Добро пожаловать в нашу систему!',
-            amount: 1000,
-            date: new Date('2024-01-01'),
-            icon: 'fas fa-star'
-        }
-    ];
+// ==============================================
+// TRANSACTION DISPLAY
+// ==============================================
 
-    displayTransactions(transactions);
-}
-
-// Display transactions
 function displayTransactions(transactionsToShow) {
     const transactionsList = document.getElementById('transactionsList');
     if (!transactionsList) return;
@@ -239,96 +368,260 @@ function displayTransactions(transactionsToShow) {
     }
 
     transactionsList.innerHTML = transactionsToShow
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .map(transaction => `
-            <div class="transaction-item">
-                <div class="transaction-icon ${transaction.type}">
-                    <i class="${transaction.icon}"></i>
+        .map(transaction => {
+            const icon = getTransactionIcon(transaction.type);
+            const typeClass = getTransactionTypeClass(transaction.type);
+            const isPositive = transaction.type === 'DEPOSIT' || transaction.type === 'REFUND';
+
+            return `
+                <div class="transaction-item">
+                    <div class="transaction-icon ${typeClass}">
+                        <i class="${icon}"></i>
+                    </div>
+                    <div class="transaction-details">
+                        <div class="transaction-title">${getTransactionTitle(transaction.type)}</div>
+                        <div class="transaction-description">${transaction.description || 'Без описания'}</div>
+                        <div class="transaction-status">
+                            <span class="badge badge-${transaction.status.toLowerCase()}">${getStatusText(transaction.status)}</span>
+                        </div>
+                    </div>
+                    <div class="transaction-amount ${isPositive ? 'positive' : 'negative'}">
+                        ${isPositive ? '+' : '-'}${formatMoney(transaction.amount)}₽
+                    </div>
+                    <div class="transaction-date">
+                        ${formatDate(transaction.createdAt)}
+                    </div>
                 </div>
-                <div class="transaction-details">
-                    <div class="transaction-title">${transaction.title}</div>
-                    <div class="transaction-description">${transaction.description}</div>
-                </div>
-                <div class="transaction-amount ${transaction.type === 'income' || transaction.type === 'bonus' ? 'positive' : 'negative'}">
-                    ${transaction.type === 'income' || transaction.type === 'bonus' ? '+' : '-'}${transaction.amount.toLocaleString()}₽
-                </div>
-                <div class="transaction-date">
-                    ${formatDate(transaction.date)}
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
 }
 
-// Load demo payment methods
-function loadPaymentMethods() {
-    paymentMethods = [
-        {
-            id: 1,
-            type: 'card',
-            name: 'Visa **** 1234',
-            description: 'Основная карта',
-            icon: 'fas fa-credit-card',
-            isDefault: true
-        },
-        {
-            id: 2,
-            type: 'card',
-            name: 'Mastercard **** 5678',
-            description: 'Резервная карта',
-            icon: 'fas fa-credit-card',
-            isDefault: false
-        },
-        {
-            id: 3,
-            type: 'bank',
-            name: 'Сбербанк',
-            description: 'Банковский перевод',
-            icon: 'fas fa-university',
-            isDefault: false
-        }
-    ];
-
-    displayPaymentMethods();
+function getTransactionIcon(type) {
+    const icons = {
+        DEPOSIT: 'fas fa-plus',
+        WITHDRAWAL: 'fas fa-minus',
+        PAYMENT: 'fas fa-bed',
+        REFUND: 'fas fa-undo'
+    };
+    return icons[type] || 'fas fa-exchange-alt';
 }
 
-// Display payment methods
-function displayPaymentMethods() {
-    const paymentCards = document.getElementById('paymentCards');
-    if (!paymentCards) return;
-
-    paymentCards.innerHTML = paymentMethods.map(method => `
-        <div class="payment-card">
-            <div class="payment-card-icon">
-                <i class="${method.icon}"></i>
-            </div>
-            <div class="payment-card-details">
-                <h4>${method.name}</h4>
-                <p>${method.description}</p>
-            </div>
-            <div class="payment-card-actions">
-                ${method.isDefault ? '<span class="badge">Основной</span>' : ''}
-                <button class="btn btn-outline" onclick="removePaymentMethod(${method.id})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        </div>
-    `).join('');
+function getTransactionTypeClass(type) {
+    return (type === 'DEPOSIT' || type === 'REFUND') ? 'income' : 'expense';
 }
 
-// Setup amount buttons
+function getTransactionTitle(type) {
+    const titles = {
+        DEPOSIT: 'Пополнение счета',
+        WITHDRAWAL: 'Вывод средств',
+        PAYMENT: 'Оплата бронирования',
+        REFUND: 'Возврат средств'
+    };
+    return titles[type] || 'Транзакция';
+}
+
+function getStatusText(status) {
+    const statuses = {
+        PENDING: 'Ожидает',
+        COMPLETED: 'Завершена',
+        FAILED: 'Ошибка',
+        CANCELLED: 'Отменена'
+    };
+    return statuses[status] || status;
+}
+
+// ==============================================
+// FILTER FUNCTIONS
+// ==============================================
+
+function filterTransactions(filter) {
+    const filterTabs = document.querySelectorAll('.filter-tab');
+
+    let transactionsToShow = transactions;
+
+    if (filter === 'income') {
+        transactionsToShow = transactions.filter(t => t.type === 'DEPOSIT' || t.type === 'REFUND');
+    } else if (filter === 'expense') {
+        transactionsToShow = transactions.filter(t => t.type === 'PAYMENT' || t.type === 'WITHDRAWAL');
+    }
+
+    // Update active tab
+    filterTabs.forEach(tab => tab.classList.remove('active'));
+    const activeTab = document.querySelector(`[data-filter="${filter}"]`);
+    if (activeTab) activeTab.classList.add('active');
+
+    displayTransactions(transactionsToShow);
+}
+
+async function loadMoreTransactions() {
+    currentPage++;
+    await loadTransactions(currentPage);
+}
+
+// ==============================================
+// MODAL FUNCTIONS
+// ==============================================
+
+function openTopUpModal() {
+    const modal = document.getElementById('topUpModal');
+    if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeTopUpModal() {
+    const modal = document.getElementById('topUpModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = 'auto';
+        resetTopUpForm();
+    }
+}
+
+function resetTopUpForm() {
+    const form = document.getElementById('topUpForm');
+    if (form) {
+        form.reset();
+        document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('selected'));
+        document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+    }
+}
+
+function openWithdrawModal() {
+    const modal = document.getElementById('withdrawModal');
+    if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeWithdrawModal() {
+    const modal = document.getElementById('withdrawModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = 'auto';
+        const form = document.getElementById('withdrawForm');
+        if (form) form.reset();
+    }
+}
+
+function openHistoryModal() {
+    const modal = document.getElementById('historyModal');
+    if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        displayHistoryTransactions();
+    }
+}
+
+function closeHistoryModal() {
+    const modal = document.getElementById('historyModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = 'auto';
+    }
+}
+
+function displayHistoryTransactions() {
+    const historyList = document.getElementById('historyList');
+    if (!historyList) return;
+
+    displayTransactions(transactions);
+}
+
+// ==============================================
+// FORM HANDLERS
+// ==============================================
+
+async function handleTopUpForm(e) {
+    e.preventDefault();
+
+    const selectedAmount = document.querySelector('.amount-btn.selected');
+    const customAmount = document.getElementById('customAmount')?.value;
+    const selectedPayment = document.querySelector('.payment-option.selected');
+
+    let amount = 0;
+    if (selectedAmount) {
+        amount = parseInt(selectedAmount.getAttribute('data-amount'));
+    } else if (customAmount) {
+        amount = parseInt(customAmount);
+    }
+
+    if (amount < 100) {
+        showNotification('Минимальная сумма пополнения: 100₽', 'error');
+        return;
+    }
+
+    if (!selectedPayment) {
+        showNotification('Выберите способ оплаты', 'error');
+        return;
+    }
+
+    const paymentMethod = selectedPayment.getAttribute('data-option').toUpperCase();
+
+    const depositRequest = {
+        amount: amount,
+        currency: 'BYN',
+        paymentMethod: paymentMethod,
+        description: `Пополнение через ${selectedPayment.querySelector('h4')?.textContent}`
+    };
+
+    try {
+        await depositFunds(depositRequest);
+        closeTopUpModal();
+    } catch (error) {
+        // Ошибка уже обработана в depositFunds
+    }
+}
+
+async function handleWithdrawForm(e) {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const amount = parseFloat(formData.get('withdrawAmount'));
+    const withdrawMethod = formData.get('withdrawCard') || 'BANK_CARD';
+    const withdrawDetails = formData.get('cardNumber') || formData.get('withdrawCard');
+
+    if (!amount || amount < 10) {
+        showNotification('Минимальная сумма вывода: 10₽', 'error');
+        return;
+    }
+
+    if (!withdrawDetails) {
+        showNotification('Укажите реквизиты для вывода', 'error');
+        return;
+    }
+
+    const withdrawRequest = {
+        amount: amount,
+        currency: 'BYN',
+        withdrawalMethod: withdrawMethod,
+        withdrawalDetails: withdrawDetails,
+        description: 'Вывод средств на карту'
+    };
+
+    try {
+        await withdrawFunds(withdrawRequest);
+        closeWithdrawModal();
+    } catch (error) {
+        // Ошибка уже обработана в withdrawFunds
+    }
+}
+
+// ==============================================
+// SETUP FUNCTIONS
+// ==============================================
+
 function setupAmountButtons() {
     const amountButtons = document.querySelectorAll('.amount-btn');
     const customAmountInput = document.getElementById('customAmount');
 
     amountButtons.forEach(button => {
         button.addEventListener('click', function() {
-            // Remove selected class from all buttons
             amountButtons.forEach(btn => btn.classList.remove('selected'));
-            
-            // Add selected class to clicked button
             this.classList.add('selected');
-            
-            // Clear custom amount input
+
             if (customAmountInput) {
                 customAmountInput.value = '';
             }
@@ -337,13 +630,11 @@ function setupAmountButtons() {
 
     if (customAmountInput) {
         customAmountInput.addEventListener('input', function() {
-            // Remove selected class from all buttons when custom amount is entered
             amountButtons.forEach(btn => btn.classList.remove('selected'));
         });
     }
 }
 
-// Setup payment options
 function setupPaymentOptions() {
     const paymentOptions = document.getElementById('paymentOptions');
     if (!paymentOptions) return;
@@ -381,7 +672,6 @@ function setupPaymentOptions() {
         </div>
     `).join('');
 
-    // Add click handlers
     const paymentOptionElements = document.querySelectorAll('.payment-option');
     paymentOptionElements.forEach(option => {
         option.addEventListener('click', function() {
@@ -391,348 +681,20 @@ function setupPaymentOptions() {
     });
 }
 
-// Filter transactions
-function filterTransactions(filter) {
-    const filterTabs = document.querySelectorAll('.filter-tab');
-    const transactionsToShow = filter === 'all' ? transactions : transactions.filter(t => t.type === filter);
+// ==============================================
+// NAVIGATION
+// ==============================================
 
-    // Update active tab
-    filterTabs.forEach(tab => tab.classList.remove('active'));
-    document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
-
-    // Display filtered transactions
-    displayTransactions(transactionsToShow);
-}
-
-// Load more transactions
-function loadMoreTransactions() {
-    showNotification('Загружено больше транзакций', 'info');
-}
-
-// Open top up modal
-function openTopUpModal() {
-    const modal = document.getElementById('topUpModal');
-    if (modal) {
-        modal.classList.add('show');
-        document.body.style.overflow = 'hidden';
-    }
-}
-
-// Close top up modal
-function closeTopUpModal() {
-    const modal = document.getElementById('topUpModal');
-    if (modal) {
-        modal.classList.remove('show');
-        document.body.style.overflow = 'auto';
-        resetTopUpForm();
-    }
-}
-
-// Reset top up form
-function resetTopUpForm() {
-    const form = document.getElementById('topUpForm');
-    if (form) {
-        form.reset();
-        document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('selected'));
-        document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
-    }
-}
-
-// Open withdraw modal
-function openWithdrawModal() {
-    const modal = document.getElementById('withdrawModal');
-    if (modal) {
-        modal.classList.add('show');
-        document.body.style.overflow = 'hidden';
-        updateWithdrawCardOptions();
-    }
-}
-
-// Close withdraw modal
-function closeWithdrawModal() {
-    const modal = document.getElementById('withdrawModal');
-    if (modal) {
-        modal.classList.remove('show');
-        document.body.style.overflow = 'auto';
-        document.getElementById('withdrawForm').reset();
-    }
-}
-
-// Update withdraw card options
-function updateWithdrawCardOptions() {
-    const select = document.getElementById('withdrawCard');
-    if (!select) return;
-
-    select.innerHTML = '<option value="">Выберите карту</option>' +
-        paymentMethods
-            .filter(method => method.type === 'card')
-            .map(method => `<option value="${method.id}">${method.name}</option>`)
-            .join('');
-}
-
-// Open transfer modal
-function openTransferModal() {
-    const modal = document.getElementById('transferModal');
-    if (modal) {
-        modal.classList.add('show');
-        document.body.style.overflow = 'hidden';
-    }
-}
-
-// Close transfer modal
-function closeTransferModal() {
-    const modal = document.getElementById('transferModal');
-    if (modal) {
-        modal.classList.remove('show');
-        document.body.style.overflow = 'auto';
-        document.getElementById('transferForm').reset();
-    }
-}
-
-// Open history modal
-function openHistoryModal() {
-    const modal = document.getElementById('historyModal');
-    if (modal) {
-        modal.classList.add('show');
-        document.body.style.overflow = 'hidden';
-        displayHistoryTransactions();
-    }
-}
-
-// Close history modal
-function closeHistoryModal() {
-    const modal = document.getElementById('historyModal');
-    if (modal) {
-        modal.classList.remove('show');
-        document.body.style.overflow = 'auto';
-    }
-}
-
-// Display history transactions
-function displayHistoryTransactions() {
-    const historyList = document.getElementById('historyList');
-    if (!historyList) return;
-
-    historyList.innerHTML = transactions
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .map(transaction => `
-            <div class="transaction-item">
-                <div class="transaction-icon ${transaction.type}">
-                    <i class="${transaction.icon}"></i>
-                </div>
-                <div class="transaction-details">
-                    <div class="transaction-title">${transaction.title}</div>
-                    <div class="transaction-description">${transaction.description}</div>
-                </div>
-                <div class="transaction-amount ${transaction.type === 'income' || transaction.type === 'bonus' ? 'positive' : 'negative'}">
-                    ${transaction.type === 'income' || transaction.type === 'bonus' ? '+' : '-'}${transaction.amount.toLocaleString()}₽
-                </div>
-                <div class="transaction-date">
-                    ${formatDate(transaction.date)}
-                </div>
-            </div>
-        `).join('');
-}
-
-// Apply history filters
-function applyHistoryFilters() {
-    const dateFrom = document.getElementById('dateFrom').value;
-    const dateTo = document.getElementById('dateTo').value;
-    const typeFilter = document.getElementById('typeFilter').value;
-
-    let filteredTransactions = transactions;
-
-    if (dateFrom) {
-        filteredTransactions = filteredTransactions.filter(t => new Date(t.date) >= new Date(dateFrom));
-    }
-
-    if (dateTo) {
-        filteredTransactions = filteredTransactions.filter(t => new Date(t.date) <= new Date(dateTo));
-    }
-
-    if (typeFilter) {
-        filteredTransactions = filteredTransactions.filter(t => t.type === typeFilter);
-    }
-
-    displayHistoryTransactions(filteredTransactions);
-}
-
-// Add payment method
-function addPaymentMethod() {
-    showNotification('Функция добавления карты будет доступна в следующей версии', 'info');
-}
-
-// Remove payment method
-function removePaymentMethod(methodId) {
-    if (confirm('Вы уверены, что хотите удалить этот способ оплаты?')) {
-        paymentMethods = paymentMethods.filter(method => method.id !== methodId);
-        displayPaymentMethods();
-        showNotification('Способ оплаты удален', 'success');
-    }
-}
-
-// Handle top up form submission
-function handleTopUpForm(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(e.target);
-    const selectedAmount = document.querySelector('.amount-btn.selected');
-    const customAmount = document.getElementById('customAmount').value;
-    const selectedPayment = document.querySelector('.payment-option.selected');
-    
-    let amount = 0;
-    if (selectedAmount) {
-        amount = parseInt(selectedAmount.getAttribute('data-amount'));
-    } else if (customAmount) {
-        amount = parseInt(customAmount);
-    }
-
-    if (amount < 100) {
-        showNotification('Минимальная сумма пополнения: 100₽', 'error');
-        return;
-    }
-
-    if (!selectedPayment) {
-        showNotification('Выберите способ оплаты', 'error');
-        return;
-    }
-
-    // Simulate top up
-    showNotification('Пополнение на ' + amount.toLocaleString() + '₽ успешно выполнено!', 'success');
-    
-    // Update balance
-    currentUser.wallet += amount;
-    localStorage.setItem('userData', JSON.stringify(currentUser));
-    updateUserInterface();
-    
-    // Add transaction
-    addTransaction('income', 'Пополнение счета', 'Пополнение через ' + selectedPayment.querySelector('h4').textContent, amount);
-    
-    closeTopUpModal();
-}
-
-// Handle withdraw form submission
-function handleWithdrawForm(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(e.target);
-    const amount = parseInt(formData.get('withdrawAmount'));
-    const cardId = formData.get('withdrawCard');
-    const comment = formData.get('withdrawComment');
-
-    if (amount > currentUser.wallet) {
-        showNotification('Недостаточно средств на счете', 'error');
-        return;
-    }
-
-    if (amount < 100) {
-        showNotification('Минимальная сумма вывода: 100₽', 'error');
-        return;
-    }
-
-    if (!cardId) {
-        showNotification('Выберите карту для вывода', 'error');
-        return;
-    }
-
-    // Simulate withdraw
-    showNotification('Заявка на вывод ' + amount.toLocaleString() + '₽ отправлена!', 'success');
-    
-    // Update balance
-    currentUser.wallet -= amount;
-    localStorage.setItem('userData', JSON.stringify(currentUser));
-    updateUserInterface();
-    
-    // Add transaction
-    addTransaction('expense', 'Вывод средств', 'Вывод на карту', amount);
-    
-    closeWithdrawModal();
-}
-
-// Handle transfer form submission
-function handleTransferForm(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(e.target);
-    const email = formData.get('transferEmail');
-    const amount = parseInt(formData.get('transferAmount'));
-    const comment = formData.get('transferComment');
-
-    if (amount > currentUser.wallet) {
-        showNotification('Недостаточно средств на счете', 'error');
-        return;
-    }
-
-    if (amount < 1) {
-        showNotification('Минимальная сумма перевода: 1₽', 'error');
-        return;
-    }
-
-    if (!isValidEmail(email)) {
-        showNotification('Введите корректный email', 'error');
-        return;
-    }
-
-    // Simulate transfer
-    showNotification('Перевод ' + amount.toLocaleString() + '₽ на ' + email + ' выполнен!', 'success');
-    
-    // Update balance
-    currentUser.wallet -= amount;
-    localStorage.setItem('userData', JSON.stringify(currentUser));
-    updateUserInterface();
-    
-    // Add transaction
-    addTransaction('expense', 'Перевод средств', 'Перевод пользователю ' + email, amount);
-    
-    closeTransferModal();
-}
-
-// Add transaction
-function addTransaction(type, title, description, amount) {
-    const newTransaction = {
-        id: Date.now(),
-        type: type,
-        title: title,
-        description: description,
-        amount: amount,
-        date: new Date(),
-        icon: type === 'income' ? 'fas fa-plus' : type === 'bonus' ? 'fas fa-gift' : 'fas fa-minus'
-    };
-
-    transactions.unshift(newTransaction);
-    displayTransactions(transactions);
-}
-
-// Format date
-function formatDate(date) {
-    return new Date(date).toLocaleDateString('ru-RU', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}
-
-// Email validation
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-// Mobile navigation toggle
 function toggleMobileMenu() {
     navMenu.classList.toggle('active');
     navToggle.classList.toggle('active');
 }
 
-// Close mobile menu
 function closeMobileMenu() {
     navMenu.classList.remove('active');
     navToggle.classList.remove('active');
 }
 
-// Toggle user menu
 function toggleUserMenu() {
     const dropdown = document.getElementById('userDropdown');
     if (dropdown) {
@@ -740,23 +702,73 @@ function toggleUserMenu() {
     }
 }
 
-// Logout function
-function logout() {
-    showNotification('Вы вышли из системы', 'info');
-    
-    // Clear user data
-    localStorage.removeItem('userData');
-    sessionStorage.removeItem('userData');
-    
-    // Redirect to home page
-    window.location.href = '../home.html';
+// ==============================================
+// LOGOUT
+// ==============================================
+
+async function logout() {
+    try {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+
+        showNotification('Вы вышли из системы', 'info');
+    } catch (error) {
+        console.error('Logout error:', error);
+    } finally {
+        removeAuthData();
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, 1000);
+    }
 }
 
-// Header scroll effect
+// ==============================================
+// THEME MANAGEMENT
+// ==============================================
+
+function initializeTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
+}
+
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+
+    const themeIcon = document.getElementById('themeIcon');
+    if (themeIcon) {
+        themeIcon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+    }
+
+    handleHeaderScroll();
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+
+    const themeBtn = document.getElementById('themeToggle');
+    if (themeBtn) {
+        themeBtn.style.transform = 'scale(0.8)';
+        setTimeout(() => {
+            themeBtn.style.transform = 'scale(1)';
+        }, 150);
+    }
+}
+
+// ==============================================
+// HEADER SCROLL EFFECT
+// ==============================================
+
 function handleHeaderScroll() {
     const header = document.querySelector('.header');
     const currentTheme = document.documentElement.getAttribute('data-theme');
-    
+
+    if (!header) return;
+
     if (window.scrollY > 100) {
         if (currentTheme === 'dark') {
             header.style.background = 'rgba(15, 23, 42, 0.98)';
@@ -775,41 +787,10 @@ function handleHeaderScroll() {
     }
 }
 
-// Theme management
-function initTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    setTheme(savedTheme);
-}
+// ==============================================
+// EVENT LISTENERS
+// ==============================================
 
-function setTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-    
-    const themeIcon = document.getElementById('themeIcon');
-    if (themeIcon) {
-        themeIcon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
-    }
-    
-    // Update header background immediately
-    handleHeaderScroll();
-}
-
-function toggleTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    
-    // Add animation to theme button
-    const themeBtn = document.getElementById('themeToggle');
-    if (themeBtn) {
-        themeBtn.style.transform = 'scale(0.8)';
-        setTimeout(() => {
-            themeBtn.style.transform = 'scale(1)';
-        }, 150);
-    }
-}
-
-// Setup event listeners
 function setupEventListeners() {
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
@@ -827,7 +808,6 @@ function setupEventListeners() {
         if (e.target.classList.contains('modal')) {
             closeTopUpModal();
             closeWithdrawModal();
-            closeTransferModal();
             closeHistoryModal();
         }
     });
@@ -837,7 +817,6 @@ function setupEventListeners() {
         if (e.key === 'Escape') {
             closeTopUpModal();
             closeWithdrawModal();
-            closeTransferModal();
             closeHistoryModal();
         }
     });
@@ -852,20 +831,41 @@ function setupEventListeners() {
     if (withdrawForm) {
         withdrawForm.addEventListener('submit', handleWithdrawForm);
     }
-
-    const transferForm = document.getElementById('transferForm');
-    if (transferForm) {
-        transferForm.addEventListener('submit', handleTransferForm);
-    }
 }
 
-// Notification system
+// ==============================================
+// UTILITIES
+// ==============================================
+
+function formatMoney(amount) {
+    const num = Number(amount) || 0;
+    return num.toLocaleString('ru-RU', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+    });
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '';
+
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// ==============================================
+// NOTIFICATION SYSTEM
+// ==============================================
+
 function showNotification(message, type = 'info') {
-    // Remove existing notifications
     const existingNotifications = document.querySelectorAll('.notification');
     existingNotifications.forEach(notification => notification.remove());
 
-    // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
@@ -878,25 +878,22 @@ function showNotification(message, type = 'info') {
         </div>
     `;
 
-    // Add styles
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        z-index: 10000;
-        animation: slideInRight 0.3s ease;
-        max-width: 400px;
-    `;
+    Object.assign(notification.style, {
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        background: type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6',
+        color: 'white',
+        padding: '1rem 1.5rem',
+        borderRadius: '12px',
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+        zIndex: '10000',
+        animation: 'slideInRight 0.3s ease',
+        maxWidth: '400px'
+    });
 
-    // Add to document
     document.body.appendChild(notification);
 
-    // Auto remove after 5 seconds
     setTimeout(() => {
         if (notification.parentElement) {
             notification.style.animation = 'slideOutRight 0.3s ease';
@@ -906,44 +903,83 @@ function showNotification(message, type = 'info') {
 }
 
 // Add notification styles
-const notificationStyles = document.createElement('style');
-notificationStyles.textContent = `
-    .notification-content {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-    
-    .notification-close {
-        background: none;
-        border: none;
-        color: white;
-        cursor: pointer;
-        padding: 0;
-        margin-left: auto;
-    }
-    
-    @keyframes slideInRight {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
+if (!document.querySelector('#notification-styles')) {
+    const notificationStyles = document.createElement('style');
+    notificationStyles.id = 'notification-styles';
+    notificationStyles.textContent = `
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
-        to {
-            transform: translateX(0);
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 0;
+            margin-left: auto;
+            font-size: 1.1rem;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+        
+        .notification-close:hover {
             opacity: 1;
         }
-    }
-    
-    @keyframes slideOutRight {
-        from {
-            transform: translateX(0);
-            opacity: 1;
+        
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
         }
-        to {
-            transform: translateX(100%);
-            opacity: 0;
+        
+        .badge-pending {
+            background: #fbbf24;
+            color: #78350f;
         }
-    }
-`;
-document.head.appendChild(notificationStyles);
+        
+        .badge-completed {
+            background: #10b981;
+            color: white;
+        }
+        
+        .badge-failed {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .badge-cancelled {
+            background: #6b7280;
+            color: white;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(notificationStyles);
+}
 
+console.log('Wallet script initialized successfully');

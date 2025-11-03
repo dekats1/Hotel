@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
 
 @Builder
@@ -12,7 +13,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class
 UserProfileResponse {
-    String id;
+    UUID id;
     String email;
     String firstName;
     String lastName;

@@ -825,7 +825,56 @@ document.addEventListener('DOMContentLoaded', function() {
     document.head.appendChild(rippleStyles);
 });
 
-// Глобальные функции для доступа из HTML
+// ==============================================
+// SEARCH REDIRECT TO CATALOG
+// ==============================================
+
+/**
+ * Переход на страницу каталога с параметрами поиска
+ */
+function redirectToCatalog() {
+    // Получаем значения из формы поиска
+    const checkIn = document.getElementById('checkIn')?.value;
+    const checkOut = document.getElementById('checkOut')?.value;
+    const guests = document.getElementById('guests')?.value || '2';
+    const roomType = document.getElementById('roomType')?.value || '';
+
+    // Формируем URL с параметрами
+    const params = new URLSearchParams();
+
+    if (checkIn) params.append('checkIn', checkIn);
+    if (checkOut) params.append('checkOut', checkOut);
+    if (guests) params.append('guests', guests);
+    if (roomType) params.append('type', roomType);
+
+    // Перенаправляем на страницу каталога
+    const url = `/catalog?${params.toString()}`;
+    console.log('Redirecting to catalog:', url);
+    window.location.href = url;
+}
+
+// Привязываем функцию к форме поиска на главной странице
+document.addEventListener('DOMContentLoaded', () => {
+    const searchForm = document.getElementById('searchForm'); // или другой ID вашей формы
+
+    if (searchForm) {
+        searchForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            redirectToCatalog();
+        });
+    }
+
+    const searchBtn = document.getElementById('searchBtn'); // ID кнопки поиска
+    if (searchBtn) {
+        searchBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            redirectToCatalog();
+        });
+    }
+});
+
+
+
 window.toggleTheme = toggleTheme;
 window.scrollToSearch = scrollToSearch;
 window.scrollToRooms = scrollToRooms;
@@ -833,4 +882,3 @@ window.toggleUserMenu = toggleUserMenu;
 window.logout = logout;
 window.login = login;
 window.register = register;
-// ⚠️ УДАЛЕНЫ: window.testAuthApi, window.simulateSuccessfulRegistration, window.debugApiResponse
