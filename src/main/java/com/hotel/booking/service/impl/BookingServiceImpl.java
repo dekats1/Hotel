@@ -11,6 +11,7 @@ import com.hotel.booking.repository.BookingRepository;
 import com.hotel.booking.repository.RoomRepository;
 import com.hotel.booking.repository.UserRepository;
 import com.hotel.booking.service.BookingService;
+import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -65,7 +66,8 @@ public class BookingServiceImpl implements BookingService {
 
     Booking saved = bookingRepository.save(booking);
     log.info("Booking created: {}", saved.getId());
-
+    user.setBalance(user.getBalance() .subtract(saved.getTotalPrice()));
+    userRepository.save(user);
     return bookingMapper.toResponse(saved);
   }
 
@@ -94,12 +96,10 @@ public class BookingServiceImpl implements BookingService {
     Booking booking = bookingRepository.findBookingById(bookingId)
             .orElseThrow(() -> new RuntimeException("Booking not found: " + bookingId));
 
-    // Проверка, что бронирование принадлежит пользователю
     if (!booking.getUser().getEmail().equals(userEmail)) {
       throw new RuntimeException("Access denied: this booking does not belong to you");
     }
 
-    // Проверка, что бронирование можно отменить
     if (booking.getStatus() == BookingStatus.CANCELLED) {
       throw new RuntimeException("Booking is already cancelled");
     }

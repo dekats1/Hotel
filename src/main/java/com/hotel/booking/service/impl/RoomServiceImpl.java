@@ -5,6 +5,7 @@ import com.hotel.booking.dto.response.room.RoomDTOResponse;
 import com.hotel.booking.mapper.RoomMapper;
 import com.hotel.booking.repository.RoomRepository;
 import com.hotel.booking.service.RoomService;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,5 +43,11 @@ public class RoomServiceImpl implements RoomService {
     }
 
     return dtos;
+  }
+
+  @Override
+  public List<RoomDTOResponse> getAvailableRooms(LocalDate checkIn, LocalDate checkOut, String type,
+      Integer guests) {
+    return List.of();
   }
 }

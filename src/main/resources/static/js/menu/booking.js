@@ -7,6 +7,7 @@ const USER_DATA_KEY = 'user_data';
 
 let currentUser = null;
 let bookings = [];
+let userReviews = [];
 let currentFilter = 'all';
 
 // ==============================================
@@ -79,6 +80,17 @@ async function loadUserBookings() {
     }
 }
 
+// ✅ НОВАЯ ФУНКЦИЯ: Загрузка отзывов пользователя
+async function loadUserReviews() {
+    try {
+        userReviews = await apiCall('/review/getUserReviews');
+        console.log('User reviews loaded:', userReviews);
+    } catch (error) {
+        console.error('Failed to load reviews:', error);
+        userReviews = [];
+    }
+}
+
 async function cancelBooking(bookingId) {
     try {
         await apiCall(`/booking/${bookingId}/cancel`, { method: 'PUT' });
@@ -88,6 +100,30 @@ async function cancelBooking(bookingId) {
     } catch (error) {
         console.error('Failed to cancel booking:', error);
         showNotification('Ошибка отмены: ' + error.message, 'error');
+    }
+}
+
+// ✅ НОВАЯ ФУНКЦИЯ: Отправка отзыва
+async function submitReview(bookingId, rating, comment) {
+    try {
+        await apiCall('/reviews/addReview', {
+            method: 'POST',
+            body: JSON.stringify({
+                bookingId: bookingId,
+                rating: rating,
+                comment: comment
+            })
+        });
+
+        showNotification('Отзыв успешно отправлен!', 'success');
+        closeReviewModal();
+
+        // Перезагружаем отзывы и бронирования
+        await loadUserReviews();
+        await loadUserBookings();
+    } catch (error) {
+        console.error('Failed to submit review:', error);
+        showNotification('Ошибка при отправке отзыва: ' + error.message, 'error');
     }
 }
 
@@ -105,6 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeBooking();
     loadUserProfile();
     loadUserBookings();
+    loadUserReviews(); // ✅ НОВОЕ: Загружаем отзывы
     setupEventListeners();
     initializeTheme();
 });
@@ -173,6 +210,11 @@ function updateUserInterface() {
     }
 }
 
+// ✅ НОВАЯ ФУНКЦИЯ: Проверка наличия отзыва для бронирования
+function hasReviewForBooking(bookingId) {
+    return userReviews.some(review => review.bookingId === bookingId);
+}
+
 function displayBookings(bookingsToShow) {
     const bookingsList = document.getElementById('bookingsList');
     if (!bookingsList) return;
@@ -183,12 +225,13 @@ function displayBookings(bookingsToShow) {
     }
 
     bookingsList.innerHTML = bookingsToShow
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .map(booking => {
-            const status = getBookingStatus(booking);
-            const nights = calculateNights(booking.checkInDate, booking.checkOutDate);
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .map(booking => {
+        const status = getBookingStatus(booking);
+        const nights = calculateNights(booking.checkInDate, booking.checkOutDate);
+        const canReview = status === 'completed' && !hasReviewForBooking(booking.id);
 
-            return `
+        return `
                 <div class="booking-card ${status}">
                     <div class="booking-header-info">
                         <div class="booking-title-info">
@@ -205,12 +248,28 @@ function displayBookings(bookingsToShow) {
                         <div class="booking-detail"><i class="fas fa-ruble-sign"></i> Сумма: <strong>${formatMoney(booking.totalPrice)}₽</strong></div>
                     </div>
                     <div class="booking-actions">
-                        <button class="booking-action-btn" onclick="viewBookingDetails('${booking.id}')"><i class="fas fa-eye"></i> Подробнее</button>
-                        ${status === 'upcoming' ? `<button class="booking-action-btn" onclick="handleCancelBooking('${booking.id}')"><i class="fas fa-times"></i> Отменить</button>` : ''}
+                        <button class="booking-action-btn" onclick="viewBookingDetails('${booking.id}')">
+                            <i class="fas fa-eye"></i> Подробнее
+                        </button>
+                        ${status === 'upcoming' ? `
+                            <button class="booking-action-btn" onclick="handleCancelBooking('${booking.id}')">
+                                <i class="fas fa-times"></i> Отменить
+                            </button>
+                        ` : ''}
+                        ${canReview ? `
+                            <button class="booking-action-btn btn-review" onclick="openReviewModal('${booking.id}', '${booking.roomNumber || booking.roomId}')">
+                                <i class="fas fa-star"></i> Оставить отзыв
+                            </button>
+                        ` : ''}
+                        ${hasReviewForBooking(booking.id) ? `
+                            <button class="booking-action-btn btn-reviewed" disabled>
+                                <i class="fas fa-check-circle"></i> Отзыв оставлен
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             `;
-        }).join('');
+    }).join('');
 }
 
 function getBookingStatus(booking) {
@@ -226,7 +285,12 @@ function getBookingStatus(booking) {
 }
 
 function getStatusText(status) {
-    const texts = { upcoming: 'Предстоящее', current: 'Текущее', completed: 'Завершено', cancelled: 'Отменено' };
+    const texts = {
+        upcoming: 'Предстоящее',
+        current: 'Текущее',
+        completed: 'Завершено',
+        cancelled: 'Отменено'
+    };
     return texts[status] || status;
 }
 
@@ -296,6 +360,142 @@ function closeBookingDetailsModal() {
     }
 }
 
+// ✅ НОВАЯ ФУНКЦИЯ: Открыть модальное окно отзыва
+function openReviewModal(bookingId, roomNumber) {
+    const modal = document.getElementById('reviewModal');
+    if (!modal) {
+        // Создаем модальное окно, если его нет
+        createReviewModal();
+    }
+
+    const reviewModal = document.getElementById('reviewModal');
+    const reviewBookingId = document.getElementById('reviewBookingId');
+    const reviewRoomNumber = document.getElementById('reviewRoomNumber');
+
+    if (reviewBookingId) reviewBookingId.value = bookingId;
+    if (reviewRoomNumber) reviewRoomNumber.textContent = roomNumber;
+
+    // Сброс формы
+    document.getElementById('reviewRating')?.setAttribute('data-rating', '0');
+    document.querySelectorAll('.star-rating i').forEach(star => {
+        star.classList.remove('active');
+    });
+    const reviewComment = document.getElementById('reviewComment');
+    if (reviewComment) reviewComment.value = '';
+
+    if (reviewModal) {
+        reviewModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// ✅ НОВАЯ ФУНКЦИЯ: Создать HTML модального окна отзыва
+function createReviewModal() {
+    const modalHTML = `
+        <div class="modal" id="reviewModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Оставить отзыв</h2>
+                    <button class="modal-close" onclick="closeReviewModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="reviewBookingId">
+                    <div class="review-form">
+                        <div class="form-group">
+                            <label>Номер: <strong id="reviewRoomNumber"></strong></label>
+                        </div>
+                        <div class="form-group">
+                            <label>Ваша оценка:</label>
+                            <div class="star-rating" id="reviewRating" data-rating="0">
+                                <i class="fas fa-star" data-value="1"></i>
+                                <i class="fas fa-star" data-value="2"></i>
+                                <i class="fas fa-star" data-value="3"></i>
+                                <i class="fas fa-star" data-value="4"></i>
+                                <i class="fas fa-star" data-value="5"></i>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="reviewComment">Ваш отзыв:</label>
+                            <textarea id="reviewComment" rows="5" placeholder="Поделитесь впечатлениями о вашем пребывании..." maxlength="500"></textarea>
+                            <small class="char-count">0 / 500</small>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-secondary" onclick="closeReviewModal()">Отмена</button>
+                            <button class="btn btn-primary" onclick="handleSubmitReview()">Отправить отзыв</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    // Добавляем обработчики для звезд
+    document.querySelectorAll('.star-rating i').forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.getAttribute('data-value'));
+            document.getElementById('reviewRating').setAttribute('data-rating', rating);
+
+            document.querySelectorAll('.star-rating i').forEach((s, index) => {
+                if (index < rating) {
+                    s.classList.add('active');
+                } else {
+                    s.classList.remove('active');
+                }
+            });
+        });
+    });
+
+    // Счетчик символов
+    const reviewComment = document.getElementById('reviewComment');
+    if (reviewComment) {
+        reviewComment.addEventListener('input', function() {
+            const charCount = this.value.length;
+            const counter = this.parentElement.querySelector('.char-count');
+            if (counter) {
+                counter.textContent = `${charCount} / 500`;
+            }
+        });
+    }
+}
+
+// ✅ НОВАЯ ФУНКЦИЯ: Закрыть модальное окно отзыва
+function closeReviewModal() {
+    const modal = document.getElementById('reviewModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = 'auto';
+    }
+}
+
+// ✅ НОВАЯ ФУНКЦИЯ: Обработка отправки отзыва
+async function handleSubmitReview() {
+    const bookingId = document.getElementById('reviewBookingId')?.value;
+    const rating = parseInt(document.getElementById('reviewRating')?.getAttribute('data-rating') || '0');
+    const comment = document.getElementById('reviewComment')?.value.trim();
+
+    // Валидация
+    if (!bookingId) {
+        showNotification('Ошибка: ID бронирования не найден', 'error');
+        return;
+    }
+
+    if (rating === 0) {
+        showNotification('Пожалуйста, выберите оценку', 'warning');
+        return;
+    }
+
+    if (!comment || comment.length < 10) {
+        showNotification('Пожалуйста, напишите отзыв (минимум 10 символов)', 'warning');
+        return;
+    }
+
+    await submitReview(bookingId, rating, comment);
+}
+
 async function handleCancelBooking(bookingId) {
     if (confirm('Отменить бронирование?')) {
         await cancelBooking(bookingId);
@@ -311,7 +511,13 @@ function updateStatistics() {
     el('totalBookings', active.length);
     el('totalNights', totalNights);
     el('totalSpent', formatMoney(totalSpent) + '₽');
-    el('averageRating', '4.5');
+
+    if (userReviews.length > 0) {
+        const avgRating = userReviews.reduce((sum, r) => sum + r.rating, 0) / userReviews.length;
+        el('averageRating', avgRating.toFixed(1));
+    } else {
+        el('averageRating', '—');
+    }
 }
 
 function toggleUserMenu() {
@@ -333,12 +539,14 @@ function setupEventListeners() {
         }
         if (e.target.classList.contains('modal')) {
             closeBookingDetailsModal();
+            closeReviewModal(); // ✅ НОВОЕ
         }
     });
 
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
             closeBookingDetailsModal();
+            closeReviewModal();
         }
     });
 }

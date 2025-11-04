@@ -1,6 +1,7 @@
 package com.hotel.booking.mapper;
 
 import com.hotel.booking.domain.entity.Review;
+import com.hotel.booking.dto.request.review.ReviewResponse;
 import com.hotel.booking.dto.response.admin.AdminReviewResponse;
 import org.mapstruct.*;
 
@@ -13,4 +14,6 @@ public interface ReviewMapper {
     @Mapping(target = "roomId", source = "room.id")
     @Mapping(target = "roomNumber", source = "room.roomNumber")
     AdminReviewResponse toAdminReviewResponse(Review review);
+
+    ReviewResponse toReviewResponse(Review review);
 }

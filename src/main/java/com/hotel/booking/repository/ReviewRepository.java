@@ -20,4 +20,6 @@
         boolean existsReviewById(UUID id);
 
         void deleteReviewById(UUID id);
+
+      List<Review> findAllReviewsByUserId(UUID id);
     }

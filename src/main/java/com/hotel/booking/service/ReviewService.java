@@ -1,3 +1,12 @@
 package com.hotel.booking.service;
 
-class ReviewService {}
+import com.hotel.booking.dto.request.review.CreateReviewRequest;
+import com.hotel.booking.dto.request.review.ReviewResponse;
+import java.util.List;
+
+public interface ReviewService {
+
+  List<ReviewResponse> getUserReviews(String name);
+
+  ReviewResponse createReview(String name, CreateReviewRequest createReviewRequest);
+}
