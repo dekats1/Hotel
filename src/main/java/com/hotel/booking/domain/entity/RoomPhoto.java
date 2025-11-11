@@ -24,7 +24,7 @@ public class RoomPhoto {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
-    @JsonBackReference("room-photos")  // Добавлено
+    @JsonBackReference("room-photos")
     private Room room;
 
     @NotBlank(message = "URL фотографии обязателен")
@@ -52,10 +52,8 @@ public class RoomPhoto {
     @Builder.Default
     private Instant uploadedAt = Instant.now();
 
-    // Метод для установки главного фото
     public void setPrimary(boolean primary) {
         if (primary && room != null) {
-            // Убираем флаг primary у всех других фото этого номера
             room.getPhotos().forEach(photo -> {
                 if (!photo.equals(this)) {
                     photo.isPrimary = false;

@@ -24,10 +24,10 @@ public class WithdrawRequest {
     private String currency;
 
     @NotBlank(message = "Метод вывода обязателен")
-    private String withdrawalMethod; // BANK_CARD, BANK_ACCOUNT
+    private String withdrawalMethod;
 
     @NotBlank(message = "Реквизиты обязательны")
-    private String withdrawalDetails; // Номер карты или счёта
+    private String withdrawalDetails;
 
     private String description;
 }

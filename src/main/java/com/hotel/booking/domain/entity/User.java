@@ -71,18 +71,15 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "gender", nullable = false)
     private UserGender gender;
 
-    // Аутентификация
     @NotBlank(message = "Пароль обязателен")
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    // Финансы
     @DecimalMin(value = "0.0", message = "Баланс не может быть отрицательным")
     @Column(name = "balance", precision = 12, scale = 2)
     @Builder.Default
     private BigDecimal balance = BigDecimal.ZERO;
 
-    // Статусы
     @Column(name = "is_active")
     @Builder.Default
     private Boolean isActive = true;
@@ -97,7 +94,6 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    // Связи
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Booking> bookings = new ArrayList<>();
@@ -110,7 +106,6 @@ public class User extends BaseEntity implements UserDetails {
     @Builder.Default
     private List<Review> reviews = new ArrayList<>();
 
-    // UserDetails методы
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));

@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserSettingsRequest {
-    private String currency; // BYN, USD, EUR
-    private String language; // RU, EN
+    private String currency;
+    private String language;
 }

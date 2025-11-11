@@ -93,7 +93,6 @@ async function apiCall(endpoint, options = {}) {
 }
 
 async function loadUserData() {
-    // Предварительная загрузка из localStorage
     currentUser = getUserDataFromStorage();
     if (currentUser) {
         updateUserInterface();
@@ -103,7 +102,6 @@ async function loadUserData() {
         const data = await apiCall('/users/profile');
         currentUser = transformUserData(data);
 
-        // Сохраняем основные данные
         const userBasicData = {
             id: currentUser.id,
             email: currentUser.email,
@@ -189,7 +187,6 @@ function checkAuthOnPageLoad() {
 }
 
 function initializeSettings() {
-    // Mobile navigation
     if (navToggle) {
         navToggle.addEventListener('click', toggleMobileMenu);
     }
@@ -198,7 +195,6 @@ function initializeSettings() {
         link.addEventListener('click', closeMobileMenu);
     });
 
-    // Setup settings controls
     setupSettingsControls();
 }
 
@@ -207,7 +203,6 @@ function initializeSettings() {
 // ==============================================
 
 function setupSettingsControls() {
-    // Theme setting
     const themeToggleSetting = document.getElementById('themeToggleSetting');
     if (themeToggleSetting) {
         const currentTheme = document.documentElement.getAttribute('data-theme');
@@ -220,7 +215,6 @@ function setupSettingsControls() {
         });
     }
 
-    // Language setting
     const languageSetting = document.getElementById('languageSetting');
     if (languageSetting) {
         const savedLanguage = localStorage.getItem('language') || 'ru';
@@ -230,14 +224,12 @@ function setupSettingsControls() {
             const language = this.value;
             localStorage.setItem('language', language);
 
-            // Сохраняем на сервере
             await saveUserSettings({ language });
 
             showNotification('Язык интерфейса изменен', 'success');
         });
     }
 
-    // Currency setting
     const currencySetting = document.getElementById('currencySetting');
     if (currencySetting) {
         const savedCurrency = localStorage.getItem('currency') || 'BYN';
@@ -247,7 +239,6 @@ function setupSettingsControls() {
             const currency = this.value;
             localStorage.setItem('currency', currency);
 
-            // Сохраняем на сервере
             await saveUserSettings({ currency });
 
             applyCurrencySettings(currency);
@@ -255,7 +246,6 @@ function setupSettingsControls() {
         });
     }
 
-    // Notification settings
     setupNotificationToggles();
 }
 
@@ -277,7 +267,6 @@ function setupNotificationToggles() {
             const settingLabel = this.closest('.settings-item')?.querySelector('label')?.textContent || 'Настройка';
             showNotification(`${settingLabel} ${isEnabled ? 'включена' : 'отключена'}`, 'info');
 
-            // Сохраняем на сервере
             const settings = {};
             settings[settingName] = isEnabled;
             await saveUserSettings(settings);
@@ -290,7 +279,6 @@ function setupNotificationToggles() {
 // ==============================================
 
 function applyCurrencySettings(currency) {
-    // Update wallet display
     if (currentUser) {
         updateAllCurrencyDisplays();
     }
@@ -300,8 +288,6 @@ function getCurrencyName(currencyCode) {
     const currencyNames = {
         'BYN': 'Белорусский рубль',
         'USD': 'Доллар США',
-        'EUR': 'Евро',
-        'RUB': 'Российский рубль'
     };
     return currencyNames[currencyCode] || currencyCode;
 }
@@ -311,8 +297,6 @@ function formatCurrency(amount) {
     const currencies = {
         'BYN': 'Br',
         'USD': '$',
-        'EUR': '€',
-        'RUB': '₽'
     };
 
     const symbol = currencies[currency] || 'Br';
@@ -456,13 +440,11 @@ function setTheme(theme) {
         themeIcon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
     }
 
-    // Update settings toggle
     const themeToggleSetting = document.getElementById('themeToggleSetting');
     if (themeToggleSetting) {
         themeToggleSetting.checked = theme === 'dark';
     }
 
-    // Update header background immediately
     handleHeaderScroll();
 }
 
@@ -513,7 +495,6 @@ function handleHeaderScroll() {
 // ==============================================
 
 function setupEventListeners() {
-    // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
         const dropdown = document.getElementById('userDropdown');
         if (dropdown && !e.target.closest('.user-menu')) {
@@ -521,7 +502,6 @@ function setupEventListeners() {
         }
     });
 
-    // Header scroll effect
     window.addEventListener('scroll', handleHeaderScroll);
 }
 
@@ -569,7 +549,6 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Add notification styles
 if (!document.querySelector('#notification-styles')) {
     const notificationStyles = document.createElement('style');
     notificationStyles.id = 'notification-styles';

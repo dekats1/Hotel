@@ -71,31 +71,22 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
-                        // ✅ ВАЖНО: Публичные страницы
                         .requestMatchers("/", "/home", "/aboutUs", "/login", "/register", "/catalog").permitAll()
 
-                        // ✅ ВАЖНО: API аутентификации
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // ✅ ВАЖНО: Статические ресурсы
                         .requestMatchers("/css/**", "/js/**", "/html/**", "/images/**", "/uploads/**").permitAll()
 
-                        // ✅ ВАЖНО: API комнат (публичный доступ)
                         .requestMatchers("/api/rooms/**").permitAll()
 
-                        // ✅ ВАЖНО: API бронирований (требуется аутентификация!)
                         .requestMatchers("/api/booking/**").authenticated()
 
-                        // ✅ ВАЖНО: API кошелька (требуется аутентификация)
                         .requestMatchers("/api/wallet/**").authenticated()
 
-                        // ✅ ВАЖНО: API пользователей
                         .requestMatchers("/api/users/**").authenticated()
 
-                        // ✅ ВАЖНО: Админ-панель
                         .requestMatchers("/api/admin", "/api/admin/**").hasRole("ADMIN")
 
-                        // ✅ ВАЖНО: Защищённые страницы
                         .requestMatchers("/setting", "/wallet", "/booking", "/profile").authenticated()
 
                         // Всё остальное - требует аутентификации

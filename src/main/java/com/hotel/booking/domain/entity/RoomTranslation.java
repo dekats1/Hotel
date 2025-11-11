@@ -19,11 +19,11 @@ public class RoomTranslation extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
-    @JsonBackReference("room-translations")  // Добавлено
+    @JsonBackReference("room-translations")
     private Room room;
 
     @Column(name = "language", nullable = false, length = 10)
-    private String language;  // Изменено с enum на String для гибкости
+    private String language;
 
     @NotBlank(message = "Название номера обязательно")
     @Size(max = 200, message = "Название не должно превышать 200 символов")

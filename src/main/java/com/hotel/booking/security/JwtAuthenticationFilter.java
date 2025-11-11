@@ -34,7 +34,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        // ✅ ДОБАВЛЕНО: Логируем все cookies
         log.debug("Processing request: {} {}", request.getMethod(), request.getRequestURI());
         if (request.getCookies() != null) {
             log.debug("Available cookies: {}",
@@ -53,7 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwtProvider.validateToken(token)) {
                 try {
                     String userId = jwtProvider.getUserIdFromToken(token);
-                    log.info("✅ Extracted user ID from token: {}", userId);
+                    log.info("Extracted user ID from token: {}", userId);
 
                     if (SecurityContextHolder.getContext().getAuthentication() == null) {
                         UserDetails userDetails = userDetailsService.loadUserById(
@@ -71,24 +70,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         );
 
                         SecurityContextHolder.getContext().setAuthentication(authentication);
-                        log.info("✅ User authenticated successfully: {}", userDetails.getUsername());
+                        log.info("User authenticated successfully: {}", userDetails.getUsername());
                     }
                 } catch (Exception e) {
-                    log.error("❌ Error loading user: {}", e.getMessage(), e);
+                    log.error("Error loading user: {}", e.getMessage(), e);
                     SecurityContextHolder.clearContext();
                 }
             } else {
-                log.warn("❌ Token validation failed");
+                log.warn("Token validation failed");
             }
         } else {
-            log.warn("❌ No JWT token found in request");
+            log.warn("No JWT token found in request");
         }
 
         filterChain.doFilter(request, response);
     }
 
     private String resolveToken(HttpServletRequest request) {
-        // Проверяем Cookie
         if (request.getCookies() != null) {
             String tokenFromCookie = Arrays.stream(request.getCookies())
                     .filter(cookie -> JWT_COOKIE_NAME.equals(cookie.getName()))
@@ -97,22 +95,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .orElse(null);
 
             if (tokenFromCookie != null && !tokenFromCookie.isBlank()) {
-                log.info("✅ Token found in Cookie: {}...", tokenFromCookie.substring(0, Math.min(20, tokenFromCookie.length())));
+                log.info("Token found in Cookie: {}...", tokenFromCookie.substring(0, Math.min(20, tokenFromCookie.length())));
                 return tokenFromCookie;
             }
         }
 
-        // Проверяем Authorization header
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String tokenFromHeader = authHeader.substring(7);
             if (!tokenFromHeader.trim().isEmpty()) {
-                log.info("✅ Token found in Authorization header");
+                log.info("Token found in Authorization header");
                 return tokenFromHeader;
             }
         }
 
-        log.warn("❌ No token found in Cookie or Authorization header");
+        log.warn("No token found in Cookie or Authorization header");
         return null;
     }
 }

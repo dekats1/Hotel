@@ -12,7 +12,6 @@ public interface TransactionMapper {
     @Mapping(source = "booking.id", target = "bookingId")
     TransactionResponse toResponse(Transaction transaction);
 
-    // Дополнительный метод для преобразования enum в String
     default String mapCurrency(com.hotel.booking.domain.enums.CurrencyType currency) {
         return currency != null ? currency.name() : null;
     }

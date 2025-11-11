@@ -20,9 +20,9 @@ public class DepositRequest {
     private BigDecimal amount;
 
     @NotNull(message = "Валюта обязательна")
-    private String currency; // BYN, USD, EUR (должно соответствовать CurrencyType enum)
+    private String currency;
 
-    private String paymentMethod; // CARD, BANK_TRANSFER, CASH, PAYPAL
+    private String paymentMethod;
 
     private String description;
 }

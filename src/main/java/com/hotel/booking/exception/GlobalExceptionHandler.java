@@ -1,5 +1,9 @@
 package com.hotel.booking.exception;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -29,5 +33,27 @@ public class GlobalExceptionHandler  {
         Map<String, String> error = new HashMap<>();
         error.put("error", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException e) {
+        ErrorResponse error = new ErrorResponse(e.getMessage());
+        return ResponseEntity.badRequest().body(error);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException e) {
+        String message = "Ошибка сохранения данных";
+        if (e.getMessage().contains("reviews_booking_id_key")) {
+            message = "На это бронирование уже оставлен отзыв";
+        }
+        ErrorResponse error = new ErrorResponse(message);
+        return ResponseEntity.badRequest().body(error);
+    }
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public class ErrorResponse {
+        private String message;
     }
 }

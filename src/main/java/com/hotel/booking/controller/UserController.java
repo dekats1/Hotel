@@ -73,6 +73,8 @@ public class UserController {
         return ResponseEntity.ok(userService.getWalletBalanceByEmail(email));
     }
 
+
+
     @PutMapping("/settings")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserSettingsResponse> updateSettings(
@@ -86,9 +88,6 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Вспомогательный метод для извлечения email из Authentication
-     */
     private String getUserEmailFromAuthentication(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new IllegalStateException("User is not authenticated");
@@ -96,14 +95,12 @@ public class UserController {
 
         Object principal = authentication.getPrincipal();
 
-        // Если principal - это UserDetails
         if (principal instanceof UserDetails) {
             String email = ((UserDetails) principal).getUsername();
             log.debug("Extracted email from UserDetails: {}", email);
             return email;
         }
 
-        // Если principal - это строка (маловероятно, но на всякий случай)
         if (principal instanceof String) {
             log.debug("Extracted email from String principal: {}", principal);
             return (String) principal;

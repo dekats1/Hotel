@@ -53,7 +53,6 @@ public class WalletServiceImpl implements WalletService {
     public TransactionResponse deposit(String email, DepositRequest request) {
         User user = findUserByEmail(email);
 
-        // Валидация суммы
         if (request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new BadRequestException("Сумма пополнения должна быть больше нуля");
         }
@@ -62,7 +61,6 @@ public class WalletServiceImpl implements WalletService {
             throw new BadRequestException("Максимальная сумма пополнения: 1,000,000");
         }
 
-        // Создаём транзакцию
         Transaction transaction = Transaction.builder()
                 .user(user)
                 .type(TransactionType.DEPOSIT)
@@ -76,18 +74,15 @@ public class WalletServiceImpl implements WalletService {
                 .completedAt(Instant.now())
                 .build();
 
-        // Устанавливаем описание по умолчанию, если не указано
         transaction.setDefaultDescription();
 
-        // Увеличиваем баланс
         BigDecimal newBalance = user.getBalance().add(request.getAmount());
         user.setBalance(newBalance);
 
-        // Сохраняем
         Transaction savedTransaction = transactionRepository.save(transaction);
         userRepository.save(user);
 
-        log.info("✅ Deposit completed: userId={}, amount={}, newBalance={}",
+        log.info("Deposit completed: userId={}, amount={}, newBalance={}",
                 user.getId(), request.getAmount(), user.getBalance());
 
         return transactionMapper.toResponse(savedTransaction);
@@ -98,22 +93,18 @@ public class WalletServiceImpl implements WalletService {
     public TransactionResponse withdraw(String email, WithdrawRequest request) {
         User user = findUserByEmail(email);
 
-        // Валидация суммы
         if (request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new BadRequestException("Сумма вывода должна быть больше нуля");
         }
 
-        // Проверка баланса
         if (user.getBalance().compareTo(request.getAmount()) < 0) {
             throw new BadRequestException("Недостаточно средств на счёте. Текущий баланс: " + user.getBalance());
         }
 
-        // Минимальная сумма вывода
         if (request.getAmount().compareTo(new BigDecimal("10")) < 0) {
             throw new BadRequestException("Минимальная сумма вывода: 10 BYN");
         }
 
-        // Создаём транзакцию
         Transaction transaction = Transaction.builder()
                 .user(user)
                 .type(TransactionType.WITHDRAWAL)
@@ -126,18 +117,15 @@ public class WalletServiceImpl implements WalletService {
                 .createdAt(Instant.now())
                 .build();
 
-        // Устанавливаем описание по умолчанию
         transaction.setDefaultDescription();
 
-        // Уменьшаем баланс
         BigDecimal newBalance = user.getBalance().subtract(request.getAmount());
         user.setBalance(newBalance);
 
-        // Сохраняем
         Transaction savedTransaction = transactionRepository.save(transaction);
         userRepository.save(user);
 
-        log.info("✅ Withdrawal initiated: userId={}, amount={}, newBalance={}",
+        log.info("Withdrawal initiated: userId={}, amount={}, newBalance={}",
                 user.getId(), request.getAmount(), user.getBalance());
 
         return transactionMapper.toResponse(savedTransaction);
@@ -166,7 +154,6 @@ public class WalletServiceImpl implements WalletService {
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction", "id", transactionId.toString()));
 
-        // Проверяем, что транзакция принадлежит пользователю
         if (!transaction.getUser().getId().equals(user.getId())) {
             throw new BadRequestException("Доступ к транзакции запрещён");
         }
@@ -174,9 +161,6 @@ public class WalletServiceImpl implements WalletService {
         return transactionMapper.toResponse(transaction);
     }
 
-    /**
-     * Генерировать уникальный ID транзакции
-     */
     private String generateTransactionId() {
         return "TXN-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }

@@ -28,7 +28,7 @@ public class AuthController {
 
         return ResponseCookie.from(JWT_COOKIE_NAME, token)
                 .httpOnly(true)
-                .secure(false) // ⚠️ Установите true для HTTPS в продакшене
+                .secure(false)
                 .path("/")
                 .maxAge(maxAge)
                 .sameSite("Lax")
@@ -37,12 +37,12 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        log.info("📝 Registration request for: {}", request.getEmail());
+        log.info("Registration request for: {}", request.getEmail());
 
         AuthResponse authResponse = authService.register(request);
         ResponseCookie cookie = createJwtCookie(authResponse.getToken(), COOKIE_MAX_AGE);
 
-        log.info("✅ Registration successful, cookie set for: {}", request.getEmail());
+        log.info("Registration successful, cookie set for: {}", request.getEmail());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
@@ -51,12 +51,12 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        log.info("🔐 Login request for: {}", request.getEmail());
+        log.info("Login request for: {}", request.getEmail());
 
         AuthResponse authResponse = authService.login(request);
         ResponseCookie cookie = createJwtCookie(authResponse.getToken(), COOKIE_MAX_AGE);
 
-        log.info("✅ Login successful, cookie set for: {}", request.getEmail());
+        log.info("Login successful, cookie set for: {}", request.getEmail());
         log.info("Cookie header: {}", cookie.toString());
 
         return ResponseEntity.ok()
@@ -70,7 +70,7 @@ public class AuthController {
 
         ResponseCookie cookie = createJwtCookie("", 0);
 
-        log.info("✅ Logout successful, cookie cleared");
+        log.info("Logout successful, cookie cleared");
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())

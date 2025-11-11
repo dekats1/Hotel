@@ -31,14 +31,12 @@ public interface RoomMapper {
   @Mapping(target = "isActive", expression = "java(Boolean.TRUE.equals(request.getIsActive()))")
   Room toEntity(CreateRoomRequest request);
 
-  // Маппинг для админ-ответа
   @Mapping(target = "translations", expression = "java(mapTranslations(room))")
   @Mapping(target = "photos", expression = "java(mapAdminPhotos(room))")
   @Mapping(target = "averageRating", expression = "java(room.getAverageRating())")
   @Mapping(target = "reviewCount", expression = "java(room.getReviewCount())")
   AdminRoomDetailsResponse toAdminRoomDetailsResponse(Room room);
 
-  // Маппинг для публичного RoomDTO
   @Mapping(target = "type", source = "type")
   @Mapping(target = "translations", expression = "java(mapTranslationsToDTO(room))")
   @Mapping(target = "photos", expression = "java(mapPhotosToDTO(room))")
@@ -47,10 +45,8 @@ public interface RoomMapper {
   @Mapping(target = "reviewCount", expression = "java(room.getReviewCount())")
   RoomDTOResponse toDTO(Room room);
 
-  // Массовый маппинг для списка
   List<RoomDTOResponse> toDTOList(List<Room> rooms);
 
-  // Вспомогательные методы для AdminRoomDetailsResponse
   default Map<String, AdminRoomDetailsResponse.TranslationResponse> mapTranslations(Room room) {
     if (room.getTranslations() == null) {
       return Map.of();
@@ -84,7 +80,6 @@ public interface RoomMapper {
         .toList();
   }
 
-  // Вспомогательные методы для публичного RoomDTO
   default Map<String, RoomDTOResponse.TranslationDTO> mapTranslationsToDTO(Room room) {
     if (room.getTranslations() == null || room.getTranslations().isEmpty()) {
       return Map.of();

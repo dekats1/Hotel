@@ -52,7 +52,6 @@ public class Transaction {
     @Builder.Default
     private TransactionStatus status = TransactionStatus.PENDING;
 
-    // Дополнительная информация
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
@@ -64,7 +63,6 @@ public class Transaction {
     @Column(name = "external_transaction_id", length = 255)
     private String externalTransactionId; // ID в платёжной системе
 
-    // Метаданные
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private Instant createdAt = Instant.now();
@@ -72,12 +70,10 @@ public class Transaction {
     @Column(name = "completed_at")
     private Instant completedAt;
 
-    // Связь с бронированием
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_id")
     private Booking booking;
 
-    // Lifecycle callbacks
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) {
@@ -92,7 +88,6 @@ public class Transaction {
         }
     }
 
-    // Бизнес-логика
     public boolean isPending() {
         return status == TransactionStatus.PENDING;
     }
@@ -117,17 +112,10 @@ public class Transaction {
         return status == TransactionStatus.PENDING;
     }
 
-    /**
-     * Получить сумму с учётом типа транзакции
-     * (положительная для пополнения, отрицательная для списания)
-     */
     public BigDecimal getSignedAmount() {
         return amount.multiply(BigDecimal.valueOf(type.getMultiplier()));
     }
 
-    /**
-     * Создать описание транзакции по умолчанию
-     */
     public void setDefaultDescription() {
         if (description == null || description.isEmpty()) {
             description = switch (type) {

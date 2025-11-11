@@ -11,7 +11,6 @@ import java.time.temporal.ChronoUnit;
 @Mapper(componentModel = "spring")
 public interface BookingMapper {
 
-    // Для публичного API
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "userEmail", source = "user.email")
     @Mapping(target = "userFullName", expression = "java(booking.getUser().getFirstName() + \" \" + booking.getUser().getLastName())")
@@ -24,7 +23,6 @@ public interface BookingMapper {
 
     BookingResponse toResponse(Booking booking);
 
-    // Для админ-панели
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "userEmail", source = "user.email")
     @Mapping(target = "userFullName", expression = "java(booking.getUser().getFirstName() + \" \" + booking.getUser().getLastName())")
@@ -38,7 +36,6 @@ public interface BookingMapper {
 
     AdminBookingDetailsResponse toAdminBookingDetailsResponse(Booking booking);
 
-    // Вспомогательный метод
     default Integer calculateTotalNights(Booking booking) {
         if (booking.getCheckInDate() == null || booking.getCheckOutDate() == null) {
             return null;

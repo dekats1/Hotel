@@ -14,7 +14,6 @@ import java.util.UUID;
 @Repository
 public interface RoomRepository extends JpaRepository<Room, UUID> {
 
-    // Для получения всех комнат БЕЗ связанных сущностей (быстрый запрос)
     @Query("SELECT r FROM Room r WHERE r.isActive = true")
     List<Room> findAllActiveRooms();
 
@@ -30,7 +29,6 @@ public interface RoomRepository extends JpaRepository<Room, UUID> {
         "WHERE r.id = :id")
     Room findByIdWithDetails(UUID id);
 
-    // Простой метод для всех комнат (без загрузки связей)
     @Query("SELECT r FROM Room r")
     List<Room> findAllRooms();
 

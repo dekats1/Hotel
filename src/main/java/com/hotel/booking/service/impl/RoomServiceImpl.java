@@ -29,11 +29,9 @@ public class RoomServiceImpl implements RoomService {
     List<Room> rooms = roomRepository.findAllRoomsWithDetails();
     log.info("Loaded {} rooms from database", rooms.size());
 
-    // Конвертируем в DTO (stars автоматически заполняется через маппер)
     List<RoomDTOResponse> dtos = roomMapper.toDTOList(rooms);
     log.info("Mapped to {} DTOs", dtos.size());
 
-    // Логируем первый DTO для проверки
     if (!dtos.isEmpty()) {
       RoomDTOResponse firstDto = dtos.get(0);
       log.info("First DTO: id={}, stars={}, reviewCount={}",

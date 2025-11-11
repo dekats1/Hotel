@@ -39,7 +39,6 @@ public class Room extends BaseEntity {
     @Column(name = "base_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal basePrice;
 
-    // Характеристики
     @Min(value = 1, message = "Вместимость должна быть не менее 1")
     @Column(name = "capacity", nullable = false)
     private Integer capacity;
@@ -51,7 +50,6 @@ public class Room extends BaseEntity {
     @Column(name = "floor")
     private Integer floor;
 
-    // Удобства (amenities)
     @Column(name = "has_wifi")
     @Builder.Default
     private Boolean hasWifi = true;
@@ -72,7 +70,6 @@ public class Room extends BaseEntity {
     @Builder.Default
     private Boolean hasSeaView = false;
 
-    // Статус
     @Column(name = "is_active")
     @Builder.Default
     private Boolean isActive = true;
@@ -94,11 +91,10 @@ public class Room extends BaseEntity {
     private Set<Booking> bookings = new HashSet<>();
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
-    @JsonIgnore  // Обычно отзывы не нужны в JSON комнаты
+    @JsonIgnore
     @Builder.Default
     private Set<Review> reviews = new HashSet<>();
 
-    // Вспомогательные методы
     public RoomPhoto getPrimaryPhoto() {
         return photos.stream()
             .filter(RoomPhoto::getIsPrimary)

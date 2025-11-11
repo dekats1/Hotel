@@ -10,6 +10,13 @@
     padding: 2rem;
 }
 
+.theme-toggle-top {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
 .auth-background {
     position: absolute;
     top: 0;

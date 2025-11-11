@@ -1,4 +1,7 @@
-// DOM Elements
+// ==============================================
+// CONFIGURATION AND DOM
+// ==============================================
+
 const registerForm = document.getElementById('registerForm');
 const firstNameInput = document.getElementById('firstName');
 const lastNameInput = document.getElementById('lastName');
@@ -12,47 +15,36 @@ const termsCheckbox = document.getElementById('terms');
 const newsletterCheckbox = document.getElementById('newsletter');
 const submitBtn = document.querySelector('.auth-btn-primary');
 
-// API Base URL
 const API_BASE_URL = 'http://localhost:8080/api';
-
-// ⚠️ JWT Token management - МЫ БОЛЬШЕ НЕ ХРАНИМ ТОКЕН В LOCALSTORAGE
-// Оставим только ключ для данных пользователя
 const USER_KEY = 'user_data';
 
-// ----------------------------------------------------------------
-// ⚠️ Удалены функции: getToken(), setToken().
-// Бэкенд теперь управляет JWT через HTTP-Only Cookies.
-// ----------------------------------------------------------------
+// ==============================================
+// STORAGE FUNCTIONS
+// ==============================================
 
-// Удалить данные аутентификации (обновлено)
 function removeAuthData() {
-    // 💡 Так как JWT хранится в HttpOnly Cookie, JS не может его удалить напрямую.
     localStorage.removeItem(USER_KEY);
-    // Для полной очистки, должен быть вызван /logout на бэкенде,
-    // который отправит Cookie с maxAge=0.
 }
 
-// Получить данные пользователя
 function getUserData() {
     const userData = localStorage.getItem(USER_KEY);
     return userData ? JSON.parse(userData) : null;
 }
 
-// Сохранить данные пользователя
 function setUserData(userData) {
     localStorage.setItem(USER_KEY, JSON.stringify(userData));
 }
 
-// Store authentication data (обновлено: сохраняем только данные пользователя)
 function storeAuthData(authResponse) {
-    // 💡 JWT токен должен быть установлен бэкендом в HTTP-Only Cookie.
-    // На клиенте мы сохраняем только данные пользователя.
     if (authResponse && authResponse.user) {
         setUserData(authResponse.user);
     }
 }
 
-// Form validation
+// ==============================================
+// VALIDATION UTILS
+// ==============================================
+
 function validateEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -77,9 +69,9 @@ function validateBirthDate(date) {
     const birthDate = new Date(date);
     const today = new Date();
     const minDate = new Date();
-    minDate.setFullYear(today.getFullYear() - 120); // 120 years ago
+    minDate.setFullYear(today.getFullYear() - 120);
     const maxDate = new Date();
-    maxDate.setFullYear(today.getFullYear() - 14); // Must be at least 14 years old
+    maxDate.setFullYear(today.getFullYear() - 14);
 
     return birthDate >= minDate && birthDate <= maxDate;
 }
@@ -128,7 +120,10 @@ function showSuccess(inputId) {
     errorElement.classList.remove('show');
 }
 
-// Real-time validation
+// ==============================================
+// REAL-TIME VALIDATION LISTENERS
+// ==============================================
+
 firstNameInput.addEventListener('input', function() {
     const name = this.value.trim();
 
@@ -248,7 +243,10 @@ confirmPasswordInput.addEventListener('input', function() {
     }
 });
 
-// Password strength indicator
+// ==============================================
+// UI FUNCTIONS
+// ==============================================
+
 function updatePasswordStrength(password, customText = null) {
     const strengthFill = document.getElementById('strengthFill');
     const strengthText = document.getElementById('strengthText');
@@ -275,7 +273,6 @@ function updatePasswordStrength(password, customText = null) {
     strengthText.textContent = strengthTexts[strength];
 }
 
-// Password toggle functionality
 function togglePassword(inputId) {
     const input = document.getElementById(inputId);
     const icon = document.getElementById(inputId + 'Icon');
@@ -291,7 +288,6 @@ function togglePassword(inputId) {
     }
 }
 
-// Loading state
 function setLoadingState(isLoading) {
     const btnText = submitBtn.querySelector('.btn-text');
     const btnLoading = submitBtn.querySelector('.btn-loading');
@@ -309,13 +305,10 @@ function setLoadingState(isLoading) {
     }
 }
 
-// Show notification
 function showNotification(message, type = 'info') {
-    // Remove existing notifications
     const existingNotifications = document.querySelectorAll('.notification');
     existingNotifications.forEach(notification => notification.remove());
 
-    // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
@@ -328,7 +321,6 @@ function showNotification(message, type = 'info') {
         </div>
     `;
 
-    // Add styles
     notification.style.cssText = `
         position: fixed;
         top: 20px;
@@ -343,10 +335,8 @@ function showNotification(message, type = 'info') {
         max-width: 400px;
     `;
 
-    // Add to document
     document.body.appendChild(notification);
 
-    // Auto remove after 5 seconds
     setTimeout(() => {
         if (notification.parentElement) {
             notification.style.animation = 'slideOutRight 0.3s ease';
@@ -355,14 +345,16 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Исправленная API Request function
+// ==============================================
+// API FUNCTIONS
+// ==============================================
+
 async function makeRequest(url, method, data) {
     const options = {
         method: method,
         headers: {
             'Content-Type': 'application/json',
         },
-        // 💡 ГЛАВНОЕ ИЗМЕНЕНИЕ: включаем Cookie в запросы
         credentials: 'include'
     };
 
@@ -373,27 +365,23 @@ async function makeRequest(url, method, data) {
     try {
         const response = await fetch(url, options);
 
-        // Проверяем, есть ли контент для парсинга
         const contentType = response.headers.get('content-type');
         const hasJson = contentType && contentType.includes('application/json');
-        const hasContent = response.status !== 204; // No Content
+        const hasContent = response.status !== 204;
 
         if (!response.ok) {
             let errorMessage = `HTTP error! status: ${response.status}`;
 
-            // Пытаемся получить сообщение об ошибке из ответа
             if (hasJson && hasContent) {
                 try {
                     const errorData = await response.json();
                     errorMessage = errorData.message || errorMessage;
                 } catch (e) {
-                    // Если не удалось распарсить JSON, используем текстовое сообщение
                     if (hasContent) {
                         try {
                             const text = await response.text();
                             errorMessage = text || errorMessage;
                         } catch (textError) {
-                            // Игнорируем ошибку чтения текста
                         }
                     }
                 }
@@ -402,14 +390,11 @@ async function makeRequest(url, method, data) {
             throw new Error(errorMessage);
         }
 
-        // Если ответ успешный и есть JSON контент - парсим его
         if (hasJson && hasContent) {
             return await response.json();
         } else if (hasContent) {
-            // Если есть контент, но не JSON - возвращаем текст
             return await response.text();
         } else {
-            // Если нет контента (например, 204 No Content) - возвращаем null
             return null;
         }
     } catch (error) {
@@ -418,24 +403,23 @@ async function makeRequest(url, method, data) {
     }
 }
 
-// Register function
 async function registerUser(userData) {
-    // 💡 Бэкенд должен отправить JWT в HttpOnly Cookie в ответ
     return await makeRequest(`${API_BASE_URL}/auth/register`, 'POST', userData);
 }
 
-// Set max date for birth date (14 years ago)
 function setMaxBirthDate() {
     const today = new Date();
     const maxDate = new Date(today.getFullYear() - 14, today.getMonth(), today.getDate());
     birthDateInput.max = maxDate.toISOString().split('T')[0];
 
-    // Set min date (120 years ago)
     const minDate = new Date(today.getFullYear() - 120, today.getMonth(), today.getDate());
     birthDateInput.min = minDate.toISOString().split('T')[0];
 }
 
-// Form submission
+// ==============================================
+// EVENT HANDLERS
+// ==============================================
+
 registerForm.addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -448,9 +432,7 @@ registerForm.addEventListener('submit', async function(e) {
     const password = passwordInput.value;
     const confirmPassword = confirmPasswordInput.value;
     const terms = termsCheckbox.checked;
-    const newsletter = newsletterCheckbox.checked;
 
-    // Clear previous errors
     clearError('firstName');
     clearError('lastName');
     clearError('birthDate');
@@ -461,7 +443,6 @@ registerForm.addEventListener('submit', async function(e) {
     clearError('confirmPassword');
     clearError('terms');
 
-    // Validate form
     let isValid = true;
 
     if (!firstName) {
@@ -534,11 +515,9 @@ registerForm.addEventListener('submit', async function(e) {
         return;
     }
 
-    // Set loading state
     setLoadingState(true);
 
     try {
-        // Prepare registration data
         const registerData = {
             firstName: firstName,
             lastName: lastName,
@@ -550,17 +529,13 @@ registerForm.addEventListener('submit', async function(e) {
             birthDate: birthDate
         };
 
-        // Make API call
         const authResponse = await registerUser(registerData);
 
-        // 💡 Проверка token в ответе не нужна, но данные пользователя нужны
         if (authResponse && authResponse.user) {
-            // Store authentication data (сохраняет только данные пользователя в localStorage)
             storeAuthData(authResponse);
 
             showNotification('Регистрация успешно завершена! Добро пожаловать!', 'success');
 
-            // Redirect to home page after a short delay
             setTimeout(() => {
                 window.location.href = '/';
             }, 2000);
@@ -571,7 +546,6 @@ registerForm.addEventListener('submit', async function(e) {
     } catch (error) {
         console.error('Registration error:', error);
 
-        // Более конкретные сообщения об ошибках
         if (error.message.includes('400') || error.message.includes('Bad Request')) {
             showNotification('Пользователь с таким email или телефоном уже существует', 'error');
         } else if (error.message.includes('Network Error')) {
@@ -584,7 +558,6 @@ registerForm.addEventListener('submit', async function(e) {
     }
 });
 
-// Social registration handlers
 document.querySelector('.social-google')?.addEventListener('click', function() {
     showNotification('Функция регистрации через Google будет добавлена позже', 'info');
 });
@@ -593,13 +566,15 @@ document.querySelector('.social-facebook')?.addEventListener('click', function()
     showNotification('Функция регистрации через Facebook будет добавлена позже', 'info');
 });
 
-// Terms link handler
 document.querySelector('.terms-link')?.addEventListener('click', function(e) {
     e.preventDefault();
     showNotification('Страница с условиями использования будет добавлена позже', 'info');
 });
 
-// Theme management
+// ==============================================
+// THEME MANAGEMENT
+// ==============================================
+
 function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
@@ -620,7 +595,6 @@ function toggleTheme() {
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
 
-    // Add animation to theme button
     const themeBtn = document.getElementById('themeToggle');
     if (themeBtn) {
         themeBtn.style.transform = 'scale(0.8)';
@@ -630,26 +604,19 @@ function toggleTheme() {
     }
 }
 
-// Check if user is already logged in
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize theme
-    initTheme();
+// ==============================================
+// INITIALIZATION AND MISC
+// ==============================================
 
-    // Set max birth date
+document.addEventListener('DOMContentLoaded', function() {
+    initTheme();
     setMaxBirthDate();
 
-    // ⚠️ Удалена проверка токена: теперь бэкенд решает, авторизован ли пользователь
-    // при загрузке страницы, используя Cookie.
     const userData = getUserData();
-
     if (userData) {
-        // Мы предполагаем, что если есть данные пользователя в LS, то Cookie тоже валиден.
         showNotification('Вы уже входили в систему. Если Cookie валиден, вы будете аутентифицированы.', 'info');
     }
-});
 
-// Add smooth animations
-document.addEventListener('DOMContentLoaded', function() {
     const authCard = document.querySelector('.auth-card');
     if (authCard) {
         authCard.style.opacity = '0';
@@ -663,7 +630,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Add keyboard navigation
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && e.target.classList.contains('form-input')) {
         const inputs = Array.from(document.querySelectorAll('.form-input'));
@@ -677,7 +643,6 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// Phone input formatting
 phoneInput.addEventListener('input', function(e) {
     let value = e.target.value.replace(/\D/g, '');
 
@@ -703,7 +668,6 @@ phoneInput.addEventListener('input', function(e) {
     e.target.value = value;
 });
 
-// Функция для отладки (можно удалить после тестирования)
 async function debugRegister() {
     console.log('Testing register API...');
 
@@ -723,7 +687,6 @@ async function debugRegister() {
                 gender: 'MALE',
                 birthDate: '1990-01-01'
             }),
-            // 💡 Включаем credentials: 'include'
             credentials: 'include'
         });
 
@@ -747,5 +710,4 @@ async function debugRegister() {
     }
 }
 
-// Добавьте в глобальную область видимости для отладки
 window.debugRegister = debugRegister;

@@ -32,7 +32,6 @@ import java.util.List;
 @EntityListeners(BookingEntityListener.class)
 public class Booking extends BaseEntity {
 
-    // Связи
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -41,7 +40,6 @@ public class Booking extends BaseEntity {
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
-    // Даты
     @NotNull(message = "Дата заезда обязательна")
     @FutureOrPresent(message = "Дата заезда не может быть в прошлом")
     @Column(name = "check_in_date", nullable = false)
@@ -56,7 +54,6 @@ public class Booking extends BaseEntity {
     @Builder.Default
     private LocalDateTime bookingDate = LocalDateTime.now();
 
-    // Детали бронирования
     @Min(value = 1, message = "Количество гостей должно быть не менее 1")
     @Column(name = "guests_count", nullable = false)
     private Integer guestsCount;
@@ -69,7 +66,6 @@ public class Booking extends BaseEntity {
         return null;
     }
 
-    // Финансы
     @NotNull(message = "Цена за ночь обязательна")
     @DecimalMin(value = "0.01", message = "Цена должна быть положительной")
     @Column(name = "price_per_night", nullable = false, precision = 10, scale = 2)
@@ -98,7 +94,6 @@ public class Booking extends BaseEntity {
     @Column(name = "cancellation_reason", columnDefinition = "TEXT")
     private String cancellationReason;
 
-    // Связи
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("changedAt DESC")
     @Builder.Default
@@ -111,7 +106,6 @@ public class Booking extends BaseEntity {
     @Builder.Default
     private List<Transaction> transactions = new ArrayList<>();
 
-    // Валидация дат
     @AssertTrue(message = "Дата выезда должна быть позже даты заезда")
     private boolean isValidDateRange() {
         if (checkInDate == null || checkOutDate == null) {
@@ -120,15 +114,14 @@ public class Booking extends BaseEntity {
         return checkOutDate.isAfter(checkInDate);
     }
 
-    @AssertTrue(message = "Дата заезда не может быть в прошлом")
+    @AssertTrue(message = "Дата заезда не может быть в прошлом при создании")
     private boolean isValidCheckInDate() {
-        if (checkInDate == null) {
+        if (checkInDate == null || super.getId() != null) {
             return true;
         }
         return !checkInDate.isBefore(LocalDate.now());
     }
 
-    // Бизнес-логика
     public void calculateTotalPrice() {
         if (pricePerNight != null && getTotalNights() != null) {
             this.totalPrice = pricePerNight.multiply(BigDecimal.valueOf(getTotalNights()));
@@ -148,7 +141,9 @@ public class Booking extends BaseEntity {
     }
 
     public boolean isCompleted() {
-        return status == BookingStatus.COMPLETED;
+        LocalDate today = LocalDate.now();
+        return this.status == BookingStatus.COMPLETED
+                || (this.checkOutDate != null && this.checkOutDate.isBefore(today));
     }
 
     public boolean canBeReviewed() {

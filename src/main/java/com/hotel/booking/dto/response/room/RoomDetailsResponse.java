@@ -26,15 +26,12 @@ public class RoomDetailsResponse {
     Boolean hasBalcony;
     Boolean hasSeaView;
 
-    // Локализованный блок
     String name;
     String description;
 
-    // Фото
     List<PhotoResponse> photos;
     UUID primaryPhotoId;
 
-    // Рейтинги
     Double averageRating;
     Long reviewCount;
 

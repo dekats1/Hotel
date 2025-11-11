@@ -17,7 +17,6 @@ import java.util.UUID;
 
 public interface AdminService {
 
-    // --- Пользователи ---
     List<AdminUserDetailsResponse> getAllUsers();
     AdminUserDetailsResponse createUser(AdminUserCreateRequest request);
     AdminUserDetailsResponse getUserById(UUID userId);
@@ -25,30 +24,25 @@ public interface AdminService {
     AdminUserDetailsResponse getUserByEmail(String email);
     void deleteUser(UUID userId);
 
-    // --- Номера ---
     AdminRoomDetailsResponse createRoom(CreateRoomRequest request);
     List<AdminRoomDetailsResponse> getAllRooms();
     AdminRoomDetailsResponse updateRoom(UUID roomId, UpdateRoomRequest request);
     void deleteRoom(UUID roomId);
 
-    // Новый: активность номера
     AdminRoomDetailsResponse setRoomActive(UUID roomId, boolean value);
 
-    // Новые: фото номера
     AdminRoomDetailsResponse uploadRoomPhotos(UUID roomId, List<MultipartFile> files);
     void deleteRoomPhoto(UUID photoId);
     AdminRoomDetailsResponse setPrimaryRoomPhoto(UUID photoId);
 
-    // Новые: переводы
     AdminRoomDetailsResponse replaceRoomTranslations(UUID roomId, Map<LanguageCode, CreateRoomRequest.TranslationData> translations);
     AdminRoomDetailsResponse patchRoomTranslations(UUID roomId, Map<LanguageCode, CreateRoomRequest.TranslationData> translations);
 
-    // --- Бронирования ---
     List<AdminBookingDetailsResponse> getAllBookings();
     AdminBookingDetailsResponse updateBookingStatus(UUID bookingId, String newStatus);
 
-    // --- Отзывы ---
     List<AdminReviewResponse> getAllReviews();
     AdminReviewResponse updateReviewVisibility(UUID reviewId, boolean isVisible);
+    AdminReviewResponse approveReview(UUID reviewId, boolean isApproved);
     void deleteReview(UUID reviewId);
 }

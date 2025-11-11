@@ -1,9 +1,12 @@
 package com.hotel.booking.domain.entity;
 
+import com.hotel.booking.domain.enums.BookingStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "reviews", indexes = {
@@ -125,9 +128,13 @@ public class Review extends BaseEntity {
     @AssertTrue(message = "Отзыв должен быть привязан к завершённому бронированию")
     private boolean isBookingCompleted() {
         if (booking == null) {
-            return true; // пропускаем валидацию если booking null
+            return true; // Пропускаем валидацию если booking null
         }
-        return booking.isCompleted();
+
+        // ✅ Проверяем напрямую статус и дату
+        LocalDate today = LocalDate.now();
+        return booking.getStatus() == BookingStatus.COMPLETED
+                || (booking.getCheckOutDate() != null && booking.getCheckOutDate().isBefore(today));
     }
 
     // Lifecycle callbacks

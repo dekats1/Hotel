@@ -5,39 +5,28 @@ const navLinks = document.querySelectorAll('.nav-link');
 const searchForm = document.getElementById('searchForm');
 const contactForm = document.getElementById('contactForm');
 
-// ⚠️ JWT Token management - УДАЛЕНО/ИЗМЕНЕНО
 const USER_KEY = 'user_data';
 
-// ⚠️ УДАЛЕНЫ: getToken, setToken, removeToken.
-// ⚠️ Токен теперь хранится в HTTP-only Cookie и недоступен JS.
-
-// Получить данные пользователя (только нечувствительные данные)
 function getUserData() {
     const userData = localStorage.getItem(USER_KEY);
     return userData ? JSON.parse(userData) : null;
 }
 
-// Сохранить данные пользователя (только нечувствительные данные)
 function setUserData(userData) {
     localStorage.setItem(USER_KEY, JSON.stringify(userData));
 }
 
-// 💡 НОВАЯ ФУНКЦИЯ: Очистка локальных данных (Cookie очищается бэкендом)
 function removeAuthData() {
     localStorage.removeItem(USER_KEY);
-    // На всякий случай удаляем старый ключ токена, если он остался
     localStorage.removeItem('auth_token');
 }
 
-// 💡 ИЗМЕНЕНО: HTTP клиент с поддержкой Cookie
 async function apiClient(url, options = {}) {
     const config = {
         headers: {
             'Content-Type': 'application/json',
-            // ⚠️ Заголовок Authorization: Bearer {token} УДАЛЕН
             ...options.headers,
         },
-        // 💡 ГЛАВНОЕ ИЗМЕНЕНИЕ: включаем Cookie в запросы
         credentials: 'include',
         ...options,
     };
@@ -46,17 +35,15 @@ async function apiClient(url, options = {}) {
         const response = await fetch(url, config);
 
         if (response.status === 401) {
-            // Cookie невалидный/отсутствует - разлогиниваем локально
             removeAuthData();
             updateNavigation();
             showNotification('Сессия истекла. Пожалуйста, войдите снова.', 'error');
             throw new Error('Unauthorized');
         }
 
-        // Проверяем, есть ли контент для парсинга
         const contentType = response.headers.get('content-type');
         const hasJson = contentType && contentType.includes('application/json');
-        const hasContent = response.status !== 204; // No Content
+        const hasContent = response.status !== 204;
 
         if (!response.ok) {
             let errorMessage = `HTTP error! status: ${response.status}`;
@@ -66,13 +53,11 @@ async function apiClient(url, options = {}) {
                     const errorData = await response.json();
                     errorMessage = errorData.message || errorMessage;
                 } catch (e) {
-                    // Fallback to text
                     if (hasContent) {
                         try {
                             const text = await response.text();
                             errorMessage = text || errorMessage;
                         } catch (textError) {
-                            // Игнорируем ошибку чтения текста
                         }
                     }
                 }
@@ -81,15 +66,11 @@ async function apiClient(url, options = {}) {
                     const text = await response.text();
                     errorMessage = text || errorMessage;
                 } catch (textError) {
-                    // Игнорируем ошибку чтения текста
                 }
             }
-
-
             throw new Error(errorMessage);
         }
 
-        // Если ответ успешный и есть JSON контент - парсим его
         if (hasJson && hasContent) {
             return await response.json();
         } else if (hasContent) {
@@ -103,43 +84,33 @@ async function apiClient(url, options = {}) {
     }
 }
 
-// 💡 ИЗМЕНЕНО: Проверка авторизации на сервере
 async function checkAuthStatus() {
     const userData = getUserData();
 
     if (!userData) {
-        // У нас нет локальных данных, пробуем получить их с бэкенда.
         try {
-            // Вызов любого защищенного endpoint (например, получения профиля)
-            // Он вернет 200, если Cookie валиден, или 401, если нет.
+
             const profileData = await apiClient('/api/users/profile', { method: 'GET' });
 
-            // Если запрос успешен (не 401), сохраняем полученные данные
             setUserData(profileData);
             updateNavigation();
             return true;
         } catch (error) {
-            // Если apiClient выбросил ошибку (401 или другую), это означает, что пользователь не авторизован
             updateNavigation();
             return false;
         }
     }
 
-    // Если есть локальные данные, обновляем UI, чтобы избежать задержки
     updateNavigation();
 
-    // В фоне можно сделать проверку, но для Home Page достаточно быстрой проверки выше
     return true;
 }
 
-// Функция для обновления навигации
 function updateNavigation() {
     const navAuth = document.querySelector('.nav-auth');
     const userData = getUserData();
 
-    // ⚠️ Теперь проверяем только наличие данных пользователя, т.к. токен недоступен
     if (userData) {
-        // Показываем профиль пользователя
         navAuth.innerHTML = `
             <div class="user-profile">
                 <div class="user-info">
@@ -188,7 +159,7 @@ function updateNavigation() {
             </div>
         `;
     } else {
-        // Показываем кнопки входа/регистрации
+
         navAuth.innerHTML = `
             <a href="/login" class="btn-auth btn-login">
                 <i class="fas fa-sign-in-alt"></i>
@@ -202,7 +173,7 @@ function updateNavigation() {
     }
 }
 
-// 💡 ИЗМЕНЕНО: Функция входа (сервер устанавливает Cookie)
+
 async function login(email, password) {
     try {
         const response = await apiClient('/api/auth/login', {
@@ -210,9 +181,7 @@ async function login(email, password) {
             body: JSON.stringify({ email, password })
         });
 
-        // 💡 Ответ сервера (response) больше не содержит токен.
-        // Он должен содержать только данные пользователя (user)
-        // и неявно установить HTTP-only Cookie в браузере.
+
 
         if (response && response.user) {
             setUserData(response.user);
@@ -220,15 +189,13 @@ async function login(email, password) {
             showNotification('Успешный вход!', 'success');
             return true;
         } else {
-            // Этот блок может быть достигнут только если API вернул 200,
-            // но без ожидаемых данных пользователя.
+
             showNotification('Неверный ответ сервера после входа.', 'error');
             return false;
         }
     } catch (error) {
         console.error('Login error:', error);
 
-        // Обработка ошибок
         if (error.message.includes('Unauthorized') || error.message.includes('401')) {
             showNotification('Неверный email или пароль', 'error');
         } else if (error.message.includes('Network Error')) {
@@ -240,7 +207,6 @@ async function login(email, password) {
     }
 }
 
-// 💡 ИЗМЕНЕНО: Функция регистрации (сервер устанавливает Cookie)
 async function register(userData) {
     try {
         if (userData.password !== userData.confirmPassword) {
@@ -253,8 +219,6 @@ async function register(userData) {
             body: JSON.stringify(userData)
         });
 
-        // 💡 Ответ сервера (response) больше не содержит токен.
-        // Он должен содержать данные пользователя (user) и установить HTTP-only Cookie.
         if (response && response.user) {
             setUserData(response.user);
             updateNavigation();
@@ -267,7 +231,6 @@ async function register(userData) {
     } catch (error) {
         console.error('Registration error:', error);
 
-        // Более конкретные сообщения об ошибках
         if (error.message.includes('Bad Request') || error.message.includes('400')) {
             showNotification('Пользователь с таким email или телефоном уже существует', 'error');
         } else if (error.message.includes('Network Error')) {
@@ -279,13 +242,10 @@ async function register(userData) {
     }
 }
 
-// 💡 ИЗМЕНЕНО: Функция выхода (нужен API вызов для очистки Cookie)
 async function logout() {
     try {
-        // Отправляем запрос на сервер, чтобы очистить HTTP-only Cookie
         await apiClient('/api/auth/logout', {
             method: 'POST',
-            // credentials: 'include' уже в apiClient
         });
 
         removeAuthData();
@@ -293,20 +253,17 @@ async function logout() {
         showNotification('Вы успешно вышли из системы', 'success');
     } catch (error) {
         console.error('Logout failed but proceeding with client clear:', error);
-        // В случае сбоя сети, все равно очищаем клиент и обновляем UI
         showNotification('Ошибка выхода из системы. Очистка клиента...', 'error');
         removeAuthData();
         updateNavigation();
     }
 
-    // Закрываем меню если оно открыто
     const dropdown = document.getElementById('userDropdown');
     if (dropdown) {
         dropdown.classList.remove('show');
     }
 }
 
-// Функция переключения меню пользователя
 function toggleUserMenu() {
     const dropdown = document.getElementById('userDropdown');
     if (dropdown) {
@@ -314,7 +271,6 @@ function toggleUserMenu() {
     }
 }
 
-// Закрытие меню при клике вне его
 function handleDropdownClick(e) {
     const dropdown = document.getElementById('userDropdown');
     if (dropdown && !e.target.closest('.user-menu')) {
@@ -322,19 +278,16 @@ function handleDropdownClick(e) {
     }
 }
 
-// Mobile Navigation Toggle
 function toggleMobileMenu() {
     navMenu.classList.toggle('active');
     navToggle.classList.toggle('active');
 }
 
-// Close mobile menu when clicking on a link
 function closeMobileMenu() {
     navMenu.classList.remove('active');
     navToggle.classList.remove('active');
 }
 
-// Event Listeners for Navigation
 if (navToggle) {
     navToggle.addEventListener('click', toggleMobileMenu);
 }
@@ -343,14 +296,13 @@ navLinks.forEach(link => {
     link.addEventListener('click', closeMobileMenu);
 });
 
-// Smooth scrolling for navigation links
+
 navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
         const targetId = link.getAttribute('href');
 
-        // If it's an external link (not starting with #), allow normal navigation
         if (!targetId.startsWith('#')) {
-            return; // Allow normal link behavior
+            return;
         }
 
         e.preventDefault();
@@ -368,7 +320,6 @@ navLinks.forEach(link => {
     });
 });
 
-// Scroll to search section
 function scrollToSearch() {
     const searchSection = document.querySelector('.search-section');
     if (searchSection) {
@@ -382,7 +333,6 @@ function scrollToSearch() {
     }
 }
 
-// Scroll to rooms section
 function scrollToRooms() {
     const roomsSection = document.querySelector('.rooms-preview');
     if (roomsSection) {
@@ -396,12 +346,11 @@ function scrollToRooms() {
     }
 }
 
-// Header scroll effect
 function handleHeaderScroll() {
     const header = document.querySelector('.header');
     const currentTheme = document.documentElement.getAttribute('data-theme');
 
-    if (!header) return; // Защита от отсутствия элемента
+    if (!header) return;
 
     if (window.scrollY > 100) {
         if (currentTheme === 'dark') {
@@ -421,7 +370,6 @@ function handleHeaderScroll() {
     }
 }
 
-// Active navigation link on scroll
 function updateActiveNavLink() {
     const sections = document.querySelectorAll('section[id]');
     const scrollPos = window.scrollY + 100;
@@ -442,7 +390,6 @@ function updateActiveNavLink() {
     });
 }
 
-// Search form handling
 function handleSearchForm(e) {
     e.preventDefault();
 
@@ -454,7 +401,6 @@ function handleSearchForm(e) {
         roomType: formData.get('room-type')
     };
 
-    // Validate dates
     if (new Date(searchData.checkin) >= new Date(searchData.checkout)) {
         showNotification('Дата выезда должна быть позже даты заезда', 'error');
         return;
@@ -465,24 +411,20 @@ function handleSearchForm(e) {
         return;
     }
 
-    // Show loading state
     const submitBtn = searchForm.querySelector('.btn-search');
     const originalText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<span class="loading"></span> Поиск...';
     submitBtn.disabled = true;
 
-    // Simulate search process
     setTimeout(() => {
         showNotification('Поиск номеров выполнен! Результаты будут показаны в следующем разделе.', 'success');
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
 
-        // Scroll to rooms section
         scrollToRooms();
     }, 2000);
 }
 
-// Contact form handling
 function handleContactForm(e) {
     e.preventDefault();
 
@@ -493,7 +435,6 @@ function handleContactForm(e) {
         message: formData.get('message')
     };
 
-    // Basic validation
     if (!contactData.name || !contactData.email || !contactData.message) {
         showNotification('Пожалуйста, заполните все поля', 'error');
         return;
@@ -504,13 +445,11 @@ function handleContactForm(e) {
         return;
     }
 
-    // Show loading state
     const submitBtn = contactForm.querySelector('.btn-primary');
     const originalText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<span class="loading"></span> Отправка...';
     submitBtn.disabled = true;
 
-    // Simulate form submission
     setTimeout(() => {
         showNotification('Сообщение успешно отправлено! Мы свяжемся с вами в ближайшее время.', 'success');
         contactForm.reset();
@@ -519,19 +458,16 @@ function handleContactForm(e) {
     }, 2000);
 }
 
-// Email validation
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
 }
 
-// Notification system (оставлена без изменений)
 function showNotification(message, type = 'info') {
-    // Remove existing notifications
+
     const existingNotifications = document.querySelectorAll('.notification');
     existingNotifications.forEach(notification => notification.remove());
 
-    // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
@@ -544,7 +480,6 @@ function showNotification(message, type = 'info') {
         </div>
     `;
 
-    // Add styles
     notification.style.cssText = `
         position: fixed;
         top: 20px;
@@ -559,10 +494,8 @@ function showNotification(message, type = 'info') {
         max-width: 400px;
     `;
 
-    // Add to document
     document.body.appendChild(notification);
 
-    // Auto remove after 5 seconds
     setTimeout(() => {
         if (notification.parentElement) {
             notification.style.animation = 'slideOutRight 0.3s ease';
@@ -571,7 +504,6 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Add notification styles (оставлена без изменений)
 const notificationStyles = document.createElement('style');
 notificationStyles.textContent = `
     .notification-content {
@@ -613,7 +545,6 @@ notificationStyles.textContent = `
 `;
 document.head.appendChild(notificationStyles);
 
-// Intersection Observer for animations (оставлена без изменений)
 function setupScrollAnimations() {
     const observerOptions = {
         threshold: 0.1,
@@ -628,7 +559,6 @@ function setupScrollAnimations() {
         });
     }, observerOptions);
 
-    // Observe elements for animation
     const animateElements = document.querySelectorAll('.feature-card, .room-card, .contact-item');
     animateElements.forEach(el => {
         el.style.opacity = '0';
@@ -637,7 +567,6 @@ function setupScrollAnimations() {
     });
 }
 
-// Set minimum date for check-in to today (оставлена без изменений)
 function setMinDate() {
     const today = new Date().toISOString().split('T')[0];
     const checkinInput = document.getElementById('checkin');
@@ -652,7 +581,6 @@ function setMinDate() {
     }
 }
 
-// Update checkout minimum date when checkin changes (оставлена без изменений)
 function updateCheckoutMinDate() {
     const checkinInput = document.getElementById('checkin');
     const checkoutInput = document.getElementById('checkout');
@@ -662,8 +590,6 @@ function updateCheckoutMinDate() {
             const checkinDate = new Date(this.value);
             checkinDate.setDate(checkinDate.getDate() + 1);
             checkoutInput.min = checkinDate.toISOString().split('T')[0];
-
-            // If checkout is before new minimum, clear it
             if (checkoutInput.value && new Date(checkoutInput.value) <= new Date(this.value)) {
                 checkoutInput.value = '';
             }
@@ -671,13 +597,11 @@ function updateCheckoutMinDate() {
     }
 }
 
-// Initialize date inputs (оставлена без изменений)
 function initializeDateInputs() {
     setMinDate();
     updateCheckoutMinDate();
 }
 
-// Parallax effect for hero section (оставлена без изменений)
 function handleParallax() {
     const hero = document.querySelector('.hero');
     const scrolled = window.pageYOffset;
@@ -688,7 +612,6 @@ function handleParallax() {
     }
 }
 
-// Theme management (оставлена без изменений)
 function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
@@ -703,7 +626,6 @@ function setTheme(theme) {
         themeIcon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
     }
 
-    // Update header background immediately
     handleHeaderScroll();
 }
 
@@ -712,7 +634,6 @@ function toggleTheme() {
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
 
-    // Add animation to theme button
     const themeBtn = document.getElementById('themeToggle');
     if (themeBtn) {
         themeBtn.style.transform = 'scale(0.8)';
@@ -722,18 +643,11 @@ function toggleTheme() {
     }
 }
 
-// Функция для проверки ответа сервера (дебаг) - ⚠️ УДАЛЕНА: debugApiResponse, testAuthApi, simulateSuccessfulRegistration
-// 💡 Используйте обновленные функции login/register для реального тестирования.
-
-// Initialize all functionality
 async function init() {
-    // Initialize theme
     initTheme();
 
-    // Check user authentication state and update navigation
     await checkAuthStatus();
 
-    // Set up event listeners
     window.addEventListener('scroll', () => {
         handleHeaderScroll();
         updateActiveNavLink();
@@ -748,27 +662,21 @@ async function init() {
         contactForm.addEventListener('submit', handleContactForm);
     }
 
-    // Add dropdown click handlers
     document.addEventListener('click', handleDropdownClick);
 
-    // Initialize other features
     initializeDateInputs();
     setupScrollAnimations();
 
-    // Set initial header state
     handleHeaderScroll();
 }
 
-// Wait for DOM to be ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
     init();
 }
 
-// Add some interactive features (оставлены без изменений)
 document.addEventListener('DOMContentLoaded', function() {
-    // Add hover effects to room cards
     const roomCards = document.querySelectorAll('.room-card');
     roomCards.forEach(card => {
         card.addEventListener('mouseenter', function() {
@@ -780,11 +688,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Add click effect to buttons
     const buttons = document.querySelectorAll('.btn');
     buttons.forEach(button => {
         button.addEventListener('click', function(e) {
-            // Create ripple effect
             const ripple = document.createElement('span');
             const rect = this.getBoundingClientRect();
             const size = Math.max(rect.width, rect.height);
@@ -812,7 +718,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Add ripple animation
     const rippleStyles = document.createElement('style');
     rippleStyles.textContent = `
         @keyframes ripple {
@@ -825,21 +730,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.head.appendChild(rippleStyles);
 });
 
-// ==============================================
-// SEARCH REDIRECT TO CATALOG
-// ==============================================
 
-/**
- * Переход на страницу каталога с параметрами поиска
- */
 function redirectToCatalog() {
-    // Получаем значения из формы поиска
     const checkIn = document.getElementById('checkIn')?.value;
     const checkOut = document.getElementById('checkOut')?.value;
     const guests = document.getElementById('guests')?.value || '2';
     const roomType = document.getElementById('roomType')?.value || '';
 
-    // Формируем URL с параметрами
     const params = new URLSearchParams();
 
     if (checkIn) params.append('checkIn', checkIn);
@@ -847,15 +744,13 @@ function redirectToCatalog() {
     if (guests) params.append('guests', guests);
     if (roomType) params.append('type', roomType);
 
-    // Перенаправляем на страницу каталога
     const url = `/catalog?${params.toString()}`;
     console.log('Redirecting to catalog:', url);
     window.location.href = url;
 }
 
-// Привязываем функцию к форме поиска на главной странице
 document.addEventListener('DOMContentLoaded', () => {
-    const searchForm = document.getElementById('searchForm'); // или другой ID вашей формы
+    const searchForm = document.getElementById('searchForm');
 
     if (searchForm) {
         searchForm.addEventListener('submit', (e) => {
@@ -864,7 +759,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const searchBtn = document.getElementById('searchBtn'); // ID кнопки поиска
+    const searchBtn = document.getElementById('searchBtn');
     if (searchBtn) {
         searchBtn.addEventListener('click', (e) => {
             e.preventDefault();

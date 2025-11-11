@@ -25,9 +25,6 @@ public class WalletController {
 
     private final WalletService walletService;
 
-    /**
-     * Получить баланс кошелька текущего пользователя
-     */
     @GetMapping("/balance")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<WalletBalanceResponse> getBalance(Authentication authentication) {
@@ -38,9 +35,6 @@ public class WalletController {
         return ResponseEntity.ok(balance);
     }
 
-    /**
-     * Пополнить кошелёк
-     */
     @PostMapping("/deposit")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<TransactionResponse> deposit(
@@ -56,9 +50,6 @@ public class WalletController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Вывести средства из кошелька
-     */
     @PostMapping("/withdraw")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<TransactionResponse> withdraw(
@@ -74,9 +65,7 @@ public class WalletController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Получить историю транзакций
-     */
+
     @GetMapping("/transactions")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<TransactionResponse>> getTransactionHistory(
@@ -92,9 +81,6 @@ public class WalletController {
         return ResponseEntity.ok(transactions);
     }
 
-    /**
-     * Получить детали конкретной транзакции
-     */
     @GetMapping("/transactions/{transactionId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<TransactionResponse> getTransaction(
@@ -109,9 +95,6 @@ public class WalletController {
         return ResponseEntity.ok(transaction);
     }
 
-    /**
-     * Вспомогательный метод для извлечения email из Authentication
-     */
     private String getUserEmailFromAuthentication(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new IllegalStateException("User is not authenticated");

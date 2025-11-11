@@ -1,8 +1,7 @@
 // ==============================================
-// PROFILE.JS - Управление профилем пользователя
+// ЭЛЕМЕНТЫ DOM
 // ==============================================
 
-// DOM Elements
 const navToggle = document.querySelector('.nav-toggle');
 const navMenu = document.querySelector('.nav-menu');
 const navLinks = document.querySelectorAll('.nav-link');
@@ -17,7 +16,7 @@ const USER_DATA_KEY = 'user_data';
 let currentUser = null;
 
 // ==============================================
-// STORAGE FUNCTIONS
+// РАБОТА С LOCAL STORAGE
 // ==============================================
 
 function getUserDataFromStorage() {
@@ -25,7 +24,7 @@ function getUserDataFromStorage() {
         const userData = localStorage.getItem(USER_DATA_KEY);
         return userData ? JSON.parse(userData) : null;
     } catch (error) {
-        console.error('Error parsing user data from storage:', error);
+        console.error('Ошибка парсинга данных пользователя из хранилища:', error);
         return null;
     }
 }
@@ -34,7 +33,7 @@ function saveUserDataToStorage(userData) {
     try {
         localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
     } catch (error) {
-        console.error('Error saving user data to storage:', error);
+        console.error('Ошибка сохранения данных пользователя в хранилище:', error);
     }
 }
 
@@ -45,7 +44,7 @@ function updateUserDataInStorage(updatedData) {
         saveUserDataToStorage(newData);
         return newData;
     } catch (error) {
-        console.error('Error updating user data in storage:', error);
+        console.error('Ошибка обновления данных пользователя в хранилище:', error);
         return null;
     }
 }
@@ -55,12 +54,12 @@ function removeAuthData() {
 }
 
 // ==============================================
-// API FUNCTIONS
+// РАБОТА С API
 // ==============================================
 
 async function apiCall(endpoint, options = {}) {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        credentials: 'include', // ✅ ВАЖНО: включаем Cookie
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
             ...(options.headers || {})
@@ -115,11 +114,9 @@ async function loadUserData() {
     }
 
     try {
-        // Загружаем свежие данные с сервера
         const data = await apiCall('/users/profile');
         currentUser = transformUserData(data);
 
-        // Обновляем localStorage
         const userBasicData = {
             id: currentUser.id,
             email: currentUser.email,
@@ -132,11 +129,9 @@ async function loadUserData() {
         updateUserInterface();
 
     } catch (error) {
-        console.error('Failed to load user data:', error);
+        console.error('Ошибка загрузки данных пользователя:', error);
 
-        // Если ошибка 401 - перенаправляем на логин
         if (error.message.includes('Требуется авторизация')) {
-            console.warn('Authentication required, redirecting to login...');
             removeAuthData();
             //window.location.href = '/login';
         } else {
@@ -193,11 +188,10 @@ async function changePasswordOnBackend(passwordData) {
 }
 
 // ==============================================
-// INITIALIZE
+// ИНИЦИАЛИЗАЦИЯ И ОБРАБОТЧИКИ
 // ==============================================
 
 function initializeProfile() {
-    // Mobile navigation
     if (navToggle) {
         navToggle.addEventListener('click', toggleMobileMenu);
     }
@@ -206,7 +200,6 @@ function initializeProfile() {
         link.addEventListener('click', closeMobileMenu);
     });
 
-    // Tab switching
     const tabButtons = document.querySelectorAll('.tab-btn');
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -215,7 +208,6 @@ function initializeProfile() {
         });
     });
 
-    // Form submissions
     const personalForm = document.getElementById('personalForm');
     if (personalForm) {
         personalForm.addEventListener('submit', handlePersonalFormSubmit);
@@ -225,18 +217,48 @@ function initializeProfile() {
         passwordForm.addEventListener('submit', handlePasswordFormSubmit);
     }
 
-    // Password strength indicator
     const newPasswordInput = document.getElementById('newPassword');
     if (newPasswordInput) {
         newPasswordInput.addEventListener('input', updatePasswordStrength);
     }
 
-    // Notification toggles
     setupNotificationToggles();
 }
 
+function setupEventListeners() {
+    document.addEventListener('click', function (e) {
+        const dropdown = document.getElementById('userDropdown');
+        if (dropdown && !e.target.closest('.user-menu')) {
+            dropdown.classList.remove('show');
+        }
+    });
+
+    document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('modal')) {
+            closePasswordModal();
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closePasswordModal();
+        }
+    });
+}
+
+function checkAuthOnPageLoad() {
+    const userData = getUserDataFromStorage();
+
+    if (!userData || !userData.email) {
+        removeAuthData();
+        window.location.href = '/login';
+        return false;
+    }
+    return true;
+}
+
 // ==============================================
-// NAVIGATION
+// НАВИГАЦИЯ И ВКЛАДКИ
 // ==============================================
 
 function toggleMobileMenu() {
@@ -268,7 +290,7 @@ function switchTab(tabName) {
 }
 
 // ==============================================
-// PROFILE EDITING
+// УПРАВЛЕНИЕ ДАННЫМИ ПРОФИЛЯ
 // ==============================================
 
 function editPersonalInfo() {
@@ -361,7 +383,7 @@ async function handlePersonalFormSubmit(e) {
 }
 
 // ==============================================
-// AVATAR MANAGEMENT
+// УПРАВЛЕНИЕ АВАТАРОМ
 // ==============================================
 
 function changeProfilePhoto() {
@@ -408,7 +430,7 @@ function handleAvatarChange(event) {
 }
 
 // ==============================================
-// PASSWORD MANAGEMENT
+// УПРАВЛЕНИЕ ПАРОЛЕМ
 // ==============================================
 
 function changePassword() {
@@ -493,7 +515,7 @@ function updatePasswordStrength() {
 }
 
 // ==============================================
-// ADDITIONAL FEATURES
+// ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ
 // ==============================================
 
 function setup2FA() {
@@ -516,7 +538,7 @@ function setupNotificationToggles() {
 }
 
 // ==============================================
-// UPDATE UI
+// ОБНОВЛЕНИЕ UI
 // ==============================================
 
 function updateUserInterface() {
@@ -582,7 +604,7 @@ function updateFormFields() {
 }
 
 // ==============================================
-// UTILITIES
+// УТИЛИТЫ
 // ==============================================
 
 function isValidEmail(email) {
@@ -620,7 +642,7 @@ function showNotification(message, type = 'info') {
         zIndex: '10000',
         animation: 'slideInRight 0.3s ease',
         maxWidth: '400px'
-    });
+});
 
     document.body.appendChild(notification);
 
@@ -638,7 +660,7 @@ async function logout() {
             credentials: 'include'
         });
     } catch (error) {
-        console.error('Logout error:', error);
+        console.error('Ошибка выхода:', error);
     } finally {
         removeAuthData();
         window.location.href = '/login';
@@ -646,7 +668,7 @@ async function logout() {
 }
 
 // ==============================================
-// THEME MANAGEMENT
+// УПРАВЛЕНИЕ ТЕМОЙ
 // ==============================================
 
 function initTheme() {
@@ -671,64 +693,29 @@ function toggleTheme() {
 }
 
 // ==============================================
-// EVENT LISTENERS
-// ==============================================
-
-function setupEventListeners() {
-    document.addEventListener('click', function (e) {
-        const dropdown = document.getElementById('userDropdown');
-        if (dropdown && !e.target.closest('.user-menu')) {
-            dropdown.classList.remove('show');
-        }
-    });
-
-    document.addEventListener('click', function (e) {
-        if (e.target.classList.contains('modal')) {
-            closePasswordModal();
-        }
-    });
-
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-            closePasswordModal();
-        }
-    });
-}
-
-
-function checkAuthOnPageLoad() {
-    const userData = getUserDataFromStorage();
-
-    // Если нет данных пользователя в localStorage
-    if (!userData || !userData.email) {
-        console.warn('No user data found, redirecting to login...');
-        removeAuthData();
-        window.location.href = '/login';
-        return false;
-    }
-
-    console.log('User data found:', userData);
-    return true;
-}
-
-// ==============================================
-// INITIALIZE ON DOM LOAD
+// ЗАПУСК ПРИ ЗАГРУЗКЕ
 // ==============================================
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🚀 Profile page loaded');
-
-    // ✅ ВАЖНО: Проверяем авторизацию ДО загрузки данных
     if (!checkAuthOnPageLoad()) {
-        return; // Останавливаем инициализацию, если не авторизован
+        return;
     }
 
     initializeProfile();
     loadUserData();
     setupEventListeners();
     initTheme();
-
-    console.log('✅ Profile initialized successfully');
 });
 
-console.log('Profile script initialized successfully');
+// Глобальные функции
+window.toggleTheme = toggleTheme;
+window.logout = logout;
+window.toggleUserMenu = toggleUserMenu;
+window.editPersonalInfo = editPersonalInfo;
+window.cancelEdit = cancelEdit;
+window.changeProfilePhoto = changeProfilePhoto;
+window.handleAvatarChange = handleAvatarChange;
+window.changePassword = changePassword;
+window.closePasswordModal = closePasswordModal;
+window.setup2FA = setup2FA;
+window.viewLoginHistory = viewLoginHistory;

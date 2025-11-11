@@ -11,24 +11,20 @@ import java.util.UUID;
 public class AdminReviewResponse {
     UUID id;
 
-    // Связи
     UUID bookingId;
     UUID userId;
-    String userName; // Имя пользователя
+    String userName;
     UUID roomId;
-    String roomNumber; // Номер комнаты
+    String roomNumber;
 
-    // Оценка
     int rating;
     String comment;
 
-    // Детальные оценки
     Integer cleanlinessRating;
     Integer comfortRating;
     Integer serviceRating;
     Integer valueRating;
 
-    // Модерация
     boolean isApproved;
     boolean isVisible;
 

@@ -1,4 +1,9 @@
+// ==============================================
+// CONFIGURATION AND INITIALIZATION
+// ==============================================
+
 const API_BASE_URL = '/api/rooms';
+const API_BASE_AUTH = '/api/auth';
 const ENDPOINTS = {
     getAllRooms: '/getAllRooms',
     roomById: (id) => `/${id}`
@@ -11,25 +16,86 @@ let currentTheme = localStorage.getItem('theme') || 'light';
 document.addEventListener('DOMContentLoaded', async () => {
     initializeThemeToggle();
     bindFilters();
-
+    checkAuthStatus();
     applyUrlParams();
-
     await loadRooms();
+    setupBookingModalListeners();
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.user-menu')) {
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown) dropdown.classList.remove('show');
+        }
+    });
 });
 
 function initializeThemeToggle() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    currentTheme = savedTheme;
     document.documentElement.setAttribute('data-theme', currentTheme);
     const icon = document.getElementById('themeIcon');
     if (icon) icon.className = currentTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
-    const toggle = document.getElementById('themeToggle');
-    if (toggle) toggle.addEventListener('click', () => {
-        currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', currentTheme);
-        localStorage.setItem('theme', currentTheme);
-        const i = document.getElementById('themeIcon');
-        if (i) i.className = currentTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
-    });
 }
+
+function toggleTheme() {
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    const icon = document.getElementById('themeIcon');
+    if (icon) {
+        icon.className = newTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+    }
+}
+
+// ==============================================
+// UTILS
+// ==============================================
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"'`=\/]/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
+        "'": '&#39;', '`': '&#x60;', '=': '&#x3D;', '/': '&#x2F;'
+    }[c]));
+}
+
+function toNum(v) {
+    const n = typeof v === 'number' ? v : parseFloat(v);
+    return Number.isNaN(n) ? 0 : n;
+}
+
+function formatMoney(v) {
+    const n = toNum(v);
+    return n.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function debounce(fn, t) {
+    let id;
+    return (...a) => {
+        clearTimeout(id);
+        id = setTimeout(() => fn.apply(null, a), t);
+    };
+}
+
+function showLoading(show) {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) overlay.style.display = show ? 'flex' : 'none';
+}
+
+function notify(message, type = 'info') {
+    const exist = document.querySelectorAll('.notification');
+    exist.forEach(n => n.remove());
+    const n = document.createElement('div');
+    n.className = `notification notification-${type}`;
+    n.style.cssText = `position:fixed;top:20px;right:20px;background:${type==='success'?'#10b981':type==='error'?'#ef4444':type==='warning'?'#f59e0b':'#3b82f6'};color:#fff;padding:1rem 1.25rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.1);z-index:10000`;
+    n.innerHTML = `<div class="notification-content"><i class="fas fa-info-circle"></i><span>${message}</span><button class="notification-close" onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:#fff;cursor:pointer;margin-left:10px"><i class="fas fa-times"></i></button></div>`;
+    document.body.appendChild(n);
+    setTimeout(() => { if (n.parentElement) n.remove(); }, 4000);
+}
+
+// ==============================================
+// API & DATA LOADING
+// ==============================================
 
 async function apiCall(endpoint, options = {}) {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -55,7 +121,6 @@ async function loadRooms() {
         let data = await apiCall(ENDPOINTS.getAllRooms);
         console.log('Raw API response:', data);
 
-        // Проверяем структуру первого элемента
         if (data && data.length > 0) {
             console.log('First room structure:', data[0]);
             console.log('Translations:', data[0].translations);
@@ -72,6 +137,10 @@ async function loadRooms() {
     }
 }
 
+// ==============================================
+// FILTERING & ROOM DISPLAY
+// ==============================================
+
 function bindFilters() {
     const form = document.getElementById('filtersForm');
     const reset = document.getElementById('btnReset');
@@ -79,11 +148,11 @@ function bindFilters() {
     if (reset) reset.addEventListener('click', () => { resetFilters(); applyFilters(); });
 
     ['searchQuery', 'typeFilter', 'priceMin', 'priceMax', 'capacityFilter', 'sortBy', 'fWifi', 'fTv', 'fMinibar', 'fBalcony', 'fSea']
-    .forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('change', debounce(applyFilters, 50));
-        if (el && el.tagName === 'INPUT' && el.type === 'text') el.addEventListener('input', debounce(applyFilters, 150));
-    });
+        .forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', debounce(applyFilters, 50));
+            if (el && el.tagName === 'INPUT' && el.type === 'text') el.addEventListener('input', debounce(applyFilters, 150));
+        });
 }
 
 function resetFilters() {
@@ -100,7 +169,6 @@ function resetFilters() {
     document.getElementById('fSea').checked = false;
 }
 
-// ИСПРАВЛЕНО: Безопасное получение перевода
 function getTranslation(room, lang = 'RU') {
     if (!room || !room.translations || typeof room.translations !== 'object') {
         return null;
@@ -108,7 +176,6 @@ function getTranslation(room, lang = 'RU') {
     return room.translations[lang] || room.translations['EN'] || null;
 }
 
-// ИСПРАВЛЕНО: Безопасное получение имени комнаты
 function getRoomName(room) {
     const transRU = getTranslation(room, 'RU');
     const transEN = getTranslation(room, 'EN');
@@ -199,7 +266,7 @@ function renderRooms() {
         <article class="room-card">
             <div class="room-media">
                 ${imgUrl ? `<img alt="${escapeHtml(name)}" src="${imgUrl}">` : '<div class="no-image">Нет фото</div>'}
-                <div class="badge-price">${price} ₽/ночь</div>
+                <div class="badge-price">${price} BYN/ночь</div>
             </div>
             <div class="room-body">
                 <div class="room-title">
@@ -223,13 +290,78 @@ function renderRooms() {
     }).join('');
 }
 
+function getRoomTypeText(type) {
+    const map = {
+        STANDARD: 'Стандарт',
+        DELUXE: 'Делюкс',
+        SUITE: 'Люкс',
+        APARTMENT: 'Апартаменты',
+        PENTHOUSE: 'Пентхаус'
+    };
+    return map[type] || type || '';
+}
+
+function applyUrlParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    console.log('URL params:', Object.fromEntries(urlParams));
+
+    const checkIn = urlParams.get('checkIn');
+    const checkOut = urlParams.get('checkOut');
+    const guests = urlParams.get('guests');
+    const roomType = urlParams.get('type');
+
+    if (roomType) {
+        const typeFilter = document.getElementById('typeFilter');
+        if (typeFilter) {
+            typeFilter.value = roomType;
+            console.log('Applied room type filter:', roomType);
+        }
+    }
+
+    if (guests) {
+        const capacityFilter = document.getElementById('capacityFilter');
+        if (capacityFilter) {
+            if (parseInt(guests) >= 5) {
+                capacityFilter.value = '5';
+            } else {
+                capacityFilter.value = guests;
+            }
+            console.log('Applied capacity filter:', guests);
+        }
+    }
+
+    if (checkIn) {
+        sessionStorage.setItem('searchCheckIn', checkIn);
+        console.log('Saved checkIn date:', checkIn);
+    }
+
+    if (checkOut) {
+        sessionStorage.setItem('searchCheckOut', checkOut);
+        console.log('Saved checkOut date:', checkOut);
+    }
+
+    if (guests) {
+        sessionStorage.setItem('searchGuests', guests);
+        console.log('Saved guests count:', guests);
+    }
+
+    if (roomType || guests) {
+        setTimeout(() => {
+            applyFilters();
+        }, 100);
+    }
+}
+
+// Room Detail Functions
+
 function goToBooking(roomId) {
     openBookingModal(roomId);
 }
+
 async function openRoomDetails(roomId) {
     showLoading(true);
     try {
-        // Ищем комнату в уже загруженных данных
         const room = allRooms.find(r => r.id === roomId);
 
         if (!room) {
@@ -260,9 +392,8 @@ function fillRoomModal(room) {
     document.getElementById('roomCapacity').textContent = room.capacity ?? '';
     document.getElementById('roomArea').textContent = room.areaSqm ?? '';
     const priceLabel = document.getElementById('galleryPrice');
-    priceLabel.textContent = `${formatMoney(room.basePrice)} ₽/ночь`;
+    priceLabel.textContent = `${formatMoney(room.basePrice)} BYN/ночь`;
 
-    // amenities
     const ul = document.getElementById('roomAmenities');
     const items = [];
     if (room.hasWifi !== false) items.push(`<li><i class="fas fa-wifi"></i> Wi‑Fi</li>`);
@@ -290,61 +421,11 @@ function fillRoomModal(room) {
     if (btnBook) btnBook.onclick = () => goToBooking(room.id);
 }
 
-// utils
-function getRoomTypeText(type) {
-    const map = {
-        STANDARD: 'Стандарт',
-        DELUXE: 'Делюкс',
-        SUITE: 'Люкс',
-        APARTMENT: 'Апартаменты',
-        PENTHOUSE: 'Пентхаус'
-    };
-    return map[type] || type || '';
-}
 
-function escapeHtml(s) {
-    return String(s).replace(/[&<>"'`=\/]/g, c => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
-        "'": '&#39;', '`': '&#x60;', '=': '&#x3D;', '/': '&#x2F;'
-    }[c]));
-}
+// ==============================================
+// BOOKING MODAL
+// ==============================================
 
-function toNum(v) {
-    const n = typeof v === 'number' ? v : parseFloat(v);
-    return Number.isNaN(n) ? 0 : n;
-}
-
-function formatMoney(v) {
-    const n = toNum(v);
-    return n.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-}
-
-function debounce(fn, t) {
-    let id;
-    return (...a) => {
-        clearTimeout(id);
-        id = setTimeout(() => fn.apply(null, a), t);
-    };
-}
-
-function showLoading(show) {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) overlay.style.display = show ? 'flex' : 'none';
-}
-
-function notify(message, type = 'info') {
-    const exist = document.querySelectorAll('.notification');
-    exist.forEach(n => n.remove());
-    const n = document.createElement('div');
-    n.className = `notification notification-${type}`;
-    n.style.cssText = `position:fixed;top:20px;right:20px;background:${type==='success'?'#10b981':type==='error'?'#ef4444':type==='warning'?'#f59e0b':'#3b82f6'};color:#fff;padding:1rem 1.25rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.1);z-index:10000`;
-    n.innerHTML = `<div class="notification-content"><i class="fas fa-info-circle"></i><span>${message}</span><button class="notification-close" onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:#fff;cursor:pointer;margin-left:10px"><i class="fas fa-times"></i></button></div>`;
-    document.body.appendChild(n);
-    setTimeout(() => { if (n.parentElement) n.remove(); }, 4000);
-}
-
-
-// ========== МОДАЛЬНОЕ ОКНО БРОНИРОВАНИЯ ==========
 function openBookingModal(roomId) {
     const room = allRooms.find(r => r.id === roomId);
 
@@ -359,20 +440,17 @@ function openBookingModal(roomId) {
         return;
     }
 
-    // Сохраняем ID комнаты и цену
     modal.dataset.roomId = roomId;
     modal.dataset.pricePerNight = room.basePrice;
 
     const name = getRoomName(room);
     document.getElementById('bookingRoomName').textContent = name;
-    document.getElementById('bookingRoomPrice').textContent = `${formatMoney(room.basePrice)} ₽/ночь`;
+    document.getElementById('bookingRoomPrice').textContent = `${formatMoney(room.basePrice)} BYN/ночь`;
 
-    // ✅ НОВОЕ: Получаем даты из sessionStorage (если были переданы с главной)
     const savedCheckIn = sessionStorage.getItem('searchCheckIn');
     const savedCheckOut = sessionStorage.getItem('searchCheckOut');
     const savedGuests = sessionStorage.getItem('searchGuests');
 
-    // Устанавливаем минимальные даты
     const today = new Date().toISOString().split('T')[0];
     const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
@@ -383,19 +461,15 @@ function openBookingModal(roomId) {
     checkInInput.min = today;
     checkOutInput.min = tomorrow;
 
-    // ✅ НОВОЕ: Используем сохранённые значения или значения по умолчанию
     checkInInput.value = savedCheckIn || today;
     checkOutInput.value = savedCheckOut || tomorrow;
     guestsInput.value = savedGuests || '1';
 
-    // Сбрасываем другие поля
     document.getElementById('currency').value = 'EUR';
     document.getElementById('specialRequests').value = '';
 
-    // Пересчитываем цену
     calculateTotalPrice();
 
-    // Показываем модальное окно
     modal.classList.add('show');
 }
 
@@ -416,7 +490,7 @@ function calculateTotalPrice() {
 
     if (!checkInDate || !checkOutDate) {
         document.getElementById('totalNights').textContent = '0';
-        document.getElementById('totalPrice').textContent = '0 ₽';
+        document.getElementById('totalPrice').textContent = '0 BYN';
         return;
     }
 
@@ -427,7 +501,7 @@ function calculateTotalPrice() {
     const totalPrice = nights * pricePerNight;
 
     document.getElementById('totalNights').textContent = nights;
-    document.getElementById('totalPrice').textContent = `${formatMoney(totalPrice)} ₽`;
+    document.getElementById('totalPrice').textContent = `${formatMoney(totalPrice)} BYN`;
 }
 
 async function submitBooking() {
@@ -445,7 +519,6 @@ async function submitBooking() {
 
     console.log('Form values:', { checkInDate, checkOutDate, guestsCount, currency });
 
-    // Валидация
     if (!checkInDate || !checkOutDate) {
         console.warn('Validation failed: dates missing');
         notify('Выберите даты заезда и выезда', 'warning');
@@ -464,7 +537,6 @@ async function submitBooking() {
         return;
     }
 
-    // Вычисляем общую цену
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
     const nights = Math.floor((checkOut - checkIn) / (1000 * 60 * 60 * 24));
@@ -472,7 +544,6 @@ async function submitBooking() {
 
     console.log('Calculated:', { nights, totalPrice });
 
-    // Формируем запрос
     const bookingRequest = {
         roomId: roomId,
         checkInDate: checkInDate,
@@ -492,13 +563,11 @@ async function submitBooking() {
         const url = '/api/booking/addBooking';
         console.log('Sending POST to:', url);
 
-        // ✅ УПРОЩЕНО: токен передаётся автоматически через cookie!
         const response = await fetch(url, {
             method: 'POST',
-            credentials: 'include',  // ✅ ВАЖНО: включает автоматическую отправку cookie
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
-                // Authorization НЕ НУЖЕН - токен в HttpOnly cookie!
             },
             body: JSON.stringify(bookingRequest)
         });
@@ -538,7 +607,7 @@ async function submitBooking() {
         if (error.message.includes('401') || error.message.includes('403')) {
             notify('Для бронирования необходимо войти в систему', 'warning');
             setTimeout(() => {
-               // window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                // window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
             }, 1500);
         } else {
             notify('Ошибка при создании бронирования: ' + error.message, 'error');
@@ -549,68 +618,9 @@ async function submitBooking() {
     }
 }
 
-function applyUrlParams() {
-    const urlParams = new URLSearchParams(window.location.search);
+// Setup Listeners
 
-    console.log('URL params:', Object.fromEntries(urlParams));
-
-    const checkIn = urlParams.get('checkIn');
-    const checkOut = urlParams.get('checkOut');
-    const guests = urlParams.get('guests');
-    const roomType = urlParams.get('type');
-
-    if (roomType) {
-        const typeFilter = document.getElementById('typeFilter');
-        if (typeFilter) {
-            typeFilter.value = roomType;
-            console.log('Applied room type filter:', roomType);
-        }
-    }
-
-    if (guests) {
-        const capacityFilter = document.getElementById('capacityFilter');
-        if (capacityFilter) {
-            // Преобразуем количество гостей в опцию фильтра
-            if (parseInt(guests) >= 5) {
-                capacityFilter.value = '5';
-            } else {
-                capacityFilter.value = guests;
-            }
-            console.log('Applied capacity filter:', guests);
-        }
-    }
-
-    // Сохраняем даты в sessionStorage для использования в модальном окне
-    if (checkIn) {
-        sessionStorage.setItem('searchCheckIn', checkIn);
-        console.log('Saved checkIn date:', checkIn);
-    }
-
-    if (checkOut) {
-        sessionStorage.setItem('searchCheckOut', checkOut);
-        console.log('Saved checkOut date:', checkOut);
-    }
-
-    if (guests) {
-        sessionStorage.setItem('searchGuests', guests);
-        console.log('Saved guests count:', guests);
-    }
-
-    // Применяем фильтры после установки значений
-    if (roomType || guests) {
-        setTimeout(() => {
-            applyFilters();
-        }, 100);
-    }
-}
-
-
-
-
-
-// Привязка событий для модального окна бронирования
-document.addEventListener('DOMContentLoaded', () => {
-    // Закрытие по клику на фон
+function setupBookingModalListeners() {
     const bookingModal = document.getElementById('bookingModal');
     if (bookingModal) {
         bookingModal.addEventListener('click', (e) => {
@@ -620,18 +630,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Пересчёт цены при изменении дат
     const checkInDate = document.getElementById('checkInDate');
     const checkOutDate = document.getElementById('checkOutDate');
 
     if (checkInDate) {
         checkInDate.addEventListener('change', () => {
-            // Обновляем минимальную дату выезда
             const nextDay = new Date(checkInDate.value);
             nextDay.setDate(nextDay.getDate() + 1);
             checkOutDate.min = nextDay.toISOString().split('T')[0];
 
-            // Если выезд раньше заезда, обновляем его
             if (checkOutDate.value && new Date(checkOutDate.value) <= new Date(checkInDate.value)) {
                 checkOutDate.value = nextDay.toISOString().split('T')[0];
             }
@@ -643,7 +650,152 @@ document.addEventListener('DOMContentLoaded', () => {
     if (checkOutDate) {
         checkOutDate.addEventListener('change', calculateTotalPrice);
     }
-});
+}
 
+// ==============================================
+// AUTH & NAVIGATION
+// ==============================================
 
+function getUserData() {
+    const userData = localStorage.getItem('user_data');
+    return userData ? JSON.parse(userData) : null;
+}
 
+function removeUserData() {
+    localStorage.removeItem('user_data');
+    localStorage.removeItem('auth_token');
+}
+
+async function apiClient(url, options = {}) {
+    const config = {
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers,
+        },
+        credentials: 'include',
+        ...options,
+    };
+
+    try {
+        const response = await fetch(url, config);
+        if (response.status === 401) {
+            removeUserData();
+            updateNavigation(false);
+        }
+        return response;
+    } catch (error) {
+        console.error('API request failed:', error);
+        throw error;
+    }
+}
+
+function checkAuthStatus() {
+    const userData = getUserData();
+    const isAuthenticated = !!userData;
+    updateNavigation(isAuthenticated, userData);
+    return isAuthenticated;
+}
+
+function updateNavigation(isAuthenticated, userData) {
+    const navAuth = document.querySelector('.nav-auth');
+    if (!navAuth) return;
+
+    userData = userData || getUserData();
+
+    if (isAuthenticated && userData) {
+        navAuth.innerHTML = `
+            <div class="user-profile">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">${userData.firstName?.charAt(0) || '👤'}</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">${userData.firstName || ''} ${userData.lastName || ''}</div>
+                        <div class="user-wallet">
+                            <i class="fas fa-wallet"></i>
+                            <span id="userWallet">${formatMoney(userData.wallet || 0)} BYN</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="user-menu">
+                    <button class="btn-auth btn-user" onclick="toggleUserMenu()">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-header">
+                            <div class="user-avatar-small">${userData.firstName?.charAt(0) || '👤'}</div>
+                            <div>
+                                <div class="user-name-small">${userData.firstName || ''} ${userData.lastName || ''}</div>
+                                <div class="user-email-small">${userData.email || ''}</div>
+                            </div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="/profile" class="dropdown-item">
+                            <i class="fas fa-user"></i>
+                            Мой профиль
+                        </a>
+                        <a href="/booking" class="dropdown-item">
+                            <i class="fas fa-calendar"></i>
+                            Мои бронирования
+                        </a>
+                        <a href="/wallet" class="dropdown-item">
+                            <i class="fas fa-wallet"></i>
+                            Кошелек
+                        </a>
+                        <a href="/setting" class="dropdown-item">
+                            <i class="fas fa-cog"></i>
+                            Настройки
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item logout-item" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Выйти
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        navAuth.innerHTML = `
+            <a href="/login" class="btn-auth btn-login">
+                <i class="fas fa-sign-in-alt"></i>
+                Войти
+            </a>
+            <a href="/register" class="btn-auth btn-register">
+                <i class="fas fa-user-plus"></i>
+                Регистрация
+            </a>
+        `;
+    }
+}
+
+async function logout() {
+    try {
+        await apiClient(`${API_BASE_AUTH}/logout`, {
+            method: 'POST'
+        });
+        removeUserData();
+        updateNavigation(false);
+        const dropdown = document.getElementById('userDropdown');
+        if (dropdown) dropdown.classList.remove('show');
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 300);
+    } catch (error) {
+        console.error('Logout failed:', error);
+        removeUserData();
+        updateNavigation(false);
+    }
+}
+
+function toggleUserMenu() {
+    const dropdown = document.getElementById('userDropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('show');
+    }
+}
+
+window.toggleTheme = toggleTheme;
+window.toggleUserMenu = toggleUserMenu;
+window.logout = logout;
+window.submitBooking = submitBooking;
+window.goToBooking = goToBooking;
+window.openRoomDetails = openRoomDetails;

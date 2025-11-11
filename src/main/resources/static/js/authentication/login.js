@@ -1,28 +1,19 @@
 // ==============================================
-// LOGIN.JS - Авторизация с HttpOnly JWT Cookie
+// CONFIGURATION AND DOM
 // ==============================================
 
-// DOM Elements
 const loginForm = document.getElementById('loginForm');
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 const rememberCheckbox = document.getElementById('remember');
 const submitBtn = document.querySelector('.auth-btn-primary');
-
-// API Base URL
 const API_BASE_URL = '/api';
-
-// LocalStorage ключ для данных пользователя (БЕЗ ТОКЕНА)
 const USER_DATA_KEY = 'user_data';
 
 // ==============================================
-// STORAGE FUNCTIONS (БЕЗ ТОКЕНА)
+// STORAGE FUNCTIONS
 // ==============================================
 
-/**
- * Сохранить данные пользователя в localStorage
- * JWT токен находится в HttpOnly Cookie и недоступен из JS
- */
 function storeAuthData(authResponse) {
     if (!authResponse || !authResponse.user) {
         console.error('Invalid auth response:', authResponse);
@@ -35,7 +26,6 @@ function storeAuthData(authResponse) {
         firstName: authResponse.user.firstName,
         lastName: authResponse.user.lastName,
         role: authResponse.user.role,
-        // Добавьте другие нечувствительные данные при необходимости
     };
 
     try {
@@ -46,9 +36,6 @@ function storeAuthData(authResponse) {
     }
 }
 
-/**
- * Получить данные пользователя из localStorage
- */
 function getUserData() {
     try {
         const userData = localStorage.getItem(USER_DATA_KEY);
@@ -59,10 +46,6 @@ function getUserData() {
     }
 }
 
-/**
- * Удалить данные пользователя из localStorage
- * JWT Cookie удаляется через /api/auth/logout
- */
 function removeAuthData() {
     try {
         localStorage.removeItem(USER_DATA_KEY);
@@ -73,13 +56,37 @@ function removeAuthData() {
 }
 
 // ==============================================
+// THEME FUNCTIONS
+// ==============================================
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+
+    const themeBtn = document.getElementById('themeToggle');
+    if (themeBtn) {
+        themeBtn.style.transform = 'scale(0.8)';
+        setTimeout(() => {
+            themeBtn.style.transform = 'scale(1)';
+        }, 150);
+    }
+}
+
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+
+    const themeIcon = document.getElementById('themeIcon');
+    if (themeIcon) {
+        themeIcon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+    }
+}
+
+// ==============================================
 // API FUNCTIONS
 // ==============================================
 
-/**
- * Авторизация пользователя
- * JWT токен автоматически устанавливается в HttpOnly Cookie бэкендом
- */
 async function loginUser(credentials) {
     try {
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -87,11 +94,10 @@ async function loginUser(credentials) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            credentials: 'include', // ✅ ВАЖНО: отправляем и получаем cookies
+            credentials: 'include',
             body: JSON.stringify(credentials)
         });
 
-        // Обработка ошибок
         if (!response.ok) {
             let errorMessage = 'Ошибка авторизации';
 
@@ -99,19 +105,15 @@ async function loginUser(credentials) {
                 const errorData = await response.json();
                 errorMessage = errorData.message || errorMessage;
             } catch (e) {
-                // Если не JSON, пытаемся получить текст
                 errorMessage = await response.text() || errorMessage;
             }
 
             throw new Error(errorMessage);
         }
 
-        // Получаем данные пользователя
         const data = await response.json();
         console.log('Login successful:', data);
 
-        // ✅ JWT токен уже установлен в HttpOnly Cookie бэкендом
-        // Сохраняем только user_data в localStorage
         storeAuthData(data);
 
         return data;
@@ -122,9 +124,6 @@ async function loginUser(credentials) {
     }
 }
 
-/**
- * Регистрация нового пользователя
- */
 async function registerUser(userData) {
     try {
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -132,7 +131,7 @@ async function registerUser(userData) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            credentials: 'include', // ✅ ВАЖНО: получаем cookies
+            credentials: 'include',
             body: JSON.stringify(userData)
         });
 
@@ -152,7 +151,6 @@ async function registerUser(userData) {
         const data = await response.json();
         console.log('Registration successful:', data);
 
-        // ✅ JWT токен уже установлен в HttpOnly Cookie
         storeAuthData(data);
 
         return data;
@@ -163,15 +161,11 @@ async function registerUser(userData) {
     }
 }
 
-/**
- * Выход из системы
- * Удаляет JWT Cookie на бэкенде
- */
 async function logoutUser() {
     try {
         const response = await fetch(`${API_BASE_URL}/auth/logout`, {
             method: 'POST',
-            credentials: 'include' // ✅ Отправляем Cookie для удаления
+            credentials: 'include'
         });
 
         if (!response.ok) {
@@ -182,12 +176,9 @@ async function logoutUser() {
 
     } catch (error) {
         console.error('Logout error:', error);
-        // Продолжаем выход даже при ошибке
     } finally {
-        // Удаляем локальные данные
         removeAuthData();
 
-        // Перенаправляем на страницу входа
         window.location.href = '/login';
     }
 }
@@ -196,19 +187,13 @@ async function logoutUser() {
 // UI FUNCTIONS
 // ==============================================
 
-/**
- * Показать уведомление
- */
 function showNotification(message, type = 'info') {
-    // Удалить существующие уведомления
     const existingNotifications = document.querySelectorAll('.notification');
     existingNotifications.forEach(notification => notification.remove());
 
-    // Создать элемент уведомления
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
 
-    // Определить иконку
     const iconMap = {
         success: 'check-circle',
         error: 'exclamation-circle',
@@ -227,7 +212,6 @@ function showNotification(message, type = 'info') {
         </div>
     `;
 
-    // Стили уведомления
     const bgColors = {
         success: '#10b981',
         error: '#ef4444',
@@ -250,10 +234,8 @@ function showNotification(message, type = 'info') {
         minWidth: '300px'
     });
 
-    // Добавить в DOM
     document.body.appendChild(notification);
 
-    // Автоматически удалить через 5 секунд
     setTimeout(() => {
         if (notification.parentElement) {
             notification.style.animation = 'slideOutRight 0.3s ease';
@@ -262,9 +244,6 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-/**
- * Показать/скрыть загрузку на кнопке
- */
 function setButtonLoading(button, isLoading) {
     if (isLoading) {
         button.disabled = true;
@@ -276,17 +255,11 @@ function setButtonLoading(button, isLoading) {
     }
 }
 
-/**
- * Валидация email
- */
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
 }
 
-/**
- * Валидация формы
- */
 function validateLoginForm(email, password) {
     if (!email || !password) {
         showNotification('Пожалуйста, заполните все поля', 'error');
@@ -306,14 +279,9 @@ function validateLoginForm(email, password) {
     return true;
 }
 
-/**
- * Перенаправление после успешного входа
- */
 function redirectAfterLogin(userData) {
-    // Проверяем роль пользователя
     const role = userData.user?.role || userData.role;
 
-    // Перенаправление в зависимости от роли
     if (role === 'ADMIN') {
         window.location.href = '/admin';
     } else {
@@ -325,50 +293,36 @@ function redirectAfterLogin(userData) {
 // EVENT HANDLERS
 // ==============================================
 
-/**
- * Обработчик отправки формы логина
- */
 if (loginForm) {
     loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        // Получить данные формы
         const email = emailInput.value.trim();
         const password = passwordInput.value;
 
-        // Валидация
         if (!validateLoginForm(email, password)) {
             return;
         }
 
         const credentials = { email, password };
 
-        // Показать загрузку
         setButtonLoading(submitBtn, true);
 
         try {
-            // Отправить запрос на авторизацию
             const authData = await loginUser(credentials);
 
-            // Показать успешное уведомление
             showNotification('Вход выполнен успешно!', 'success');
 
-            // Подождать немного для показа уведомления
             setTimeout(() => {
                 redirectAfterLogin(authData);
             }, 1000);
 
         } catch (error) {
-            // Показать ошибку
             showNotification(error.message, 'error');
             setButtonLoading(submitBtn, false);
         }
     });
 }
-
-// ==============================================
-// PASSWORD VISIBILITY TOGGLE
-// ==============================================
 
 const passwordToggle = document.querySelector('.password-toggle');
 if (passwordToggle) {
@@ -384,11 +338,8 @@ if (passwordToggle) {
     });
 }
 
-// ==============================================
-// REMEMBER ME FUNCTIONALITY
-// ==============================================
 
-// Загрузить сохраненный email при загрузке страницы
+
 document.addEventListener('DOMContentLoaded', function() {
     const savedEmail = localStorage.getItem('remembered_email');
     if (savedEmail && emailInput) {
@@ -399,7 +350,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Сохранить email при выборе "Запомнить меня"
 if (rememberCheckbox) {
     rememberCheckbox.addEventListener('change', function() {
         if (this.checked && emailInput.value) {
@@ -414,17 +364,12 @@ if (rememberCheckbox) {
 // REDIRECT IF ALREADY LOGGED IN
 // ==============================================
 
-/**
- * Проверить, авторизован ли пользователь
- * (только по наличию данных в localStorage)
- */
 function checkIfLoggedIn() {
     const userData = getUserData();
 
     if (userData) {
         console.log('User already logged in, redirecting...');
 
-        // Перенаправление в зависимости от роли
         if (userData.role === 'ADMIN') {
             window.location.href = '/profileAdmin';
         } else {
@@ -433,9 +378,7 @@ function checkIfLoggedIn() {
     }
 }
 
-// Проверить при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    // Если мы на странице логина, проверим авторизацию
     if (window.location.pathname === '/login') {
         checkIfLoggedIn();
     }
@@ -445,7 +388,6 @@ document.addEventListener('DOMContentLoaded', function() {
 // CSS ANIMATIONS FOR NOTIFICATIONS
 // ==============================================
 
-// Добавить стили анимаций, если их еще нет
 if (!document.querySelector('#notification-animations')) {
     const style = document.createElement('style');
     style.id = 'notification-animations';
@@ -497,11 +439,5 @@ if (!document.querySelector('#notification-animations')) {
     document.head.appendChild(style);
 }
 
-// ==============================================
-// EXPORT FUNCTIONS (если используете модули)
-// ==============================================
-
-// Если используете ES6 модули, можете экспортировать функции:
-// export { loginUser, registerUser, logoutUser, getUserData, showNotification };
 
 console.log('Login script initialized successfully');

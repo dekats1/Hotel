@@ -66,7 +66,6 @@ public class AdminServiceImpl implements AdminService {
     private static final String STATIC_UPLOADS_ROOT = "src/main/resources/static/uploads";
     private static final String ROOMS_FOLDER = "rooms";
 
-    // ========== USER MANAGEMENT ==========
 
     @Override
     @Transactional(readOnly = true)
@@ -131,7 +130,6 @@ public class AdminServiceImpl implements AdminService {
         log.info("User with ID: {} deleted successfully", userId);
     }
 
-    // ========== ROOM MANAGEMENT ==========
 
     @Override
     @Transactional
@@ -255,10 +253,8 @@ public class AdminServiceImpl implements AdminService {
 
         Room room = photo.getRoom();
 
-        // Сбросить все isPrimary флаги
         room.getPhotos().forEach(p -> p.setIsPrimary(false));
 
-        // Установить новое primary фото
         photo.setIsPrimary(true);
 
         Room updatedRoom = roomRepository.save(room);
@@ -274,10 +270,8 @@ public class AdminServiceImpl implements AdminService {
         log.info("Replacing translations for room {}", roomId);
         Room room = findRoomById(roomId);
 
-        // Удалить все существующие переводы
         room.getTranslations().clear();
 
-        // Добавить новые переводы
         attachTranslationsFromLanguageCodeMap(room, translations);
 
         Room updatedRoom = roomRepository.save(room);
@@ -293,12 +287,10 @@ public class AdminServiceImpl implements AdminService {
         log.info("Patching translations for room {}", roomId);
         Room room = findRoomById(roomId);
 
-        // Обновить или добавить переводы
         for (Map.Entry<LanguageCode, CreateRoomRequest.TranslationData> entry : translations.entrySet()) {
             String langCode = entry.getKey().name();
             CreateRoomRequest.TranslationData translationData = entry.getValue();
 
-            // Найти существующий перевод
             Optional<RoomTranslation> existingTranslation = room.getTranslations().stream()
                     .filter(t -> t.getLanguage().equals(langCode))
                     .findFirst();
@@ -309,7 +301,6 @@ public class AdminServiceImpl implements AdminService {
                 translation.setName(translationData.getName());
                 translation.setDescription(translationData.getDescription());
             } else {
-                // Добавить новый
                 RoomTranslation newTranslation = RoomTranslation.builder()
                         .room(room)
                         .language(langCode)
@@ -325,7 +316,6 @@ public class AdminServiceImpl implements AdminService {
         return roomMapper.toAdminRoomDetailsResponse(updatedRoom);
     }
 
-    // ========== BOOKING MANAGEMENT ==========
 
     @Override
     @Transactional(readOnly = true)
@@ -354,7 +344,6 @@ public class AdminServiceImpl implements AdminService {
         return bookingMapper.toAdminBookingDetailsResponse(updatedBooking);
     }
 
-    // ========== REVIEW MANAGEMENT ==========
 
     @Override
     @Transactional(readOnly = true)
@@ -382,6 +371,20 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    public AdminReviewResponse approveReview(UUID reviewId, boolean isApproved) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Отзыв не найден"));
+
+        review.setIsApproved(isApproved);
+        if (isApproved) {
+            review.setIsVisible(true);
+        }
+
+        Review saved = reviewRepository.save(review);
+        return reviewMapper.toAdminReviewResponse(saved);
+    }
+
+    @Override
     @Transactional
     public void deleteReview(UUID reviewId) {
         log.warn("Deleting review {}", reviewId);
@@ -391,8 +394,6 @@ public class AdminServiceImpl implements AdminService {
         reviewRepository.deleteById(reviewId);
         log.info("Review {} deleted successfully", reviewId);
     }
-
-    // ========== PRIVATE HELPER METHODS ==========
 
     private User findUserById(UUID userId) {
         return userRepository.findById(userId)
@@ -456,22 +457,17 @@ public class AdminServiceImpl implements AdminService {
         room.setIsActive(Boolean.TRUE.equals(request.getIsActive()));
 
         if (request.getTranslations() != null && !request.getTranslations().isEmpty()) {
-            // Получаем Iterator для безопасного удаления
             Iterator<RoomTranslation> iterator = room.getTranslations().iterator();
             while (iterator.hasNext()) {
                 RoomTranslation translation = iterator.next();
                 iterator.remove();
-                translation.setRoom(null); // Разрываем связь
+                translation.setRoom(null);
             }
-            // Применяем удаление к базе данных
             entityManager.flush();
-            // Добавляем новые переводы
             attachTranslationsFromLanguageCodeMap(room, request.getTranslations());
         }
     }
 
-
-    // Унифицированный метод для работы с LanguageCode
     private void attachTranslationsFromLanguageCodeMap(
             Room room,
             Map<LanguageCode, CreateRoomRequest.TranslationData> translations) {

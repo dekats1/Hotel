@@ -28,7 +28,6 @@ public class RoomDTOResponse {
 
   private Double stars;
 
-  // Map с ключами языков (RU, EN, etc.)
   private Map<String, TranslationDTO> translations;
 
   private List<PhotoDTO> photos;

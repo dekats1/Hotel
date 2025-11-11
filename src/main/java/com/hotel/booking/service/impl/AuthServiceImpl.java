@@ -64,7 +64,7 @@ public class AuthServiceImpl implements AuthService {
             log.info("Authentication successful!");
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            // ✅ ИСПРАВЛЕНО: Получаем email из UserDetails и загружаем User entity из БД
+
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String email = userDetails.getUsername();
 
@@ -92,7 +92,6 @@ public class AuthServiceImpl implements AuthService {
 
         Object principal = authentication.getPrincipal();
 
-        // ✅ ИСПРАВЛЕНО: Principal всегда будет UserDetails, получаем email
         if (principal instanceof UserDetails) {
             String email = ((UserDetails) principal).getUsername();
             return userRepository.findUserByEmail(email).orElse(null);

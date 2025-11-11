@@ -16,7 +16,6 @@ public class AdminUserDetailsResponse {
     UUID id;
     UserRole role;
 
-    // Персональные данные
     String firstName;
     String lastName;
     String email;
@@ -24,10 +23,8 @@ public class AdminUserDetailsResponse {
     LocalDate birthDate;
     UserGender gender;
 
-    // Финансы
     BigDecimal balance;
 
-    // Метаданные
     Boolean isActive;
     Boolean emailVerified;
     LocalDateTime createdAt;

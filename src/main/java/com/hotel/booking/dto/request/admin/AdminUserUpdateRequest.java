@@ -12,14 +12,10 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/**
- * DTO для обновления данных пользователя администратором.
- * Администратор может менять почти все поля, включая роль и статус.
- */
+
 @Value
 public class AdminUserUpdateRequest {
 
-    // Персональные данные
     @NotBlank(message = "First name is required")
     @Size(max = 100)
     String firstName;
@@ -41,7 +37,6 @@ public class AdminUserUpdateRequest {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     LocalDate birthDate;
 
-    // Роль и статус
     @NotNull(message = "Role is required")
     UserRole role;
 
@@ -51,7 +46,6 @@ public class AdminUserUpdateRequest {
     @NotNull(message = "Email verification status is required")
     Boolean emailVerified;
 
-    // Финансы (администратор может пополнять/списывать баланс)
     @NotNull(message = "Balance is required")
     BigDecimal balance;
 

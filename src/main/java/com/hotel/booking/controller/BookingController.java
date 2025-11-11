@@ -24,7 +24,7 @@ public class BookingController {
   public ResponseEntity<BookingResponse> addBooking(@RequestBody @Valid CreateBookingRequest dto) {
     log.info("=== BOOKING REQUEST ===");
     BookingResponse booking = bookingService.addBooking(dto);
-    log.info("✅ Booking response: {}", booking.getId());
+    log.info("Booking response: {}", booking.getId());
     return ResponseEntity.ok(booking);
   }
 
@@ -32,7 +32,7 @@ public class BookingController {
   public ResponseEntity<List<BookingResponse>> getMyBookings() {
     log.info("=== GET MY BOOKINGS ===");
     List<BookingResponse> bookings = bookingService.getMyBookings();
-    log.info("✅ Found {} bookings", bookings.size());
+    log.info("Found {} bookings", bookings.size());
     return ResponseEntity.ok(bookings);
   }
 
@@ -40,7 +40,7 @@ public class BookingController {
   public ResponseEntity<Void> cancelBooking(@PathVariable UUID bookingId) {
     log.info("=== CANCEL BOOKING {} ===", bookingId);
     bookingService.cancelBooking(bookingId);
-    log.info("✅ Booking cancelled successfully");
+    log.info("Booking cancelled successfully");
     return ResponseEntity.noContent().build();
   }
 }

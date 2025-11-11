@@ -8,5 +8,4 @@ import java.util.UUID;
 
 @Repository
 public interface RoomPhotoRepository extends JpaRepository<RoomPhoto, UUID> {
-    // Дополнительные методы при необходимости
 }

@@ -19,18 +19,16 @@ import java.util.UUID;
 public class AdminBookingDetailsResponse {
     private UUID id;
 
-    // User info
     private UUID userId;
     private String userEmail;
     private String userFullName;
     private String userPhone;
 
-    // Room info
+
     private UUID roomId;
     private String roomNumber;
     private String roomType;
 
-    // Booking details
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
     private Integer totalNights;

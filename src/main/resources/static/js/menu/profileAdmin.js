@@ -1,15 +1,12 @@
 // Admin Panel Management JavaScript
 
-// DOM Elements
 const navToggle = document.querySelector('.nav-toggle');
 const navMenu = document.querySelector('.nav-menu');
 const navLinks = document.querySelectorAll('.nav-link');
 const userDropdown = document.getElementById('userDropdown');
 
-// API Configuration
 const API_BASE_URL = '/api/admin';
 
-// Global State
 let currentUser = null;
 let currentSection = 'dashboard';
 let users = [];
@@ -18,13 +15,14 @@ let reviews = [];
 let bookings = [];
 let currentEditId = null;
 
-// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
     initializeAdmin();
     loadUserData();
     setupEventListeners();
     initializeTheme();
-    loadDashboardData();
+    setTimeout(() => {
+        switchSection('dashboard');
+    }, 100);
 });
 
 document.getElementById('roomPhotos')?.addEventListener('change', function () {
@@ -32,7 +30,6 @@ document.getElementById('roomPhotos')?.addEventListener('change', function () {
     const preview = document.getElementById('photoPreview');
     if (!preview) return;
 
-    // Показываем временные превью для выбранных файлов
     files.forEach(file => {
         const reader = new FileReader();
         reader.onload = () => {
@@ -47,8 +44,16 @@ document.getElementById('roomPhotos')?.addEventListener('change', function () {
     });
 });
 
+function setupEventListeners() {
+    setupSearchAndFilters();
 
-// Initialize admin panel
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.user-dropdown') && !e.target.closest('#themeToggle')) {
+            if (userDropdown) userDropdown.classList.remove('show');
+        }
+    });
+}
+
 function initializeAdmin() {
     if (navToggle) navToggle.addEventListener('click', toggleMobileMenu);
     navLinks.forEach(link => link.addEventListener('click', closeMobileMenu));
@@ -65,9 +70,7 @@ function initializeAdmin() {
     setupSearchAndFilters();
 }
 
-// Setup search and filter functionality
 function setupSearchAndFilters() {
-    // Users
     const userSearch = document.getElementById('userSearch');
     const userRoleFilter = document.getElementById('userRoleFilter');
     const userStatusFilter = document.getElementById('userStatusFilter');
@@ -75,7 +78,6 @@ function setupSearchAndFilters() {
     if (userRoleFilter) userRoleFilter.addEventListener('change', () => filterUsers());
     if (userStatusFilter) userStatusFilter.addEventListener('change', () => filterUsers());
 
-    // Rooms
     const roomSearch = document.getElementById('roomSearch');
     const roomTypeFilter = document.getElementById('roomTypeFilter');
     const roomStatusFilter = document.getElementById('roomStatusFilter');
@@ -83,7 +85,6 @@ function setupSearchAndFilters() {
     if (roomTypeFilter) roomTypeFilter.addEventListener('change', () => filterRooms());
     if (roomStatusFilter) roomStatusFilter.addEventListener('change', () => filterRooms());
 
-    // Reviews
     const reviewSearch = document.getElementById('reviewSearch');
     const reviewRatingFilter = document.getElementById('reviewRatingFilter');
     const reviewStatusFilter = document.getElementById('reviewStatusFilter');
@@ -91,7 +92,6 @@ function setupSearchAndFilters() {
     if (reviewRatingFilter) reviewRatingFilter.addEventListener('change', () => filterReviews());
     if (reviewStatusFilter) reviewStatusFilter.addEventListener('change', () => filterReviews());
 
-    // Bookings
     const bookingSearch = document.getElementById('bookingSearch');
     const bookingStatusFilter = document.getElementById('bookingStatusFilter');
     const bookingDateFilter = document.getElementById('bookingDateFilter');
@@ -100,7 +100,6 @@ function setupSearchAndFilters() {
     if (bookingDateFilter) bookingDateFilter.addEventListener('change', () => filterBookings());
 }
 
-// API Call function with Cookie authentication
 async function apiCall(endpoint, options = {}) {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         credentials: 'include',
@@ -136,7 +135,6 @@ async function apiCall(endpoint, options = {}) {
     return await response.json();
 }
 
-// Local storage helpers
 function getUserDataFromStorage() {
     try { return JSON.parse(localStorage.getItem('user_data') || 'null'); }
     catch { return null; }
@@ -146,7 +144,6 @@ function saveUserDataToStorage(userData) {
     catch {}
 }
 
-// Load user data
 async function loadUserData() {
     currentUser = getUserDataFromStorage();
     if (currentUser) updateUserInterface();
@@ -174,7 +171,6 @@ function transformUserData(apiData) {
     };
 }
 
-// Update header UI
 function updateUserInterface() {
     if (!currentUser) return;
     const userName = document.getElementById('userName');
@@ -187,7 +183,6 @@ function updateUserInterface() {
     if (userAvatarSmall) userAvatarSmall.innerHTML = '<i class="fas fa-user"></i>';
 }
 
-// Section switcher
 function switchSection(section) {
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     const nav = document.querySelector(`[data-section="${section}"]`);
@@ -198,17 +193,39 @@ function switchSection(section) {
     if (content) content.classList.add('active');
 
     currentSection = section;
+
     switch (section) {
-        case 'dashboard': loadDashboardData(); break;
-        case 'users': loadUsers(); break;
-        case 'rooms': loadRooms(); break;
-        case 'reviews': loadReviews(); break;
-        case 'bookings': loadBookings(); break;
+        case 'dashboard':
+            loadDashboardData();
+            break;
+        case 'users':
+            loadUsers();
+            break;
+        case 'rooms':
+            loadRooms();
+            break;
+        case 'reviews':
+            loadReviews();
+            break;
+        case 'bookings':
+            loadBookings();
+            break;
+    }
+}
+
+function setText(id, text) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.textContent = text ?? '';
+        console.log(`✅ setText: ${id} = ${text}`);
+    } else {
+        console.warn(`⚠️ Element not found: ${id}`);
     }
 }
 
 // ==================== DASHBOARD ====================
 async function loadDashboardData() {
+    console.log('🔄 loadDashboardData called');
     showLoading(true);
     try {
         const [usersData, roomsData, bookingsData, reviewsData] = await Promise.all([
@@ -217,20 +234,25 @@ async function loadDashboardData() {
             apiCall('/bookings'),
             apiCall('/reviews')
         ]);
-        users = usersData || [];
-        rooms = roomsData || [];
-        bookings = bookingsData || [];
-        reviews = reviewsData || [];
+
+        console.log('📊 Data loaded:', { usersData, roomsData, bookingsData, reviewsData });
+
+        users = usersData;
+        rooms = roomsData;
+        bookings = bookingsData;
+        reviews = reviewsData;
+
         updateDashboardStats();
         updateRecentBookings();
         updateRoomStats();
     } catch (error) {
         console.error('Error loading dashboard data:', error);
-        showNotification('Ошибка загрузки данных панели управления', 'error');
+        showNotification('Ошибка загрузки данных дашборда', 'error');
     } finally {
         showLoading(false);
     }
 }
+
 
 function updateDashboardStats() {
     setText('totalUsers', users.length);
@@ -342,131 +364,6 @@ function filterUsers() {
     }
     displayUsers(filtered);
 }
-
-// ... (предыдущий код остается без изменений до секции USERS)
-
-// ========== NOTIFICATIONS (КАК В LOGIN.JS) ==========
-
-/**
- * Показать уведомление с автоматическим скрытием
- */
-function showNotification(message, type = 'info') {
-    // Удалить существующие уведомления
-    const existingNotifications = document.querySelectorAll('.notification');
-    existingNotifications.forEach(notification => notification.remove());
-
-    // Создать элемент уведомления
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-
-    // Иконка в зависимости от типа
-    const icon = type === 'success' ? 'check-circle' :
-        type === 'error' ? 'exclamation-circle' :
-            type === 'warning' ? 'exclamation-triangle' :
-                'info-circle';
-
-    notification.innerHTML = `
-        <div class="notification-content">
-            <i class="fas fa-${icon}"></i>
-            <span>${message}</span>
-            <button class="notification-close" onclick="this.parentElement.parentElement.remove()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
-
-    // Стили
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        z-index: 10000;
-        animation: slideInRight 0.3s ease;
-        max-width: 400px;
-        min-width: 300px;
-    `;
-
-    // Добавить в документ
-    document.body.appendChild(notification);
-
-    // Автоматически удалить через 5 секунд
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.style.animation = 'slideOutRight 0.3s ease';
-            setTimeout(() => notification.remove(), 300);
-        }
-    }, 5000);
-}
-
-// Добавить стили для анимаций уведомлений
-if (!document.querySelector('#notification-styles')) {
-    const notificationStyles = document.createElement('style');
-    notificationStyles.id = 'notification-styles';
-    notificationStyles.textContent = `
-        .notification-content {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .notification-close {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            padding: 0;
-            margin-left: auto;
-            font-size: 1.1rem;
-            opacity: 0.8;
-            transition: opacity 0.2s;
-        }
-        
-        .notification-close:hover {
-            opacity: 1;
-        }
-        
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        
-        @keyframes slideOutRight {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-        }
-        
-        .required {
-            color: #ef4444;
-        }
-        
-        .form-hint {
-            display: block;
-            margin-top: 0.25rem;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-    `;
-    document.head.appendChild(notificationStyles);
-}
-
-// ========== USERS (ОБНОВЛЕННАЯ ВЕРСИЯ) ==========
 
 /**
  * Открыть модальное окно создания пользователя
@@ -782,10 +679,9 @@ async function onRoomFormSubmit(e) {
             if (!roomId) throw new Error('Не получен ID созданного номера');
         }
 
-        // Загружаем фото, если выбраны; важно — multipart, без Content-Type заголовка вручную
         if (files.length > 0 && roomId) {
             const fd = new FormData();
-            for (const f of files) fd.append('files', f); // ИМЯ ПАРАМЕТРА ДОЛЖНО БЫТЬ "files"
+            for (const f of files) fd.append('files', f);
             const resp = await fetch(`/api/admin/rooms/${roomId}/photos`, {
                 method: 'POST',
                 credentials: 'include',
@@ -797,9 +693,7 @@ async function onRoomFormSubmit(e) {
             }
         }
 
-        // Обновить список и превью
         await loadRooms();
-        // Если редактировали — обновить локальные фото в форме
         if (currentEditId) {
             const updated = rooms.find(r => r.id === currentEditId);
             if (updated) loadRoomPhotos(updated.photos || []);
@@ -807,7 +701,6 @@ async function onRoomFormSubmit(e) {
 
         showNotification(currentEditId ? 'Номер обновлен' : 'Номер создан', 'success');
 
-        // Сбрасываем input файлов вручную после успешной загрузки
         if (fileInput) fileInput.value = '';
 
         closeRoomModal();
@@ -882,22 +775,6 @@ function loadRoomPhotos(photos) {
         });
 }
 
-async function uploadRoomPhotos(roomId, fileList) {
-    const formData = new FormData();
-    Array.from(fileList).forEach(f => formData.append('files', f));
-    try {
-        const resp = await fetch(`${API_BASE_URL}/rooms/${roomId}/photos`, {
-            method: 'POST',
-            credentials: 'include',
-            body: formData
-        });
-        if (!resp.ok) throw new Error(await resp.text());
-        showNotification('Фотографии загружены', 'success');
-    } catch (e) {
-        showNotification('Не удалось загрузить фото: ' + e.message, 'error');
-    }
-}
-
 async function removeRoomPhoto(photoId) {
     if (!currentEditId) {
         showNotification('Сначала сохраните номер', 'warning');
@@ -961,28 +838,51 @@ async function loadReviews() {
 function displayReviews(list) {
     const tbody = document.getElementById('reviewsTableBody');
     if (!tbody) return;
+
     if (!list || list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem">Нет данных</td></tr>`;
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem">Нет отзывов</td></tr>';
         return;
     }
-    tbody.innerHTML = list.map(r => `
-    <tr>
-      <td>${r.id}</td>
-      <td>${escapeHtml(r.userName || r.userId || '')}</td>
-      <td>${escapeHtml(r.roomNumber || r.roomId || '')}</td>
-      <td>${r.rating ?? ''}</td>
-      <td>${escapeHtml(r.comment || '')}</td>
-      <td><span class="status-badge ${r.isApproved ? 'approved' : 'pending'}">${r.isApproved ? 'Одобрен' : 'На модерации'}</span></td>
-      <td>${formatDate(r.createdAt)}</td>
-      <td>
-        <div class="action-buttons">
-          <button class="btn-action btn-view" onclick="openReviewModal('${r.id}')"><i class="fas fa-eye"></i></button>
-          <button class="btn-action btn-delete" onclick="deleteReview('${r.id}')"><i class="fas fa-trash"></i></button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+
+    tbody.innerHTML = list.map(r => {
+        let statusBadge = '';
+        let statusText = '';
+
+        if (r.isApproved === true) {
+            statusBadge = 'approved';
+            statusText = 'Одобрен';
+        } else if (r.isApproved === false && r.isVisible === false) {
+            statusBadge = 'rejected';
+            statusText = 'Отклонён';
+        } else {
+            statusBadge = 'pending';
+            statusText = 'На модерации';
+        }
+
+        return `
+            <tr>
+                <td>${r.id}</td>
+                <td>${escapeHtml(r.userName || r.userId)}</td>
+                <td>${escapeHtml(r.roomNumber || r.roomId)}</td>
+                <td>${r.rating ?? '-'}</td>
+                <td>${escapeHtml(r.comment)}</td>
+                <td><span class="status-badge ${statusBadge}">${statusText}</span></td>
+                <td>${formatDate(r.createdAt)}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-action btn-view" onclick="openReviewModal('${r.id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn-action btn-delete" onclick="deleteReview('${r.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
+
 
 function filterReviews() {
     const search = (document.getElementById('reviewSearch').value || '').toLowerCase();
@@ -1035,10 +935,11 @@ async function approveReview() {
     const id = modal.dataset.reviewId;
     if (!id) return;
     try {
-        const updated = await apiCall(`/reviews/${id}/visibility?visible=true`, { method: 'PUT' });
+        await apiCall(`/reviews/${id}/approve?isApproved=true`, { method: 'PUT' });
         showNotification('Отзыв одобрен', 'success');
         closeReviewModal();
-        loadReviews();
+
+        await loadReviews();
     } catch (e) {
         showNotification(e.message, 'error');
     }
@@ -1049,14 +950,17 @@ async function rejectReview() {
     const id = modal.dataset.reviewId;
     if (!id) return;
     try {
-        const updated = await apiCall(`/reviews/${id}/visibility?visible=false`, { method: 'PUT' });
-        showNotification('Отзыв скрыт', 'success');
+        await apiCall(`/reviews/${id}/approve?isApproved=false`, { method: 'PUT' });
+        await apiCall(`/reviews/${id}/visibility?isVisible=false`, { method: 'PUT' });
+        showNotification('Отзыв отклонён', 'success');
         closeReviewModal();
-        loadReviews();
+
+        await loadReviews();
     } catch (e) {
         showNotification(e.message, 'error');
     }
 }
+
 
 async function deleteReview(id) {
     if (!confirm('Удалить отзыв?')) return;
@@ -1251,10 +1155,6 @@ function logout() {
 }
 
 // ==================== UTILITIES ====================
-function setText(id, text) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text ?? '';
-}
 function setValue(id, value) {
     const el = document.getElementById(id);
     if (el) el.value = value ?? '';
@@ -1289,17 +1189,13 @@ function showLoading(show) {
     overlay.style.display = show ? 'flex' : 'none';
 }
 
-
 function showNotification(message, type = 'info') {
-    // Удалить существующие уведомления
     const existingNotifications = document.querySelectorAll('.notification');
     existingNotifications.forEach(notification => notification.remove());
 
-    // Создать элемент уведомления
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
 
-    // Иконка в зависимости от типа
     const icon = type === 'success' ? 'check-circle' :
         type === 'error' ? 'exclamation-circle' :
             type === 'warning' ? 'exclamation-triangle' :
@@ -1315,7 +1211,6 @@ function showNotification(message, type = 'info') {
         </div>
     `;
 
-    // Стили
     notification.style.cssText = `
         position: fixed;
         top: 20px;
@@ -1331,10 +1226,8 @@ function showNotification(message, type = 'info') {
         min-width: 300px;
     `;
 
-    // Добавить в документ
     document.body.appendChild(notification);
 
-    // Автоматически удалить через 5 секунд
     setTimeout(() => {
         if (notification.parentElement) {
             notification.style.animation = 'slideOutRight 0.3s ease';
@@ -1343,7 +1236,6 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Добавить стили для анимаций уведомлений
 if (!document.querySelector('#notification-styles')) {
     const notificationStyles = document.createElement('style');
     notificationStyles.id = 'notification-styles';
@@ -1353,7 +1245,7 @@ if (!document.querySelector('#notification-styles')) {
             align-items: center;
             gap: 0.75rem;
         }
-        
+
         .notification-close {
             background: none;
             border: none;
@@ -1365,11 +1257,11 @@ if (!document.querySelector('#notification-styles')) {
             opacity: 0.8;
             transition: opacity 0.2s;
         }
-        
+
         .notification-close:hover {
             opacity: 1;
         }
-        
+
         @keyframes slideInRight {
             from {
                 transform: translateX(100%);
@@ -1380,7 +1272,7 @@ if (!document.querySelector('#notification-styles')) {
                 opacity: 1;
             }
         }
-        
+
         @keyframes slideOutRight {
             from {
                 transform: translateX(0);
@@ -1391,11 +1283,11 @@ if (!document.querySelector('#notification-styles')) {
                 opacity: 0;
             }
         }
-        
+
         .required {
             color: #ef4444;
         }
-        
+
         .form-hint {
             display: block;
             margin-top: 0.25rem;
@@ -1405,4 +1297,3 @@ if (!document.querySelector('#notification-styles')) {
     `;
     document.head.appendChild(notificationStyles);
 }
-

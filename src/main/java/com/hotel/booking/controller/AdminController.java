@@ -156,6 +156,14 @@ public class AdminController {
         return ResponseEntity.ok(adminService.updateReviewVisibility(reviewId, isVisible));
     }
 
+    @PutMapping("/reviews/{reviewId}/approve")
+    public ResponseEntity<AdminReviewResponse> approveReview(
+            @PathVariable UUID reviewId,
+            @RequestParam("isApproved") boolean isApproved
+    ) {
+        return ResponseEntity.ok(adminService.approveReview(reviewId, isApproved));
+    }
+
     @DeleteMapping("/reviews/{reviewId}")
     public ResponseEntity<Void> deleteReview(@PathVariable UUID reviewId) {
         adminService.deleteReview(reviewId);

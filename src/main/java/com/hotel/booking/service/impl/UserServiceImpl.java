@@ -29,10 +29,6 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 
-    // ========================================
-    // ✅ НОВЫЕ МЕТОДЫ для работы с email
-    // ========================================
-
     @Override
     public UserProfileResponse getUserProfileByEmail(String email) {
         log.info("Getting profile for user with email: {}", email);
@@ -70,10 +66,6 @@ public class UserServiceImpl implements UserService {
         User user = findUserByEmail(email);
         return updateUserSettings(user.getId(), request);
     }
-
-    // ========================================
-    // Существующие методы для работы с UUID
-    // ========================================
 
     @Override
     public UserProfileResponse getUserProfile(UUID userId) {
@@ -123,7 +115,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserSettingsResponse getUserSettings(UUID userId) {
-        findUserById(userId); // проверка существования
+        findUserById(userId);
         return new UserSettingsResponse();
     }
 
@@ -131,15 +123,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserSettingsResponse updateUserSettings(UUID userId, UserSettingsRequest request) {
         User user = findUserById(userId);
-        // Здесь можно добавить логику сохранения настроек
         log.info("User currency preference: {}", request.getCurrency());
         log.info("User language preference: {}", request.getLanguage());
         return new UserSettingsResponse();
     }
-
-    // ========================================
-    // Private helper methods
-    // ========================================
 
     private User findUserById(UUID userId) {
         return userRepository.findById(userId)

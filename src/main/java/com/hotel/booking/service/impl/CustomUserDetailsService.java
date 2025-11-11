@@ -32,9 +32,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     return buildUserDetails(user);
   }
 
-  /**
-   * Загрузка пользователя по UUID (для JWT)
-   */
   public UserDetails loadUserById(UUID userId) throws UsernameNotFoundException {
     log.debug("Loading user by ID: {}", userId);
 
@@ -44,9 +41,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     return buildUserDetails(user);
   }
 
-  /**
-   * Создание UserDetails из User entity
-   */
   private UserDetails buildUserDetails(User user) {
     Collection<? extends GrantedAuthority> authorities = getAuthorities(user);
 
@@ -54,16 +48,14 @@ public class CustomUserDetailsService implements UserDetailsService {
         user.getEmail(),
         user.getPasswordHash(),
         user.getIsActive(),
-        true, // accountNonExpired
-        true, // credentialsNonExpired
-        true, // accountNonLocked
+        true,
+        true,
+        true,
         authorities
     );
   }
 
-  /**
-   * Получение ролей пользователя
-   */
+
   private Collection<? extends GrantedAuthority> getAuthorities(User user) {
     return user.getRoles().stream()
         .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toString()))
