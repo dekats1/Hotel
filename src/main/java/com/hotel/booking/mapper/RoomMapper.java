@@ -31,67 +31,70 @@ public interface RoomMapper {
   @Mapping(target = "isActive", expression = "java(Boolean.TRUE.equals(request.getIsActive()))")
   Room toEntity(CreateRoomRequest request);
 
-  @Mapping(target = "translations", expression = "java(mapTranslations(room))")
+  // ДЛЯ АДМИНА - оставляем Map
+  @Mapping(target = "translations", expression = "java(mapTranslationsForAdmin(room))")
   @Mapping(target = "photos", expression = "java(mapAdminPhotos(room))")
   @Mapping(target = "averageRating", expression = "java(room.getAverageRating())")
   @Mapping(target = "reviewCount", expression = "java(room.getReviewCount())")
   AdminRoomDetailsResponse toAdminRoomDetailsResponse(Room room);
 
+  // ДЛЯ КЛИЕНТА - используем List
   @Mapping(target = "type", source = "type")
-  @Mapping(target = "translations", expression = "java(mapTranslationsToDTO(room))")
+  @Mapping(target = "translations", expression = "java(mapTranslationsToList(room))")
   @Mapping(target = "photos", expression = "java(mapPhotosToDTO(room))")
   @Mapping(target = "averageRating", expression = "java(room.getAverageRating())")
-  @Mapping(target = "stars", expression = "java(room.getAverageRating())")  // ДОБАВЛЕНО
+  @Mapping(target = "stars", expression = "java(room.getAverageRating())")
   @Mapping(target = "reviewCount", expression = "java(room.getReviewCount())")
   RoomDTOResponse toDTO(Room room);
 
   List<RoomDTOResponse> toDTOList(List<Room> rooms);
 
-  default Map<String, AdminRoomDetailsResponse.TranslationResponse> mapTranslations(Room room) {
-    if (room.getTranslations() == null) {
-      return Map.of();
-    }
-    return room.getTranslations().stream()
-        .collect(Collectors.toMap(
-            RoomTranslation::getLanguage,
-            t -> AdminRoomDetailsResponse.TranslationResponse.builder()
-                .name(t.getName())
-                .description(t.getDescription())
-                .build()
-        ));
-  }
-
-  default List<AdminRoomDetailsResponse.PhotoResponse> mapAdminPhotos(Room room) {
-    if (room.getPhotos() == null) {
-      return List.of();
-    }
-    return room.getPhotos().stream()
-        .sorted(Comparator.comparing(
-            RoomPhoto::getDisplayOrder,
-            Comparator.nullsLast(Integer::compareTo)))
-        .map(p -> AdminRoomDetailsResponse.PhotoResponse.builder()
-            .id(p.getId())
-            .url(p.getUrl())
-            .thumbnailUrl(p.getThumbnailUrl())
-            .altText(p.getAltText())
-            .displayOrder(p.getDisplayOrder())
-            .isPrimary(Boolean.TRUE.equals(p.getIsPrimary()))
-            .build())
-        .toList();
-  }
-
-  default Map<String, RoomDTOResponse.TranslationDTO> mapTranslationsToDTO(Room room) {
+  // ДЛЯ АДМИНА - Map с ключом language
+  default Map<String, AdminRoomDetailsResponse.TranslationResponse> mapTranslationsForAdmin(Room room) {
     if (room.getTranslations() == null || room.getTranslations().isEmpty()) {
       return Map.of();
     }
     return room.getTranslations().stream()
-        .collect(Collectors.toMap(
-            RoomTranslation::getLanguage,
-            t -> RoomDTOResponse.TranslationDTO.builder()
-                .name(t.getName())
-                .description(t.getDescription())
-                .build()
-        ));
+            .collect(Collectors.toMap(
+                    RoomTranslation::getLanguage,
+                    t -> AdminRoomDetailsResponse.TranslationResponse.builder()
+                            .name(t.getName())
+                            .description(t.getDescription())
+                            .build()
+            ));
+  }
+
+  default List<AdminRoomDetailsResponse.PhotoResponse> mapAdminPhotos(Room room) {
+    if (room.getPhotos() == null || room.getPhotos().isEmpty()) {
+      return List.of();
+    }
+    return room.getPhotos().stream()
+            .sorted(Comparator.comparing(
+                    RoomPhoto::getDisplayOrder,
+                    Comparator.nullsLast(Integer::compareTo)))
+            .map(p -> AdminRoomDetailsResponse.PhotoResponse.builder()
+                    .id(p.getId())
+                    .url(p.getUrl())
+                    .thumbnailUrl(p.getThumbnailUrl())
+                    .altText(p.getAltText())
+                    .displayOrder(p.getDisplayOrder())
+                    .isPrimary(Boolean.TRUE.equals(p.getIsPrimary()))
+                    .build())
+            .toList();
+  }
+
+  // ДЛЯ КЛИЕНТА - List с полем language в каждом объекте
+  default List<RoomDTOResponse.TranslationDTO> mapTranslationsToList(Room room) {
+    if (room.getTranslations() == null || room.getTranslations().isEmpty()) {
+      return List.of();
+    }
+    return room.getTranslations().stream()
+            .map(t -> RoomDTOResponse.TranslationDTO.builder()
+                    .language(t.getLanguage())  // ВАЖНО: добавляем поле language!
+                    .name(t.getName())
+                    .description(t.getDescription())
+                    .build())
+            .collect(Collectors.toList());
   }
 
   default List<RoomDTOResponse.PhotoDTO> mapPhotosToDTO(Room room) {
@@ -99,17 +102,24 @@ public interface RoomMapper {
       return List.of();
     }
     return room.getPhotos().stream()
-        .sorted(Comparator.comparing(
-            RoomPhoto::getDisplayOrder,
-            Comparator.nullsLast(Integer::compareTo)))
-        .map(p -> RoomDTOResponse.PhotoDTO.builder()
-            .id(p.getId())
-            .url(p.getUrl())
-            .thumbnailUrl(p.getThumbnailUrl())
-            .altText(p.getAltText())
-            .displayOrder(p.getDisplayOrder())
-            .isPrimary(Boolean.TRUE.equals(p.getIsPrimary()))
-            .build())
-        .toList();
+            .sorted((p1, p2) -> {
+              // Primary photos first
+              if (Boolean.TRUE.equals(p1.getIsPrimary()) && !Boolean.TRUE.equals(p2.getIsPrimary())) return -1;
+              if (!Boolean.TRUE.equals(p1.getIsPrimary()) && Boolean.TRUE.equals(p2.getIsPrimary())) return 1;
+              // Then by display order
+              return Comparator.comparing(
+                      RoomPhoto::getDisplayOrder,
+                      Comparator.nullsLast(Integer::compareTo)
+              ).compare(p1, p2);
+            })
+            .map(p -> RoomDTOResponse.PhotoDTO.builder()
+                    .id(p.getId())
+                    .url(p.getUrl())
+                    .thumbnailUrl(p.getThumbnailUrl())
+                    .altText(p.getAltText())
+                    .displayOrder(p.getDisplayOrder())
+                    .isPrimary(Boolean.TRUE.equals(p.getIsPrimary()))
+                    .build())
+            .collect(Collectors.toList());
   }
 }

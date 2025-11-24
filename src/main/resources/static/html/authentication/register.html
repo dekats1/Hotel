@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Регистрация - Отель "Райский уголок"</title>
+    <title data-i18n="auth.registerTitle">Регистрация - Отель "Райский уголок"</title>
     <link rel="stylesheet" href="../../css/index.css">
     <link rel="stylesheet" href="../../css/authentication/register.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="../../js/i18n.js"></script>
     <script>
         (function() {
             const savedTheme = localStorage.getItem('theme') || 'light';
@@ -31,10 +32,10 @@
             <div class="auth-header">
                 <div class="auth-logo">
                     <i class="fas fa-hotel"></i>
-                    <span>Райский уголок</span>
+                    <span data-i18n="common.hotelName">Райский уголок</span>
                 </div>
-                <h1 class="auth-title">Создать аккаунт</h1>
-                <p class="auth-subtitle">Заполните форму для регистрации</p>
+                <h1 class="auth-title" data-i18n="auth.createAccount">Создать аккаунт</h1>
+                <p class="auth-subtitle" data-i18n="auth.registerSubtitle">Заполните форму для регистрации</p>
             </div>
 
             <form class="auth-form" id="registerForm">
@@ -42,18 +43,18 @@
                     <div class="form-group">
                         <label for="firstName" class="form-label">
                             <i class="fas fa-user"></i>
-                            Имя
+                            <span data-i18n="auth.firstName">Имя</span>
                         </label>
-                        <input type="text" id="firstName" name="firstName" class="form-input" placeholder="Введите имя" required>
+                        <input type="text" id="firstName" name="firstName" class="form-input" data-i18n-placeholder="auth.enterFirstName" placeholder="Введите имя" required>
                         <div class="form-error" id="firstNameError"></div>
                     </div>
 
                     <div class="form-group">
                         <label for="lastName" class="form-label">
                             <i class="fas fa-user"></i>
-                            Фамилия
+                            <span data-i18n="auth.lastName">Фамилия</span>
                         </label>
-                        <input type="text" id="lastName" name="lastName" class="form-input" placeholder="Введите фамилию" required>
+                        <input type="text" id="lastName" name="lastName" class="form-input" data-i18n-placeholder="auth.enterLastName" placeholder="Введите фамилию" required>
                         <div class="form-error" id="lastNameError"></div>
                     </div>
                 </div>
@@ -62,7 +63,7 @@
                     <div class="form-group">
                         <label for="birthDate" class="form-label">
                             <i class="fas fa-calendar"></i>
-                            Дата рождения
+                            <span data-i18n="auth.birthDate">Дата рождения</span>
                         </label>
                         <input type="date" id="birthDate" name="birthDate" class="form-input" required>
                         <div class="form-error" id="birthDateError"></div>
@@ -71,14 +72,14 @@
                     <div class="form-group">
                         <label for="gender" class="form-label">
                             <i class="fas fa-venus-mars"></i>
-                            Пол
+                            <span data-i18n="auth.gender">Пол</span>
                         </label>
                         <select id="gender" name="gender" class="form-input" required>
-                            <option value="">Выберите пол</option>
-                            <option value="MALE">Мужской</option>
-                            <option value="FEMALE">Женский</option>
-                            <option value="OTHER">Другой</option>
-                            <option value="PREFER_NOT_TO_SAY">Предпочитаю не указывать</option>
+                            <option value="" data-i18n="auth.selectGender">Выберите пол</option>
+                            <option value="MALE" data-i18n="genders.MALE">Мужской</option>
+                            <option value="FEMALE" data-i18n="genders.FEMALE">Женский</option>
+                            <option value="OTHER" data-i18n="genders.OTHER">Другой</option>
+                            <option value="PREFER_NOT_TO_SAY" data-i18n="genders.PREFER_NOT_TO_SAY">Предпочитаю не указывать</option>
                         </select>
                         <div class="form-error" id="genderError"></div>
                     </div>
@@ -87,16 +88,16 @@
                 <div class="form-group">
                     <label for="email" class="form-label">
                         <i class="fas fa-envelope"></i>
-                        Email
+                        <span data-i18n="auth.email">Email</span>
                     </label>
-                    <input type="email" id="email" name="email" class="form-input" placeholder="Введите ваш email" required>
+                    <input type="email" id="email" name="email" class="form-input" data-i18n-placeholder="auth.enterEmail" placeholder="Введите ваш email" required>
                     <div class="form-error" id="emailError"></div>
                 </div>
 
                 <div class="form-group">
                     <label for="phone" class="form-label">
                         <i class="fas fa-phone"></i>
-                        Телефон
+                        <span data-i18n="auth.phone">Телефон</span>
                     </label>
                     <input type="tel" id="phone" name="phone" class="form-input" placeholder="+7 (999) 123-45-67" required>
                     <div class="form-error" id="phoneError"></div>
@@ -105,10 +106,10 @@
                 <div class="form-group">
                     <label for="password" class="form-label">
                         <i class="fas fa-lock"></i>
-                        Пароль
+                        <span data-i18n="auth.password">Пароль</span>
                     </label>
                     <div class="password-input">
-                        <input type="password" id="password" name="password" class="form-input" placeholder="Создайте пароль" required>
+                        <input type="password" id="password" name="password" class="form-input" data-i18n-placeholder="auth.createPassword" placeholder="Создайте пароль" required>
                         <button type="button" class="password-toggle" onclick="togglePassword('password')">
                             <i class="fas fa-eye" id="passwordIcon"></i>
                         </button>
@@ -117,7 +118,7 @@
                         <div class="strength-bar">
                             <div class="strength-fill" id="strengthFill"></div>
                         </div>
-                        <span class="strength-text" id="strengthText">Введите пароль</span>
+                        <span class="strength-text" id="strengthText" data-i18n="auth.passwordStrength">Введите пароль</span>
                     </div>
                     <div class="form-error" id="passwordError"></div>
                 </div>
@@ -125,10 +126,10 @@
                 <div class="form-group">
                     <label for="confirmPassword" class="form-label">
                         <i class="fas fa-lock"></i>
-                        Подтвердите пароль
+                        <span data-i18n="auth.confirmPassword">Подтвердите пароль</span>
                     </label>
                     <div class="password-input">
-                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" placeholder="Подтвердите пароль" required>
+                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" data-i18n-placeholder="auth.confirmPassword" placeholder="Подтвердите пароль" required>
                         <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
                             <i class="fas fa-eye" id="confirmPasswordIcon"></i>
                         </button>
@@ -140,7 +141,7 @@
                     <label class="checkbox-container">
                         <input type="checkbox" name="terms" id="terms" required>
                         <span class="checkmark"></span>
-                        <span class="checkbox-text">
+                        <span class="checkbox-text" data-i18n-html="auth.termsAgree">
                                 Я согласен с <a href="#" class="terms-link">условиями использования</a> и <a href="#" class="terms-link">политикой конфиденциальности</a>
                             </span>
                     </label>
@@ -151,40 +152,40 @@
                     <label class="checkbox-container">
                         <input type="checkbox" name="newsletter" id="newsletter">
                         <span class="checkmark"></span>
-                        <span class="checkbox-text">
+                        <span class="checkbox-text" data-i18n="auth.newsletter">
                                 Подписаться на новости и специальные предложения
                             </span>
                     </label>
                 </div>
 
                 <button type="submit" class="auth-btn auth-btn-primary">
-                    <span class="btn-text">Зарегистрироваться</span>
+                    <span class="btn-text" data-i18n="common.register">Зарегистрироваться</span>
                     <div class="btn-loading" style="display: none;">
                         <div class="loading-spinner"></div>
                     </div>
                 </button>
 
                 <div class="auth-divider">
-                    <span>или</span>
+                    <span data-i18n="auth.or">или</span>
                 </div>
 
                 <div class="social-login">
                     <button type="button" class="social-btn social-google">
                         <i class="fab fa-google"></i>
-                        Зарегистрироваться через Google
+                        <span data-i18n="auth.registerWithGoogle">Зарегистрироваться через Google</span>
                     </button>
                     <button type="button" class="social-btn social-facebook">
                         <i class="fab fa-facebook-f"></i>
-                        Зарегистрироваться через Facebook
+                        <span data-i18n="auth.registerWithFacebook">Зарегистрироваться через Facebook</span>
                     </button>
                 </div>
             </form>
 
             <div class="auth-footer">
-                <p>Уже есть аккаунт? <a href="login" class="auth-link">Войти</a></p>
+                <p><span data-i18n="auth.haveAccount">Уже есть аккаунт?</span> <a href="login" class="auth-link" data-i18n="common.login">Войти</a></p>
                 <a href="/" class="back-link">
                     <i class="fas fa-arrow-left"></i>
-                    Вернуться на главную
+                    <span data-i18n="auth.backToHome">Вернуться на главную</span>
                 </a>
             </div>
         </div>

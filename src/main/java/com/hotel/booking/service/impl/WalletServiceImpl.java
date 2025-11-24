@@ -110,7 +110,7 @@ public class WalletServiceImpl implements WalletService {
                 .type(TransactionType.WITHDRAWAL)
                 .amount(request.getAmount())
                 .currency(CurrencyType.valueOf(request.getCurrency()))
-                .status(TransactionStatus.PENDING) // Вывод требует подтверждения
+                .status(TransactionStatus.COMPLETED)
                 .description(request.getDescription())
                 .paymentMethod(request.getWithdrawalMethod())
                 .externalTransactionId(generateTransactionId())

@@ -1,3 +1,7 @@
 package com.hotel.booking.exception;
 
-class InsufficientFundsException extends Exception{}
+public class InsufficientFundsException extends RuntimeException {
+    public InsufficientFundsException() {
+        super("Недостаточно средств для выполнения операции");
+    }
+}

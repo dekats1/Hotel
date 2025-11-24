@@ -1,3 +1,7 @@
 package com.hotel.booking.exception;
 
-class ForbiddenException extends RuntimeException {}
+public class ForbiddenException extends RuntimeException {
+    public ForbiddenException(String message) {
+        super(message);
+    }
+}

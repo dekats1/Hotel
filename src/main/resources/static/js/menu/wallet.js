@@ -16,10 +16,6 @@ let transactions = [];
 let currentPage = 0;
 const TRANSACTIONS_PER_PAGE = 20;
 
-// ==============================================
-// STORAGE FUNCTIONS
-// ==============================================
-
 function getUserDataFromStorage() {
     try {
         const userData = localStorage.getItem(USER_DATA_KEY);
@@ -58,16 +54,16 @@ async function apiCall(endpoint, options = {}) {
 
     if (response.status === 401) {
         removeAuthData();
-        showNotification('Сессия истекла. Пожалуйста, войдите снова.', 'error');
+        showNotification(window.i18n?.t('errors.sessionExpired') || 'Сессия истекла. Пожалуйста, войдите снова.', 'error');
         setTimeout(() => {
             window.location.href = '/login';
         }, 1000);
-        throw new Error('Требуется авторизация');
+        throw new Error(window.i18n?.t('errors.authRequired') || 'Требуется авторизация');
     }
 
     if (response.status === 403) {
-        showNotification('Доступ запрещен', 'error');
-        throw new Error('Доступ запрещен');
+        showNotification(window.i18n?.t('errors.accessDenied') || 'Доступ запрещен', 'error');
+        throw new Error(window.i18n?.t('errors.accessDenied') || 'Доступ запрещен');
     }
 
     if (!response.ok) {
@@ -95,17 +91,13 @@ async function apiCall(endpoint, options = {}) {
     return await response.json();
 }
 
-// ==============================================
-// WALLET API
-// ==============================================
-
 async function loadWalletBalance() {
     try {
         const data = await apiCall('/wallet/balance');
         return data.balance;
     } catch (error) {
         console.error('Failed to load wallet balance:', error);
-        showNotification('Ошибка загрузки баланса: ' + error.message, 'error');
+        showNotification((window.i18n?.t('errors.balanceLoadError') || 'Ошибка загрузки баланса') + ': ' + error.message, 'error');
         return 0;
     }
 }
@@ -137,8 +129,8 @@ async function loadUserProfile() {
         updateUserInterface();
     } catch (error) {
         console.error('Failed to load user profile:', error);
-        if (!error.message.includes('Требуется авторизация')) {
-            showNotification('Ошибка загрузки профиля: ' + error.message, 'error');
+        if (!error.message.includes('Требуется авторизация') && !error.message.includes('Authorization')) {
+            showNotification((window.i18n?.t('errors.profileLoadError') || 'Ошибка загрузки профиля') + ': ' + error.message, 'error');
         }
     }
 }
@@ -151,7 +143,7 @@ async function loadTransactions(page = 0, size = TRANSACTIONS_PER_PAGE) {
         currentPage = page;
     } catch (error) {
         console.error('Failed to load transactions:', error);
-        showNotification('Ошибка загрузки транзакций: ' + error.message, 'error');
+        showNotification((window.i18n?.t('errors.transactionsLoadError') || 'Ошибка загрузки транзакций') + ': ' + error.message, 'error');
     }
 }
 
@@ -162,7 +154,7 @@ async function depositFunds(depositRequest) {
             body: JSON.stringify(depositRequest)
         });
 
-        showNotification(`Пополнение на ${formatMoney(depositRequest.amount)} выполнено успешно!`, 'success');
+        showNotification((window.i18n?.t('wallet.depositSuccess') || 'Пополнение на') + ` ${formatMoney(depositRequest.amount)} ${window.i18n?.t('wallet.completed') || 'выполнено успешно!'}`, 'success');
 
         // Обновляем баланс и транзакции
         await loadUserProfile();
@@ -171,7 +163,7 @@ async function depositFunds(depositRequest) {
         return data;
     } catch (error) {
         console.error('Failed to deposit funds:', error);
-        showNotification('Ошибка пополнения: ' + error.message, 'error');
+        showNotification((window.i18n?.t('errors.depositError') || 'Ошибка пополнения') + ': ' + error.message, 'error');
         throw error;
     }
 }
@@ -183,7 +175,7 @@ async function withdrawFunds(withdrawRequest) {
             body: JSON.stringify(withdrawRequest)
         });
 
-        showNotification(`Заявка на вывод ${formatMoney(withdrawRequest.amount)} отправлена!`, 'success');
+        showNotification((window.i18n?.t('wallet.withdrawSuccess') || 'Вывод') + ` ${formatMoney(withdrawRequest.amount)} ${window.i18n?.t('wallet.completed') || 'выполнен успешно!'}`, 'success');
 
         // Обновляем баланс и транзакции
         await loadUserProfile();
@@ -192,14 +184,28 @@ async function withdrawFunds(withdrawRequest) {
         return data;
     } catch (error) {
         console.error('Failed to withdraw funds:', error);
-        showNotification('Ошибка вывода средств: ' + error.message, 'error');
+        showNotification((window.i18n?.t('errors.withdrawError') || 'Ошибка вывода средств') + ': ' + error.message, 'error');
         throw error;
     }
 }
 
-// ==============================================
-// INITIALIZE
-// ==============================================
+// Listen for language changes
+window.addEventListener('languageChanged', function() {
+    if (typeof updateNavigation === 'function') {
+        updateNavigation();
+    }
+    // Re-display transactions with new translations
+    if (typeof displayTransactions === 'function' && typeof transactions !== 'undefined') {
+        displayTransactions(transactions);
+    }
+    if (typeof displayHistoryTransactions === 'function') {
+        displayHistoryTransactions();
+    }
+    // Re-apply translations to all elements
+    if (window.i18n && window.i18n.applyTranslations) {
+        window.i18n.applyTranslations();
+    }
+});
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Wallet page loaded');
@@ -228,7 +234,6 @@ function checkAuthOnPageLoad() {
 }
 
 function initializeWallet() {
-    // Mobile navigation
     if (navToggle) {
         navToggle.addEventListener('click', toggleMobileMenu);
     }
@@ -240,11 +245,8 @@ function initializeWallet() {
     // Setup components
     setupAmountButtons();
     setupPaymentOptions();
+    setupCardValidation();
 }
-
-// ==============================================
-// UI UPDATE FUNCTIONS
-// ==============================================
 
 function updateUserInterface() {
     if (!currentUser) return;
@@ -261,7 +263,7 @@ function updateWalletBalances() {
     const userWallet = document.getElementById('userWallet');
     const availableBalance = document.getElementById('availableBalance');
 
-    const balanceText = formatMoney(currentUser.wallet) + '₽';
+    const balanceText = formatMoney(currentUser.wallet) + 'BYN';
 
     if (mainBalance) mainBalance.textContent = balanceText;
     if (userWallet) userWallet.textContent = balanceText;
@@ -272,7 +274,7 @@ function updateMonthlyStats() {
     const monthlySpent = calculateMonthlySpent();
     const monthlySpentElement = document.getElementById('monthlySpent');
     if (monthlySpentElement) {
-        monthlySpentElement.textContent = '-' + formatMoney(monthlySpent) + '₽';
+        monthlySpentElement.textContent = '-' + formatMoney(monthlySpent) + 'BYN';
     }
 }
 
@@ -300,10 +302,10 @@ function updateNavigationForLoggedInUser(user) {
             <div class="user-info">
                 <div class="user-avatar" id="userAvatar">${user.avatar || '👤'}</div>
                 <div class="user-details">
-                    <div class="user-name" id="userName">${user.name || 'Пользователь'}</div>
+                    <div class="user-name" id="userName">${user.name || (window.i18n?.t('common.user') || 'Пользователь')}</div>
                     <div class="user-wallet">
                         <i class="fas fa-wallet"></i>
-                        <span id="navWalletAmount">${formatMoney(user.wallet)}₽</span>
+                        <span id="navWalletAmount">${formatMoney(user.wallet)}BYN</span>
                     </div>
                 </div>
             </div>
@@ -315,41 +317,37 @@ function updateNavigationForLoggedInUser(user) {
                     <div class="dropdown-header">
                         <div class="user-avatar-small">${user.avatar || '👤'}</div>
                         <div>
-                            <div class="user-name-small">${user.name || 'Пользователь'}</div>
+                            <div class="user-name-small">${user.name || (window.i18n?.t('common.user') || 'Пользователь')}</div>
                             <div class="user-email-small">${user.email || ''}</div>
                         </div>
                     </div>
                     <div class="dropdown-divider"></div>
                     <a href="/profile" class="dropdown-item">
                         <i class="fas fa-user"></i>
-                        Мой профиль
+                        ${window.i18n?.t('common.profile') || 'Мой профиль'}
                     </a>
                     <a href="/booking" class="dropdown-item">
                         <i class="fas fa-calendar"></i>
-                        Мои бронирования
+                        ${window.i18n?.t('common.bookings') || 'Мои бронирования'}
                     </a>
                     <a href="/wallet" class="dropdown-item active">
                         <i class="fas fa-wallet"></i>
-                        Кошелек
+                        ${window.i18n?.t('common.wallet') || 'Кошелек'}
                     </a>
                     <a href="/setting" class="dropdown-item">
                         <i class="fas fa-cog"></i>
-                        Настройки
+                        ${window.i18n?.t('common.settings') || 'Настройки'}
                     </a>
                     <div class="dropdown-divider"></div>
                     <a href="#" class="dropdown-item logout-item" onclick="logout()">
                         <i class="fas fa-sign-out-alt"></i>
-                        Выйти
+                        ${window.i18n?.t('common.logout') || 'Выйти'}
                     </a>
                 </div>
             </div>
         </div>
     `;
 }
-
-// ==============================================
-// TRANSACTION DISPLAY
-// ==============================================
 
 function displayTransactions(transactionsToShow) {
     const transactionsList = document.getElementById('transactionsList');
@@ -359,8 +357,8 @@ function displayTransactions(transactionsToShow) {
         transactionsList.innerHTML = `
             <div class="transaction-item">
                 <div class="transaction-details">
-                    <div class="transaction-title">Нет транзакций</div>
-                    <div class="transaction-description">Транзакции появятся здесь после операций с кошельком</div>
+                    <div class="transaction-title">${window.i18n?.t('wallet.noTransactions') || 'Нет транзакций'}</div>
+                    <div class="transaction-description">${window.i18n?.t('wallet.noTransactionsDesc') || 'Транзакции появятся здесь после операций с кошельком'}</div>
                 </div>
             </div>
         `;
@@ -380,13 +378,13 @@ function displayTransactions(transactionsToShow) {
                     </div>
                     <div class="transaction-details">
                         <div class="transaction-title">${getTransactionTitle(transaction.type)}</div>
-                        <div class="transaction-description">${transaction.description || 'Без описания'}</div>
+                        <div class="transaction-description">${transaction.description || ''}</div>
                         <div class="transaction-status">
                             <span class="badge badge-${transaction.status.toLowerCase()}">${getStatusText(transaction.status)}</span>
                         </div>
                     </div>
                     <div class="transaction-amount ${isPositive ? 'positive' : 'negative'}">
-                        ${isPositive ? '+' : '-'}${formatMoney(transaction.amount)}₽
+                        ${isPositive ? '+' : '-'}${formatMoney(transaction.amount)}BYN
                     </div>
                     <div class="transaction-date">
                         ${formatDate(transaction.createdAt)}
@@ -411,38 +409,69 @@ function getTransactionTypeClass(type) {
 }
 
 function getTransactionTitle(type) {
+    if (window.i18n && window.i18n.t) {
+        try {
+            const titles = {
+                DEPOSIT: window.i18n.t('wallet.deposit'),
+                WITHDRAWAL: window.i18n.t('wallet.withdrawal'),
+                PAYMENT: window.i18n.t('wallet.payment'),
+                REFUND: window.i18n.t('wallet.refund')
+            };
+            const result = titles[type] || window.i18n.t('wallet.transaction');
+            // If translation returns the key itself (translation not found), use fallback
+            if (!result || result === 'wallet.deposit' || result === 'wallet.withdrawal' || 
+                result === 'wallet.payment' || result === 'wallet.refund' || result === 'wallet.transaction' ||
+                (result.startsWith && result.startsWith('wallet.'))) {
+                return getFallbackTitle(type);
+            }
+            return result;
+        } catch (e) {
+            console.warn('Error getting transaction title translation:', e);
+            return getFallbackTitle(type);
+        }
+    }
+    return getFallbackTitle(type);
+}
+
+function getFallbackTitle(type) {
     const titles = {
-        DEPOSIT: 'Пополнение счета',
-        WITHDRAWAL: 'Вывод средств',
-        PAYMENT: 'Оплата бронирования',
-        REFUND: 'Возврат средств'
+        DEPOSIT: 'Deposit',
+        WITHDRAWAL: 'Withdrawal',
+        PAYMENT: 'Booking payment',
+        REFUND: 'Refund'
     };
-    return titles[type] || 'Транзакция';
+    return titles[type] || 'Transaction';
 }
 
 function getStatusText(status) {
+    if (window.i18n && window.i18n.t) {
+        const statuses = {
+            PENDING: window.i18n.t('wallet.statusPending') || 'Pending',
+            COMPLETED: window.i18n.t('wallet.statusCompleted') || 'Completed',
+            FAILED: window.i18n.t('wallet.statusFailed') || 'Failed',
+            CANCELLED: window.i18n.t('wallet.statusCancelled') || 'Cancelled'
+        };
+        return statuses[status] || status;
+    }
+    // Fallback to English
     const statuses = {
-        PENDING: 'Ожидает',
-        COMPLETED: 'Завершена',
-        FAILED: 'Ошибка',
-        CANCELLED: 'Отменена'
+        PENDING: 'Pending',
+        COMPLETED: 'Completed',
+        FAILED: 'Failed',
+        CANCELLED: 'Cancelled'
     };
     return statuses[status] || status;
 }
 
-// ==============================================
-// FILTER FUNCTIONS
-// ==============================================
-
 function filterTransactions(filter) {
     const filterTabs = document.querySelectorAll('.filter-tab');
 
-    let transactionsToShow = transactions;
+    let filteredTransactions = [...transactions];
 
     if (filter === 'income') {
-        transactionsToShow = transactions.filter(t => t.type === 'DEPOSIT' || t.type === 'REFUND');
+        filteredTransactions = transactions.filter(t => t.type === 'DEPOSIT' || t.type === 'REFUND');
     } else if (filter === 'expense') {
-        transactionsToShow = transactions.filter(t => t.type === 'PAYMENT' || t.type === 'WITHDRAWAL');
+        filteredTransactions = transactions.filter(t => t.type === 'PAYMENT' || t.type === 'WITHDRAWAL');
     }
 
     // Update active tab
@@ -450,17 +479,8 @@ function filterTransactions(filter) {
     const activeTab = document.querySelector(`[data-filter="${filter}"]`);
     if (activeTab) activeTab.classList.add('active');
 
-    displayTransactions(transactionsToShow);
+    displayTransactions(filteredTransactions);
 }
-
-async function loadMoreTransactions() {
-    currentPage++;
-    await loadTransactions(currentPage);
-}
-
-// ==============================================
-// MODAL FUNCTIONS
-// ==============================================
 
 function openTopUpModal() {
     const modal = document.getElementById('topUpModal');
@@ -503,6 +523,17 @@ function closeWithdrawModal() {
         document.body.style.overflow = 'auto';
         const form = document.getElementById('withdrawForm');
         if (form) form.reset();
+
+        // Очистить ошибки валидации
+        const cardNumberInput = document.getElementById('cardNumber');
+        if (cardNumberInput) {
+            cardNumberInput.classList.remove('input-error', 'input-success');
+        }
+        const errorMessage = document.getElementById('cardError');
+        if (errorMessage) {
+            errorMessage.textContent = '';
+            errorMessage.style.display = 'none';
+        }
     }
 }
 
@@ -530,9 +561,82 @@ function displayHistoryTransactions() {
     displayTransactions(transactions);
 }
 
-// ==============================================
-// FORM HANDLERS
-// ==============================================
+function applyHistoryFilters() {
+    const dateFrom = document.getElementById('dateFrom')?.value;
+    const dateTo = document.getElementById('dateTo')?.value;
+    const typeFilter = document.getElementById('typeFilter')?.value;
+
+    let filteredTransactions = [...transactions];
+
+    // Фильтр по дате начала
+    if (dateFrom) {
+        const fromDate = new Date(dateFrom);
+        filteredTransactions = filteredTransactions.filter(t => {
+            const transactionDate = new Date(t.createdAt);
+            return transactionDate >= fromDate;
+        });
+    }
+
+    // Фильтр по дате окончания
+    if (dateTo) {
+        const toDate = new Date(dateTo);
+        toDate.setHours(23, 59, 59, 999); // Конец дня
+        filteredTransactions = filteredTransactions.filter(t => {
+            const transactionDate = new Date(t.createdAt);
+            return transactionDate <= toDate;
+        });
+    }
+
+    // Фильтр по типу
+    if (typeFilter === 'income') {
+        filteredTransactions = filteredTransactions.filter(t => t.type === 'DEPOSIT' || t.type === 'REFUND');
+    } else if (typeFilter === 'expense') {
+        filteredTransactions = filteredTransactions.filter(t => t.type === 'PAYMENT' || t.type === 'WITHDRAWAL');
+    }
+
+    // Отобразить отфильтрованные транзакции в модальном окне
+    const historyList = document.getElementById('historyList');
+    if (historyList) {
+        if (filteredTransactions.length === 0) {
+            historyList.innerHTML = `
+                <div class="transaction-item">
+                    <div class="transaction-details">
+                        <div class="transaction-title">${window.i18n?.t('wallet.noTransactions') || 'Нет транзакций'}</div>
+                        <div class="transaction-description">${window.i18n?.t('wallet.noTransactionsFiltered') || 'По заданным фильтрам транзакции не найдены'}</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            historyList.innerHTML = filteredTransactions
+                .map(transaction => {
+                    const icon = getTransactionIcon(transaction.type);
+                    const typeClass = getTransactionTypeClass(transaction.type);
+                    const isPositive = transaction.type === 'DEPOSIT' || transaction.type === 'REFUND';
+
+                    return `
+                        <div class="transaction-item">
+                            <div class="transaction-icon ${typeClass}">
+                                <i class="${icon}"></i>
+                            </div>
+                            <div class="transaction-details">
+                                <div class="transaction-title">${getTransactionTitle(transaction.type)}</div>
+                                <div class="transaction-description">${transaction.description || ''}</div>
+                                <div class="transaction-status">
+                                    <span class="badge badge-${transaction.status.toLowerCase()}">${getStatusText(transaction.status)}</span>
+                                </div>
+                            </div>
+                            <div class="transaction-amount ${isPositive ? 'positive' : 'negative'}">
+                                ${isPositive ? '+' : '-'}${formatMoney(transaction.amount)}BYN
+                            </div>
+                            <div class="transaction-date">
+                                ${formatDate(transaction.createdAt)}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+        }
+    }
+}
 
 async function handleTopUpForm(e) {
     e.preventDefault();
@@ -549,12 +653,12 @@ async function handleTopUpForm(e) {
     }
 
     if (amount < 100) {
-        showNotification('Минимальная сумма пополнения: 100₽', 'error');
+        showNotification(window.i18n?.t('wallet.minDepositAmount') || 'Минимальная сумма пополнения: 100BYN', 'error');
         return;
     }
 
     if (!selectedPayment) {
-        showNotification('Выберите способ оплаты', 'error');
+        showNotification(window.i18n?.t('wallet.selectPaymentMethod') || 'Выберите способ оплаты', 'error');
         return;
     }
 
@@ -564,14 +668,13 @@ async function handleTopUpForm(e) {
         amount: amount,
         currency: 'BYN',
         paymentMethod: paymentMethod,
-        description: `Пополнение через ${selectedPayment.querySelector('h4')?.textContent}`
+        description: `${window.i18n?.t('wallet.deposit') || 'Deposit'} via ${selectedPayment.querySelector('h4')?.textContent}`
     };
 
     try {
         await depositFunds(depositRequest);
         closeTopUpModal();
     } catch (error) {
-        // Ошибка уже обработана в depositFunds
     }
 }
 
@@ -580,38 +683,32 @@ async function handleWithdrawForm(e) {
 
     const formData = new FormData(e.target);
     const amount = parseFloat(formData.get('withdrawAmount'));
-    const withdrawMethod = formData.get('withdrawCard') || 'BANK_CARD';
-    const withdrawDetails = formData.get('cardNumber') || formData.get('withdrawCard');
+    const cardNumber = formData.get('cardNumber');
 
     if (!amount || amount < 10) {
-        showNotification('Минимальная сумма вывода: 10₽', 'error');
+        showNotification((window.i18n?.t('errors.minWithdrawAmount') || 'Минимальная сумма вывода: 10BYN'), 'error');
         return;
     }
 
-    if (!withdrawDetails) {
-        showNotification('Укажите реквизиты для вывода', 'error');
+    if (!cardNumber || !validateCardNumber(cardNumber)) {
+        showNotification((window.i18n?.t('errors.invalidCardNumber') || 'Укажите корректный номер карты'), 'error');
         return;
     }
 
     const withdrawRequest = {
         amount: amount,
         currency: 'BYN',
-        withdrawalMethod: withdrawMethod,
-        withdrawalDetails: withdrawDetails,
-        description: 'Вывод средств на карту'
+        withdrawalMethod: 'BANK_CARD',
+        withdrawalDetails: cardNumber,
+        description: window.i18n?.t('wallet.withdrawDescription') || 'Withdrawal to card'
     };
 
     try {
         await withdrawFunds(withdrawRequest);
         closeWithdrawModal();
     } catch (error) {
-        // Ошибка уже обработана в withdrawFunds
     }
 }
-
-// ==============================================
-// SETUP FUNCTIONS
-// ==============================================
 
 function setupAmountButtons() {
     const amountButtons = document.querySelectorAll('.amount-btn');
@@ -642,20 +739,20 @@ function setupPaymentOptions() {
     const options = [
         {
             id: 'card',
-            name: 'Банковская карта',
-            description: 'Visa, Mastercard, МИР',
+            name: window.i18n?.t('wallet.paymentMethodCard') || 'Bank Card',
+            description: window.i18n?.t('wallet.cardHint') || 'Visa, Mastercard, MIR',
             icon: 'fas fa-credit-card'
         },
         {
             id: 'bank',
-            name: 'Банковский перевод',
-            description: 'Сбербанк, ВТБ, Альфа-Банк',
+            name: window.i18n?.t('wallet.paymentMethodBank') || 'Bank Transfer',
+            description: window.i18n?.t('wallet.bankDescription') || 'Bank transfer',
             icon: 'fas fa-university'
         },
         {
             id: 'wallet',
-            name: 'Электронный кошелек',
-            description: 'ЮMoney, QIWI, WebMoney',
+            name: window.i18n?.t('wallet.paymentMethodWallet') || 'E-Wallet',
+            description: window.i18n?.t('wallet.walletDescription') || 'E-wallet services',
             icon: 'fas fa-wallet'
         }
     ];
@@ -682,8 +779,91 @@ function setupPaymentOptions() {
 }
 
 // ==============================================
-// NAVIGATION
+// ВАЛИДАЦИЯ НОМЕРА КАРТЫ
 // ==============================================
+
+function setupCardValidation() {
+    const cardNumberInput = document.getElementById('cardNumber');
+    if (!cardNumberInput) return;
+
+    // Форматирование ввода (добавление пробелов)
+    cardNumberInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\s/g, '');
+        let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+        e.target.value = formattedValue;
+
+        // Валидация в реальном времени
+        validateCardNumberInput(e.target);
+    });
+
+    // Разрешить только цифры и пробелы
+    cardNumberInput.addEventListener('keypress', function(e) {
+        const char = String.fromCharCode(e.which);
+        if (!/[\d\s]/.test(char)) {
+            e.preventDefault();
+        }
+    });
+}
+
+function validateCardNumberInput(input) {
+    const cardNumber = input.value.replace(/\s/g, '');
+    const errorMessage = document.getElementById('cardError');
+
+    if (cardNumber.length === 0) {
+        input.classList.remove('input-error', 'input-success');
+        if (errorMessage) {
+            errorMessage.textContent = '';
+            errorMessage.style.display = 'none';
+        }
+        return;
+    }
+
+    if (validateCardNumber(cardNumber)) {
+        input.classList.remove('input-error');
+        input.classList.add('input-success');
+        if (errorMessage) {
+            errorMessage.textContent = '';
+            errorMessage.style.display = 'none';
+        }
+    } else {
+        input.classList.remove('input-success');
+        input.classList.add('input-error');
+        if (errorMessage) {
+            errorMessage.textContent = window.i18n?.t('errors.invalidCardNumber') || 'Invalid card number';
+            errorMessage.style.display = 'block';
+        }
+    }
+}
+
+function validateCardNumber(cardNumber) {
+    // Удаляем все пробелы
+    const cleanNumber = cardNumber.replace(/\s/g, '');
+
+    // Проверка длины (13-19 цифр для большинства карт)
+    if (!/^\d{13,19}$/.test(cleanNumber)) {
+        return false;
+    }
+
+    // Алгоритм Луна (Luhn algorithm)
+    let sum = 0;
+    let isEven = false;
+
+    for (let i = cleanNumber.length - 1; i >= 0; i--) {
+        let digit = parseInt(cleanNumber[i], 10);
+
+        if (isEven) {
+            digit *= 2;
+            if (digit > 9) {
+                digit -= 9;
+            }
+        }
+
+        sum += digit;
+        isEven = !isEven;
+    }
+
+    return sum % 10 === 0;
+}
 
 function toggleMobileMenu() {
     navMenu.classList.toggle('active');
@@ -702,10 +882,6 @@ function toggleUserMenu() {
     }
 }
 
-// ==============================================
-// LOGOUT
-// ==============================================
-
 async function logout() {
     try {
         await fetch(`${API_BASE_URL}/auth/logout`, {
@@ -713,7 +889,7 @@ async function logout() {
             credentials: 'include'
         });
 
-        showNotification('Вы вышли из системы', 'info');
+        showNotification(window.i18n?.t('errors.loggedOut') || 'You have logged out', 'info');
     } catch (error) {
         console.error('Logout error:', error);
     } finally {
@@ -723,10 +899,6 @@ async function logout() {
         }, 1000);
     }
 }
-
-// ==============================================
-// THEME MANAGEMENT
-// ==============================================
 
 function initializeTheme() {
     const savedTheme = localStorage.getItem('theme') || 'light';
@@ -759,10 +931,6 @@ function toggleTheme() {
     }
 }
 
-// ==============================================
-// HEADER SCROLL EFFECT
-// ==============================================
-
 function handleHeaderScroll() {
     const header = document.querySelector('.header');
     const currentTheme = document.documentElement.getAttribute('data-theme');
@@ -787,10 +955,6 @@ function handleHeaderScroll() {
     }
 }
 
-// ==============================================
-// EVENT LISTENERS
-// ==============================================
-
 function setupEventListeners() {
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
@@ -800,10 +964,8 @@ function setupEventListeners() {
         }
     });
 
-    // Header scroll effect
     window.addEventListener('scroll', handleHeaderScroll);
 
-    // Close modals when clicking outside
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('modal')) {
             closeTopUpModal();
@@ -812,7 +974,6 @@ function setupEventListeners() {
         }
     });
 
-    // Handle escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             closeTopUpModal();
@@ -832,10 +993,6 @@ function setupEventListeners() {
         withdrawForm.addEventListener('submit', handleWithdrawForm);
     }
 }
-
-// ==============================================
-// UTILITIES
-// ==============================================
 
 function formatMoney(amount) {
     const num = Number(amount) || 0;
@@ -857,10 +1014,6 @@ function formatDate(dateString) {
         minute: '2-digit'
     });
 }
-
-// ==============================================
-// NOTIFICATION SYSTEM
-// ==============================================
 
 function showNotification(message, type = 'info') {
     const existingNotifications = document.querySelectorAll('.notification');
@@ -902,7 +1055,6 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Add notification styles
 if (!document.querySelector('#notification-styles')) {
     const notificationStyles = document.createElement('style');
     notificationStyles.id = 'notification-styles';
@@ -955,6 +1107,23 @@ if (!document.querySelector('#notification-styles')) {
         .badge-cancelled {
             background: #6b7280;
             color: white;
+        }
+        
+        .input-error {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+        }
+        
+        .input-success {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+        }
+        
+        .error-message {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
         }
         
         @keyframes slideInRight {

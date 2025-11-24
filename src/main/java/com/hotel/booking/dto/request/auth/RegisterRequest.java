@@ -8,33 +8,33 @@ import java.time.LocalDate;
 
 @Data
 public class RegisterRequest {
-    @NotBlank(message = "Имя обязательно")
+    @NotBlank(message = "First name is required")
     @Size(max = 100)
     private String firstName;
 
-    @NotBlank(message = "Фамилия обязательна")
+    @NotBlank(message = "Last name is required")
     @Size(max = 100)
     private String lastName;
 
-    @NotBlank(message = "Email обязателен")
+    @NotBlank(message = "Email is required")
     @Email
     private String email;
 
-    @NotBlank(message = "Телефон обязателен")
+    @NotBlank(message = "Phone is required")
     @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$")
     private String phone;
 
-    @NotNull(message = "Дата рождения обязательна")
+    @NotNull(message = "Birth date is required")
     @Past
     private LocalDate birthDate;
 
-    @NotNull(message = "Пол обязателен")
+    @NotNull(message = "Gender is required")
     private UserGender gender;
 
-    @NotBlank(message = "Пароль обязателен")
-    @Size(min = 6, message = "Пароль должен содержать минимум 6 символов")
+    @NotBlank(message = "Password is required")
+    @Size(min = 6, message = "Password must contain at least 6 characters")
     private String password;
 
-    @NotBlank(message = "Подтверждение пароля обязательно")
+    @NotBlank(message = "Password confirmation is required")
     private String confirmPassword;
 }

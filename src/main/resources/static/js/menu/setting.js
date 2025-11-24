@@ -55,21 +55,21 @@ async function apiCall(endpoint, options = {}) {
 
     if (response.status === 401) {
         removeAuthData();
-        showNotification('Сессия истекла. Пожалуйста, войдите снова.', 'error');
+        showNotification(window.i18n?.t('errors.sessionExpired') || 'Сессия истекла. Пожалуйста, войдите снова.', 'error');
         setTimeout(() => {
             window.location.href = '/login';
         }, 1000);
-        throw new Error('Требуется авторизация');
+        throw new Error(window.i18n?.t('errors.authRequired') || 'Требуется авторизация');
     }
 
     if (response.status === 403) {
-        showNotification('Доступ запрещен', 'error');
-        throw new Error('Доступ запрещен');
+        showNotification(window.i18n?.t('errors.accessDenied') || 'Доступ запрещен', 'error');
+        throw new Error(window.i18n?.t('errors.accessDenied') || 'Доступ запрещен');
     }
 
     if (!response.ok) {
         const contentType = response.headers.get('content-type');
-        let errorText = `Ошибка: ${response.status}`;
+        let errorText = `${window.i18n?.t('errors.error') || 'Ошибка'}: ${response.status}`;
 
         if (contentType && contentType.includes('application/json')) {
             try {
@@ -116,8 +116,8 @@ async function loadUserData() {
         updateUserInterface();
     } catch (error) {
         console.error('Failed to load user data:', error);
-        if (!error.message.includes('Требуется авторизация')) {
-            showNotification('Ошибка загрузки данных профиля: ' + error.message, 'error');
+        if (!error.message.includes('Требуется авторизация') && !error.message.includes('Authorization Required')) {
+            showNotification((window.i18n?.t('errors.profileLoadError') || 'Ошибка загрузки данных профиля') + ': ' + error.message, 'error');
         }
     }
 }
@@ -150,10 +150,10 @@ async function saveUserSettings(settings) {
             body: JSON.stringify(settings)
         });
 
-        showNotification('Настройки успешно сохранены', 'success');
+        showNotification(window.i18n?.t('settings.settingsSaved') || 'Настройки успешно сохранены', 'success');
     } catch (error) {
         console.error('Failed to save settings:', error);
-        showNotification('Ошибка сохранения настроек: ' + error.message, 'error');
+        showNotification((window.i18n?.t('settings.settingsError') || 'Ошибка сохранения настроек') + ': ' + error.message, 'error');
     }
 }
 
@@ -211,7 +211,10 @@ function setupSettingsControls() {
         themeToggleSetting.addEventListener('change', function() {
             const newTheme = this.checked ? 'dark' : 'light';
             setTheme(newTheme);
-            showNotification(`Тема изменена на ${newTheme === 'dark' ? 'темную' : 'светлую'}`, 'success');
+            const themeText = newTheme === 'dark' 
+                ? (window.i18n?.t('settings.dark') || 'темную')
+                : (window.i18n?.t('settings.light') || 'светлую');
+            showNotification(`${window.i18n?.t('settings.themeChanged') || 'Тема изменена на'} ${themeText}`, 'success');
         });
     }
 
@@ -226,7 +229,11 @@ function setupSettingsControls() {
 
             await saveUserSettings({ language });
 
-            showNotification('Язык интерфейса изменен', 'success');
+            showNotification(window.i18n?.t('settings.languageChanged') || 'Язык интерфейса изменен', 'success');
+            // Reload translations after language change
+            if (window.i18n) {
+                await window.i18n.setLanguage(language);
+            }
         });
     }
 
@@ -242,7 +249,8 @@ function setupSettingsControls() {
             await saveUserSettings({ currency });
 
             applyCurrencySettings(currency);
-            showNotification(`Валюта изменена на ${getCurrencyName(currency)}`, 'success');
+            const currencyName = getCurrencyName(currency);
+            showNotification(`${window.i18n?.t('settings.currencyChanged') || 'Валюта изменена на'} ${currencyName}`, 'success');
         });
     }
 
@@ -265,7 +273,10 @@ function setupNotificationToggles() {
             localStorage.setItem(settingName, isEnabled.toString());
 
             const settingLabel = this.closest('.settings-item')?.querySelector('label')?.textContent || 'Настройка';
-            showNotification(`${settingLabel} ${isEnabled ? 'включена' : 'отключена'}`, 'info');
+            const statusText = isEnabled 
+                ? (window.i18n?.t('settings.settingEnabled') || 'включена')
+                : (window.i18n?.t('settings.settingDisabled') || 'отключена');
+            showNotification(`${settingLabel} ${statusText}`, 'info');
 
             const settings = {};
             settings[settingName] = isEnabled;
@@ -285,6 +296,9 @@ function applyCurrencySettings(currency) {
 }
 
 function getCurrencyName(currencyCode) {
+    if (window.i18n) {
+        return window.i18n.t(`currencies.${currencyCode}`) || currencyCode;
+    }
     const currencyNames = {
         'BYN': 'Белорусский рубль',
         'USD': 'Доллар США',
@@ -337,67 +351,9 @@ function toggleUserMenu() {
 // UPDATE UI
 // ==============================================
 
-function updateUserInterface() {
-    if (!currentUser) return;
 
-    updateNavigationForLoggedInUser(currentUser);
-}
 
-function updateNavigationForLoggedInUser(user) {
-    const navAuth = document.querySelector('.nav-auth');
-    if (!navAuth) return;
 
-    navAuth.innerHTML = `
-        <div class="user-profile">
-            <div class="user-info">
-                <div class="user-avatar" id="userAvatar">${user.avatar || '👤'}</div>
-                <div class="user-details">
-                    <div class="user-name" id="userName">${user.name || 'Пользователь'}</div>
-                    <div class="user-wallet">
-                        <i class="fas fa-wallet"></i>
-                        <span id="walletAmount">${formatCurrency(user.wallet || 0)}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="user-menu">
-                <button class="btn-auth btn-user" onclick="toggleUserMenu()">
-                    <i class="fas fa-chevron-down"></i>
-                </button>
-                <div class="user-dropdown" id="userDropdown">
-                    <div class="dropdown-header">
-                        <div class="user-avatar-small">${user.avatar || '👤'}</div>
-                        <div>
-                            <div class="user-name-small">${user.name || 'Пользователь'}</div>
-                            <div class="user-email-small">${user.email || ''}</div>
-                        </div>
-                    </div>
-                    <div class="dropdown-divider"></div>
-                    <a href="/profile" class="dropdown-item">
-                        <i class="fas fa-user"></i>
-                        Мой профиль
-                    </a>
-                    <a href="/booking" class="dropdown-item">
-                        <i class="fas fa-calendar"></i>
-                        Мои бронирования
-                    </a>
-                    <a href="/wallet" class="dropdown-item">
-                        <i class="fas fa-wallet"></i>
-                        Кошелек
-                    </a>
-                    <a href="/setting" class="dropdown-item active">
-                        <i class="fas fa-cog"></i>
-                        Настройки
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <a href="#" class="dropdown-item logout-item" onclick="logout()">
-                        <i class="fas fa-sign-out-alt"></i>
-                        Выйти
-                    </a>
-                </div>
-            </div>
-        </div>
-    `;
-}
 
 // ==============================================
 // LOGOUT
@@ -410,10 +366,10 @@ async function logout() {
             credentials: 'include'
         });
 
-        showNotification('Вы вышли из системы', 'info');
+        showNotification(window.i18n?.t('errors.loggedOut') || 'Вы вышли из системы', 'info');
     } catch (error) {
         console.error('Logout error:', error);
-        showNotification('Ошибка выхода из системы', 'error');
+        showNotification(window.i18n?.t('errors.logoutError') || 'Ошибка выхода из системы', 'error');
     } finally {
         removeAuthData();
         setTimeout(() => {

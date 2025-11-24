@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Отель "Райский уголок" - Бронирование номеров</title>
+    <title data-i18n="home.title">Отель "Райский уголок" - Бронирование номеров</title>
     <link rel="stylesheet" href="/css/home.css">
     <link rel="stylesheet" href="/css/index.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/i18n.js"></script>
     <script>
         (function() {
             const savedTheme = localStorage.getItem('theme') || 'light';
@@ -21,7 +22,7 @@
         <div class="nav-container">
             <div class="nav-logo">
                 <i class="fas fa-hotel"></i>
-                <span>Райский уголок</span>
+                <span data-i18n="common.hotelName">Райский уголок</span>
             </div>
             <div class="theme-toggle">
                 <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">
@@ -29,20 +30,20 @@
                 </button>
             </div>
             <ul class="nav-menu">
-                <li><a href="#home" class="nav-link active">Главная</a></li>
-                <li><a href="#rooms" class="nav-link">Номера</a></li>
-                <li><a href="#services" class="nav-link">Услуги</a></li>
-                <li><a href="/aboutUs" class="nav-link">О нас</a></li>
-                <li><a href="#contact" class="nav-link">Контакты</a></li>
+                <li><a href="#home" class="nav-link active" data-i18n="common.home">Главная</a></li>
+                <li><a href="#rooms" class="nav-link" data-i18n="common.rooms">Номера</a></li>
+                <li><a href="#services" class="nav-link" data-i18n="common.services">Услуги</a></li>
+                <li><a href="/aboutUs" class="nav-link" data-i18n="common.about">О нас</a></li>
+                <li><a href="#contact" class="nav-link" data-i18n="common.contact">Контакты</a></li>
             </ul>
             <div class="nav-auth">
                 <a href="/login" class="btn-auth btn-login">
                     <i class="fas fa-sign-in-alt"></i>
-                    Войти
+                    <span data-i18n="common.login">Войти</span>
                 </a>
                 <a href="/register" class="btn-auth btn-register">
                     <i class="fas fa-user-plus"></i>
-                    Регистрация
+                    <span data-i18n="common.register">Регистрация</span>
                 </a>
             </div>
             <div class="nav-toggle">
@@ -56,16 +57,16 @@
 
 <section id="home" class="hero">
     <div class="hero-content">
-        <h1 class="hero-title">Добро пожаловать в <span class="highlight">Райский уголок</span></h1>
-        <p class="hero-subtitle">Насладитесь незабываемым отдыхом в нашем роскошном отеле</p>
+        <h1 class="hero-title" data-i18n-html="home.heroTitle">Добро пожаловать в <span class="highlight">Райский уголок</span></h1>
+        <p class="hero-subtitle" data-i18n="home.heroSubtitle">Насладитесь незабываемым отдыхом в нашем роскошном отеле</p>
         <div class="hero-buttons">
             <button class="btn btn-primary" onclick="scrollToSearch()">
                 <i class="fas fa-calendar-check"></i>
-                Забронировать номер
+                <span data-i18n="home.bookRoom">Забронировать номер</span>
             </button>
             <button class="btn btn-secondary" onclick="scrollToRooms()">
                 <i class="fas fa-eye"></i>
-                Посмотреть номера
+                <span data-i18n="home.viewRooms">Посмотреть номера</span>
             </button>
         </div>
     </div>
@@ -76,51 +77,51 @@
 
 <section class="search-section">
     <div class="container">
-        <h1>Найдите идеальный номер</h1>
+        <h1 data-i18n="home.findPerfectRoom">Найдите идеальный номер</h1>
         <form id="searchForm" class="search-form">
             <div class="form-group">
                 <label for="checkIn">
-                    <i class="fas fa-calendar-check"></i> Дата заезда
+                    <i class="fas fa-calendar-check"></i> <span data-i18n="home.checkIn">Дата заезда</span>
                 </label>
                 <input type="date" id="checkIn" name="checkIn" required>
             </div>
 
             <div class="form-group">
                 <label for="checkOut">
-                    <i class="fas fa-calendar-times"></i> Дата выезда
+                    <i class="fas fa-calendar-times"></i> <span data-i18n="home.checkOut">Дата выезда</span>
                 </label>
                 <input type="date" id="checkOut" name="checkOut" required>
             </div>
 
             <div class="form-group">
                 <label for="guests">
-                    <i class="fas fa-users"></i> Гости
+                    <i class="fas fa-users"></i> <span data-i18n="home.guests">Гости</span>
                 </label>
                 <select id="guests" name="guests">
-                    <option value="1">1 гость</option>
-                    <option value="2" selected>2 гостя</option>
-                    <option value="3">3 гостя</option>
-                    <option value="4">4 гостя</option>
-                    <option value="5">5+ гостей</option>
+                    <option value="1" data-i18n="catalog.guestsOptions.one">1 гость</option>
+                    <option value="2" selected data-i18n="catalog.guestsOptions.two">2 гостя</option>
+                    <option value="3" data-i18n="catalog.guestsOptions.three">3 гостя</option>
+                    <option value="4" data-i18n="catalog.guestsOptions.four">4 гостя</option>
+                    <option value="5" data-i18n="catalog.guestsOptions.fivePlus">5+ гостей</option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label for="roomType">
-                    <i class="fas fa-bed"></i> Тип номера
+                    <i class="fas fa-bed"></i> <span data-i18n="home.roomType">Тип номера</span>
                 </label>
                 <select id="roomType" name="roomType">
-                    <option value="">Все типы</option>
-                    <option value="STANDARD">Стандарт</option>
-                    <option value="DELUXE">Делюкс</option>
-                    <option value="SUITE">Люкс</option>
-                    <option value="APARTMENT">Апартаменты</option>
-                    <option value="PENTHOUSE">Пентхаус</option>
+                    <option value="" data-i18n="home.allTypes">Все типы</option>
+                    <option value="STANDARD" data-i18n="roomTypes.STANDARD">Стандарт</option>
+                    <option value="DELUXE" data-i18n="roomTypes.DELUXE">Делюкс</option>
+                    <option value="SUITE" data-i18n="roomTypes.SUITE">Люкс</option>
+                    <option value="APARTMENT" data-i18n="roomTypes.APARTMENT">Апартаменты</option>
+                    <option value="PENTHOUSE" data-i18n="roomTypes.PENTHOUSE">Пентхаус</option>
                 </select>
             </div>
 
             <button type="submit" id="searchBtn" class="btn btn-primary">
-                <i class="fas fa-search"></i> Найти номера
+                <i class="fas fa-search"></i> <span data-i18n="home.findRooms">Найти номера</span>
             </button>
         </form>
     </div>
@@ -129,132 +130,176 @@
 
 <section id="services" class="features">
     <div class="container">
-        <h2 class="section-title">Почему выбирают нас</h2>
+        <h2 class="section-title" data-i18n="home.whyChooseUs">Почему выбирают нас</h2>
         <div class="features-grid">
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-wifi"></i>
                 </div>
-                <h3>Бесплатный Wi-Fi</h3>
-                <p>Высокоскоростной интернет во всех номерах и общественных зонах</p>
+                <h3 data-i18n="home.freeWifi">Бесплатный Wi-Fi</h3>
+                <p data-i18n="home.freeWifiDesc">Высокоскоростной интернет во всех номерах и общественных зонах</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-car"></i>
                 </div>
-                <h3>Парковка</h3>
-                <p>Бесплатная охраняемая парковка для всех гостей отеля</p>
+                <h3 data-i18n="home.parking">Парковка</h3>
+                <p data-i18n="home.parkingDesc">Бесплатная охраняемая парковка для всех гостей отеля</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-utensils"></i>
                 </div>
-                <h3>Ресторан</h3>
-                <p>Изысканная кухня и свежие продукты в нашем ресторане</p>
+                <h3 data-i18n="home.restaurant">Ресторан</h3>
+                <p data-i18n="home.restaurantDesc">Изысканная кухня и свежие продукты в нашем ресторане</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-concierge-bell"></i>
                 </div>
-                <h3>24/7 Сервис</h3>
-                <p>Круглосуточное обслуживание и помощь консьержа</p>
+                <h3 data-i18n="home.service24">24/7 Сервис</h3>
+                <p data-i18n="home.service24Desc">Круглосуточное обслуживание и помощь консьержа</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-swimming-pool"></i>
                 </div>
-                <h3>Бассейн</h3>
-                <p>Крытый бассейн с подогревом и зоной отдыха</p>
+                <h3 data-i18n="home.pool">Бассейн</h3>
+                <p data-i18n="home.poolDesc">Крытый бассейн с подогревом и зоной отдыха</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-spa"></i>
                 </div>
-                <h3>СПА-центр</h3>
-                <p>Расслабляющие процедуры и массаж в нашем СПА</p>
+                <h3 data-i18n="home.spa">СПА-центр</h3>
+                <p data-i18n="home.spaDesc">Расслабляющие процедуры и массаж в нашем СПА</p>
             </div>
         </div>
     </div>
 </section>
 
-<section id="rooms" class="rooms-preview">
+<section id="rooms" class="gallery-section">
     <div class="container">
-        <h2 class="section-title">Наши номера</h2>
-        <div class="rooms-grid">
-            <div class="room-card">
-                <div class="room-image">
-                    <div class="room-placeholder standard"></div>
-                    <div class="room-price">от 3,500₽/ночь</div>
-                </div>
-                <div class="room-info">
-                    <h3>Стандарт</h3>
-                    <p>Уютный номер с современным дизайном и всеми удобствами</p>
-                    <ul class="room-features">
-                        <li><i class="fas fa-bed"></i> 1 кровать</li>
-                        <li><i class="fas fa-user"></i> До 2 гостей</li>
-                        <li><i class="fas fa-wifi"></i> Wi-Fi</li>
-                    </ul>
+        <h2 class="section-title" data-i18n="home.ourHotel">Наш отель</h2>
+        <p class="section-subtitle" data-i18n="home.hotelSubtitle">Познакомьтесь с красотой и комфортом "Райского уголка"</p>
+
+        <div class="gallery-grid">
+            <div class="gallery-item gallery-large">
+                <div class="gallery-overlay">
+                    <div class="gallery-content">
+                        <i class="fas fa-hotel"></i>
+                        <h3 data-i18n="home.mainEntrance">Главный вход</h3>
+                        <p data-i18n="home.welcomeLuxury">Добро пожаловать в роскошь</p>
+                    </div>
                 </div>
             </div>
-            <div class="room-card">
-                <div class="room-image">
-                    <div class="room-placeholder deluxe"></div>
-                    <div class="room-price">от 5,500₽/ночь</div>
-                </div>
-                <div class="room-info">
-                    <h3>Делюкс</h3>
-                    <p>Просторный номер с панорамными окнами и балконом</p>
-                    <ul class="room-features">
-                        <li><i class="fas fa-bed"></i> 1 большая кровать</li>
-                        <li><i class="fas fa-user"></i> До 3 гостей</li>
-                        <li><i class="fas fa-wifi"></i> Wi-Fi</li>
-                    </ul>
+
+            <div class="gallery-item gallery-medium gallery-pool">
+                <div class="gallery-overlay">
+                    <div class="gallery-content">
+                        <i class="fas fa-swimming-pool"></i>
+                        <h3 data-i18n="home.pool">Бассейн</h3>
+                        <p data-i18n="home.refreshingSwim">Освежающее плавание</p>
+                    </div>
                 </div>
             </div>
-            <div class="room-card">
-                <div class="room-image">
-                    <div class="room-placeholder suite"></div>
-                    <div class="room-price">от 8,500₽/ночь</div>
+
+            <div class="gallery-item gallery-medium gallery-restaurant">
+                <div class="gallery-overlay">
+                    <div class="gallery-content">
+                        <i class="fas fa-utensils"></i>
+                        <h3 data-i18n="home.restaurant">Ресторан</h3>
+                        <p data-i18n="home.exquisiteCuisine">Изысканная кухня</p>
+                    </div>
                 </div>
-                <div class="room-info">
-                    <h3>Люкс</h3>
-                    <p>Роскошный номер с отдельной гостиной и ванной комнатой</p>
-                    <ul class="room-features">
-                        <li><i class="fas fa-bed"></i> 2 кровати</li>
-                        <li><i class="fas fa-user"></i> До 4 гостей</li>
-                        <li><i class="fas fa-wifi"></i> Wi-Fi</li>
-                    </ul>
+            </div>
+
+            <div class="gallery-item gallery-small gallery-room">
+                <div class="gallery-overlay">
+                    <div class="gallery-content">
+                        <i class="fas fa-bed"></i>
+                        <h3 data-i18n="common.rooms">Номера</h3>
+                        <p data-i18n="home.comfortCozy">Комфорт и уют</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="gallery-item gallery-small gallery-spa">
+                <div class="gallery-overlay">
+                    <div class="gallery-content">
+                        <i class="fas fa-spa"></i>
+                        <h3 data-i18n="home.spa">СПА-зона</h3>
+                        <p data-i18n="home.relaxation">Релаксация</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="gallery-item gallery-small gallery-gym">
+                <div class="gallery-overlay">
+                    <div class="gallery-content">
+                        <i class="fas fa-dumbbell"></i>
+                        <h3 data-i18n="home.fitnessCenter">Фитнес-центр</h3>
+                        <p data-i18n="home.healthSport">Здоровье и спорт</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="gallery-item gallery-wide gallery-lobby">
+                <div class="gallery-overlay">
+                    <div class="gallery-content">
+                        <i class="fas fa-door-open"></i>
+                        <h3 data-i18n="home.lobby">Лобби</h3>
+                        <p data-i18n="home.elegantSpace">Элегантное пространство</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="gallery-item gallery-small gallery-bar">
+                <div class="gallery-overlay">
+                    <div class="gallery-content">
+                        <i class="fas fa-cocktail"></i>
+                        <h3 data-i18n="home.bar">Бар</h3>
+                        <p data-i18n="home.eveningCocktails">Вечерние коктейли</p>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <div class="gallery-action">
+            <button class="btn btn-primary" onclick="window.location.href='/catalog'">
+                <i class="fas fa-door-open"></i>
+                <span data-i18n="home.viewRooms">Посмотреть номера</span>
+            </button>
+        </div>
     </div>
 </section>
+
 
 <section id="contact" class="contact">
     <div class="container">
         <div class="contact-content">
             <div class="contact-info">
-                <h2>Свяжитесь с нами</h2>
-                <p>Мы всегда рады помочь вам с бронированием и ответить на любые вопросы</p>
+                <h2 data-i18n="home.contactUs">Свяжитесь с нами</h2>
+                <p data-i18n="home.contactDesc">Мы всегда рады помочь вам с бронированием и ответить на любые вопросы</p>
                 <div class="contact-details">
                     <div class="contact-item">
                         <i class="fas fa-phone"></i>
                         <div>
-                            <h4>Телефон</h4>
+                            <h4 data-i18n="home.phone">Телефон</h4>
                             <p>+7 (495) 123-45-67</p>
                         </div>
                     </div>
                     <div class="contact-item">
                         <i class="fas fa-envelope"></i>
                         <div>
-                            <h4>Email</h4>
+                            <h4 data-i18n="home.email">Email</h4>
                             <p>info@paradise-hotel.ru</p>
                         </div>
                     </div>
                     <div class="contact-item">
                         <i class="fas fa-map-marker-alt"></i>
                         <div>
-                            <h4>Адрес</h4>
+                            <h4 data-i18n="home.address">Адрес</h4>
                             <p>ул. Райская, 123, Москва</p>
                         </div>
                     </div>
@@ -263,15 +308,15 @@
             <div class="contact-form">
                 <form id="contactForm">
                     <div class="form-group">
-                        <input type="text" id="name" name="name" placeholder="Ваше имя" required>
+                        <input type="text" id="name" name="name" data-i18n-placeholder="home.yourName" placeholder="Ваше имя" required>
                     </div>
                     <div class="form-group">
                         <input type="email" id="email" name="email" placeholder="Email" required>
                     </div>
                     <div class="form-group">
-                        <textarea id="message" name="message" placeholder="Сообщение" rows="5" required></textarea>
+                        <textarea id="message" name="message" data-i18n-placeholder="home.message" placeholder="Сообщение" rows="5" required></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Отправить сообщение</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="home.sendMessage">Отправить сообщение</button>
                 </form>
             </div>
         </div>
@@ -284,28 +329,28 @@
             <div class="footer-section">
                 <div class="footer-logo">
                     <i class="fas fa-hotel"></i>
-                    <span>Райский уголок</span>
+                    <span data-i18n="common.hotelName">Райский уголок</span>
                 </div>
-                <p>Ваш идеальный отдых начинается здесь</p>
+                <p data-i18n="home.footerTagline">Ваш идеальный отдых начинается здесь</p>
             </div>
             <div class="footer-section">
-                <h4>Быстрые ссылки</h4>
+                <h4 data-i18n="home.quickLinks">Быстрые ссылки</h4>
                 <ul>
-                    <li><a href="#home">Главная</a></li>
-                    <li><a href="#rooms">Номера</a></li>
-                    <li><a href="#services">Услуги</a></li>
-                    <li><a href="#contact">Контакты</a></li>
+                    <li><a href="#home" data-i18n="common.home">Главная</a></li>
+                    <li><a href="#rooms" data-i18n="common.rooms">Номера</a></li>
+                    <li><a href="#services" data-i18n="common.services">Услуги</a></li>
+                    <li><a href="#contact" data-i18n="common.contact">Контакты</a></li>
                 </ul>
             </div>
             <div class="footer-section">
-                <h4>Контакты</h4>
+                <h4 data-i18n="common.contact">Контакты</h4>
                 <p><i class="fas fa-phone"></i> +7 (495) 123-45-67</p>
                 <p><i class="fas fa-envelope"></i> info@paradise-hotel.ru</p>
                 <p><i class="fas fa-map-marker-alt"></i> ул. Райская, 123, Москва</p>
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2025 Отель "Райский уголок". Все права защищены.</p>
+            <p data-i18n="home.copyright">&copy; 2025 Отель "Райский уголок". Все права защищены.</p>
         </div>
     </div>
 </footer>

@@ -3,7 +3,6 @@ package com.hotel.booking.dto.response.room;
 import lombok.*;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Data
@@ -28,7 +27,8 @@ public class RoomDTOResponse {
 
   private Double stars;
 
-  private Map<String, TranslationDTO> translations;
+  // ИЗМЕНЕНО: List вместо Map
+  private List<TranslationDTO> translations;
 
   private List<PhotoDTO> photos;
 
@@ -40,6 +40,7 @@ public class RoomDTOResponse {
   @NoArgsConstructor
   @AllArgsConstructor
   public static class TranslationDTO {
+    private String language;
     private String name;
     private String description;
   }

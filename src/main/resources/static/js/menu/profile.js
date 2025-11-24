@@ -309,7 +309,7 @@ function editPersonalInfo() {
     }
 
     if (editBtn) {
-        editBtn.innerHTML = '<i class="fas fa-save"></i> Сохранить';
+        editBtn.innerHTML = `<i class="fas fa-save"></i> ${window.i18n?.t('common.save') || 'Сохранить'}`;
         editBtn.onclick = () => form.dispatchEvent(new Event('submit'));
     }
 }
@@ -334,7 +334,7 @@ function cancelEdit() {
     }
 
     if (editBtn) {
-        editBtn.innerHTML = '<i class="fas fa-edit"></i> Редактировать';
+        editBtn.innerHTML = `<i class="fas fa-edit"></i> ${window.i18n?.t('common.edit') || 'Редактировать'}`;
         editBtn.onclick = editPersonalInfo;
     }
 }
@@ -375,10 +375,10 @@ async function handlePersonalFormSubmit(e) {
         updateUserDataInStorage(updatedBasicData);
 
         updateUserInterface();
-        showNotification('Профиль успешно обновлен!', 'success');
+        showNotification(window.i18n?.t('profile.updated') || 'Профиль успешно обновлен!', 'success');
         cancelEdit();
     } catch (error) {
-        showNotification('Ошибка обновления профиля: ' + error.message, 'error');
+        showNotification((window.i18n?.t('errors.profileUpdateError') || 'Ошибка обновления профиля') + ': ' + error.message, 'error');
     }
 }
 
@@ -397,12 +397,12 @@ function handleAvatarChange(event) {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-        showNotification('Пожалуйста, выберите изображение', 'error');
+        showNotification(window.i18n?.t('errors.selectImage') || 'Пожалуйста, выберите изображение', 'error');
         return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-        showNotification('Размер файла не должен превышать 5MB', 'error');
+        showNotification(window.i18n?.t('errors.fileSizeExceeded') || 'Размер файла не должен превышать 5MB', 'error');
         return;
     }
 
@@ -424,7 +424,7 @@ function handleAvatarChange(event) {
         }
 
         updateUserInterface();
-        showNotification('Фото профиля успешно обновлено!', 'success');
+        showNotification(window.i18n?.t('profile.photoUpdated') || 'Фото профиля успешно обновлено!', 'success');
     };
     reader.readAsDataURL(file);
 }
@@ -460,7 +460,7 @@ async function handlePasswordFormSubmit(e) {
     };
 
     if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-        showNotification('Пожалуйста, заполните все поля', 'error');
+        showNotification(window.i18n?.t('errors.fillAllFields') || 'Пожалуйста, заполните все поля', 'error');
         return;
     }
 
@@ -554,7 +554,7 @@ function updateUserInterface() {
     if (profileName) profileName.textContent = currentUser.name;
     if (profileEmail) profileEmail.textContent = currentUser.email;
     if (userName) userName.textContent = currentUser.name;
-    if (userWallet) userWallet.textContent = currentUser.wallet ? currentUser.wallet.toLocaleString() + '₽' : '0₽';
+    if (userWallet) userWallet.textContent = currentUser.wallet ? currentUser.wallet.toLocaleString() + 'BYN' : '0BYN';
 
     const updateAvatar = (element) => {
         if (!element) return;
@@ -695,6 +695,14 @@ function toggleTheme() {
 // ==============================================
 // ЗАПУСК ПРИ ЗАГРУЗКЕ
 // ==============================================
+
+// Listen for language changes
+window.addEventListener('languageChanged', function() {
+    // Re-apply translations to all elements
+    if (window.i18n && window.i18n.applyTranslations) {
+        window.i18n.applyTranslations();
+    }
+});
 
 document.addEventListener('DOMContentLoaded', function () {
     if (!checkAuthOnPageLoad()) {

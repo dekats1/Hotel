@@ -25,12 +25,12 @@ public class RoomTranslation extends BaseEntity {
     @Column(name = "language", nullable = false, length = 10)
     private String language;
 
-    @NotBlank(message = "Название номера обязательно")
-    @Size(max = 200, message = "Название не должно превышать 200 символов")
+    @NotBlank(message = "Room name is required")
+    @Size(max = 200, message = "Room name must not exceed 200 characters")
     @Column(name = "name", nullable = false, length = 200)
     private String name;
 
-    @NotBlank(message = "Описание номера обязательно")
+    @NotBlank(message = "Room description is required")
     @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 }

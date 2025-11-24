@@ -99,7 +99,7 @@ async function loginUser(credentials) {
         });
 
         if (!response.ok) {
-            let errorMessage = 'Ошибка авторизации';
+            let errorMessage = window.i18n?.t('errors.loginError') || 'Ошибка авторизации';
 
             try {
                 const errorData = await response.json();
@@ -136,7 +136,7 @@ async function registerUser(userData) {
         });
 
         if (!response.ok) {
-            let errorMessage = 'Ошибка регистрации';
+            let errorMessage = window.i18n?.t('errors.registrationError') || 'Ошибка регистрации';
 
             try {
                 const errorData = await response.json();
@@ -248,10 +248,11 @@ function setButtonLoading(button, isLoading) {
     if (isLoading) {
         button.disabled = true;
         button.dataset.originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Вход...';
+        const loadingText = window.i18n?.t('common.loading') || 'Вход...';
+        button.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${loadingText}`;
     } else {
         button.disabled = false;
-        button.innerHTML = button.dataset.originalText || 'Войти';
+        button.innerHTML = button.dataset.originalText || (window.i18n?.t('common.login') || 'Войти');
     }
 }
 
@@ -262,17 +263,17 @@ function isValidEmail(email) {
 
 function validateLoginForm(email, password) {
     if (!email || !password) {
-        showNotification('Пожалуйста, заполните все поля', 'error');
+        showNotification(window.i18n?.t('errors.fillAllFields') || 'Пожалуйста, заполните все поля', 'error');
         return false;
     }
 
     if (!isValidEmail(email)) {
-        showNotification('Пожалуйста, введите корректный email', 'error');
+        showNotification(window.i18n?.t('errors.invalidEmail') || 'Пожалуйста, введите корректный email', 'error');
         return false;
     }
 
     if (password.length < 6) {
-        showNotification('Пароль должен содержать минимум 6 символов', 'error');
+        showNotification(window.i18n?.t('validation.passwordMinLength') || 'Пароль должен содержать минимум 6 символов', 'error');
         return false;
     }
 
@@ -311,7 +312,7 @@ if (loginForm) {
         try {
             const authData = await loginUser(credentials);
 
-            showNotification('Вход выполнен успешно!', 'success');
+            showNotification(window.i18n?.t('auth.loginSuccess') || 'Вход выполнен успешно!', 'success');
 
             setTimeout(() => {
                 redirectAfterLogin(authData);

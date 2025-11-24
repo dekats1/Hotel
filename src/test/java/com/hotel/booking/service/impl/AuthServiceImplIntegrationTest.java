@@ -13,7 +13,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -40,10 +39,6 @@ class AuthServiceImplIntegrationTest {
         register.setLastName("intlastname");
         register.setBirthDate(LocalDate.of(2000, 1, 1));
         register.setGender(UserGender.MALE);
-
-
-
-
 
         AuthResponse regResponse = authService.register(register);
         assertNotNull(regResponse.getToken());

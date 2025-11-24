@@ -44,15 +44,15 @@ public class CreateBookingRequest {
 
   private UUID roomId;
 
-  @NotNull(message = "Дата заезда обязательна")
-  @FutureOrPresent(message = "Дата заезда не может быть в прошлом")
+  @NotNull(message = "Check-in date is required")
+  @FutureOrPresent(message = "Check-in date cannot be in the past")
   private LocalDate checkInDate;
 
-  @NotNull(message = "Дата выезда обязательна")
-  @Future(message = "Дата выезда должна быть в будущем")
+  @NotNull(message = "Check-out date is required")
+  @Future(message = "Check-out date must be in the future")
   private LocalDate checkOutDate;
 
-  @Min(value = 1, message = "Количество гостей должно быть не менее 1")
+  @Min(value = 1, message = "Number of guests must be at least 1")
   private Integer guestsCount;
 
   @Transient
@@ -63,12 +63,12 @@ public class CreateBookingRequest {
     return null;
   }
 
-  @NotNull(message = "Цена за ночь обязательна")
-  @DecimalMin(value = "0.01", message = "Цена должна быть положительной")
+  @NotNull(message = "Price per night is required")
+  @DecimalMin(value = "0.01", message = "Price must be positive")
   private BigDecimal pricePerNight;
 
-  @NotNull(message = "Общая цена обязательна")
-  @DecimalMin(value = "0.01", message = "Цена должна быть положительной")
+  @NotNull(message = "Total price is required")
+  @DecimalMin(value = "0.01", message = "Price must be positive")
   private BigDecimal totalPrice;
 
   @Enumerated(EnumType.STRING)

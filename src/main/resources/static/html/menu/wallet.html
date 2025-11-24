@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Кошелек - Отель "Райский уголок"</title>
+    <title data-i18n="wallet.title">Кошелек - Отель "Райский уголок"</title>
     <link rel="stylesheet" href="../../css/index.css">
     <link rel="stylesheet" href="../../css/menu/wallet.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="../../js/i18n.js"></script>
     <script>
-        // Apply theme immediately to prevent flash
         (function() {
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
@@ -17,372 +17,311 @@
     </script>
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <nav class="navbar">
-            <div class="nav-container">
-                <div class="nav-logo">
-                    <i class="fas fa-hotel"></i>
-                    <span>Райский уголок</span>
-                </div>
-                <div class="theme-toggle">
-                    <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">
-                        <i class="fas fa-sun" id="themeIcon"></i>
-                    </button>
-                </div>
-                <ul class="nav-menu">
-                    <li><a href="/" class="nav-link">Главная</a></li>
-                    <li><a href="/#rooms" class="nav-link">Номера</a></li>
-                    <li><a href="/#services" class="nav-link">Услуги</a></li>
-                    <li><a href="aboutUs" class="nav-link">О нас</a></li>
-                    <li><a href="/#contact" class="nav-link">Контакты</a></li>
-                </ul>
-                <div class="nav-auth">
-                    <div class="user-profile">
-                        <div class="user-info">
-                            <div class="user-avatar" id="userAvatar">👤</div>
-                            <div class="user-details">
-                                <div class="user-name" id="userName">Пользователь</div>
-                                <div class="user-wallet">
-                                    <i class="fas fa-wallet"></i>
-                                    <span id="userWallet">0₽</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="user-menu">
-                            <button class="btn-auth btn-user" onclick="toggleUserMenu()">
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                            <div class="user-dropdown" id="userDropdown">
-                                <div class="dropdown-header">
-                                    <div class="user-avatar-small" id="userAvatarSmall">👤</div>
-                                    <div>
-                                        <div class="user-name-small" id="userNameSmall">Пользователь</div>
-                                        <div class="user-email-small" id="userEmailSmall">user@example.com</div>
-                                    </div>
-                                </div>
-                                <div class="dropdown-divider"></div>
-                                <a href="profile.html" class="dropdown-item">
-                                    <i class="fas fa-user"></i>
-                                    Мой профиль
-                                </a>
-                                <a href="booking.html" class="dropdown-item">
-                                    <i class="fas fa-calendar"></i>
-                                    Мои бронирования
-                                </a>
-                                <a href="wallet.html" class="dropdown-item active">
-                                    <i class="fas fa-wallet"></i>
-                                    Кошелек
-                                </a>
-                                <a href="setting.html" class="dropdown-item">
-                                    <i class="fas fa-cog"></i>
-                                    Настройки
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a href="#" class="dropdown-item logout-item" onclick="logout()">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    Выйти
-                                </a>
+<header class="header">
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-hotel"></i>
+                <span data-i18n="common.hotelName">Райский уголок</span>
+            </div>
+            <div class="theme-toggle">
+                <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">
+                    <i class="fas fa-sun" id="themeIcon"></i>
+                </button>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/" class="nav-link" data-i18n="common.home">Главная</a></li>
+                <li><a href="/#rooms" class="nav-link" data-i18n="common.rooms">Номера</a></li>
+                <li><a href="/#services" class="nav-link" data-i18n="common.services">Услуги</a></li>
+                <li><a href="aboutUs" class="nav-link" data-i18n="common.about">О нас</a></li>
+                <li><a href="/#contact" class="nav-link" data-i18n="common.contact">Контакты</a></li>
+            </ul>
+            <div class="nav-auth">
+                <div class="user-profile">
+                    <div class="user-info">
+                        <div class="user-avatar" id="userAvatar">👤</div>
+                        <div class="user-details">
+                            <div class="user-name" id="userName"></div>
+                            <div class="user-wallet">
+                                <i class="fas fa-wallet"></i>
+                                <span id="userWallet">0BYN</span>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="nav-toggle">
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                    <span class="bar"></span>
+                    <div class="user-menu">
+                        <button class="btn-auth btn-user" onclick="toggleUserMenu()">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="user-dropdown" id="userDropdown">
+                            <div class="dropdown-header">
+                                <div class="user-avatar-small" id="userAvatarSmall">👤</div>
+                                <div>
+                                    <div class="user-name-small" id="userNameSmall"></div>
+                                    <div class="user-email-small" id="userEmailSmall">user@example.com</div>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="profile.html" class="dropdown-item">
+                                <i class="fas fa-user"></i>
+                                <span data-i18n="common.profile">Мой профиль</span>
+                            </a>
+                            <a href="booking.html" class="dropdown-item">
+                                <i class="fas fa-calendar"></i>
+                                <span data-i18n="common.bookings">Мои бронирования</span>
+                            </a>
+                            <a href="wallet.html" class="dropdown-item active">
+                                <i class="fas fa-wallet"></i>
+                                <span data-i18n="common.wallet">Кошелек</span>
+                            </a>
+                            <a href="setting.html" class="dropdown-item">
+                                <i class="fas fa-cog"></i>
+                                <span data-i18n="common.settings">Настройки</span>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item logout-item" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span data-i18n="common.logout">Выйти</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </nav>
-    </header>
-
-    <!-- Wallet Content -->
-    <main class="wallet-main">
-        <div class="container">
-            <!-- Wallet Header -->
-            <section class="wallet-header">
-                <div class="wallet-title">
-                    <h1>Мой кошелек</h1>
-                    <p>Управляйте своими финансами и транзакциями</p>
-                </div>
-                <div class="wallet-actions">
-                    <button class="btn btn-primary" onclick="openTopUpModal()">
-                        <i class="fas fa-plus"></i>
-                        Пополнить
-                    </button>
-                    <button class="btn btn-secondary" onclick="openWithdrawModal()">
-                        <i class="fas fa-minus"></i>
-                        Вывести
-                    </button>
-                </div>
-            </section>
-
-            <!-- Balance Cards -->
-            <section class="balance-section">
-                <div class="balance-grid">
-                    <div class="balance-card primary">
-                        <div class="balance-icon">
-                            <i class="fas fa-wallet"></i>
-                        </div>
-                        <div class="balance-info">
-                            <h3>Основной баланс</h3>
-                            <div class="balance-amount" id="mainBalance">15,000₽</div>
-                            <p>Доступно для использования</p>
-                        </div>
-                    </div>
-                    <div class="balance-card secondary">
-                        <div class="balance-icon">
-                            <i class="fas fa-gift"></i>
-                        </div>
-                        <div class="balance-info">
-                            <h3>Бонусы</h3>
-                            <div class="balance-amount" id="bonusBalance">2,500₽</div>
-                            <p>Накопленные бонусы</p>
-                        </div>
-                    </div>
-                    <div class="balance-card accent">
-                        <div class="balance-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="balance-info">
-                            <h3>За месяц</h3>
-                            <div class="balance-amount" id="monthlySpent">-8,500₽</div>
-                            <p>Потрачено в этом месяце</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Quick Actions -->
-            <section class="quick-actions">
-                <h2>Быстрые действия</h2>
-                <div class="actions-grid">
-                    <button class="action-card" onclick="openTopUpModal()">
-                        <div class="action-icon">
-                            <i class="fas fa-plus-circle"></i>
-                        </div>
-                        <div class="action-text">
-                            <h4>Пополнить</h4>
-                            <p>Добавить средства на счет</p>
-                        </div>
-                    </button>
-                    <button class="action-card" onclick="openWithdrawModal()">
-                        <div class="action-icon">
-                            <i class="fas fa-minus-circle"></i>
-                        </div>
-                        <div class="action-text">
-                            <h4>Вывести</h4>
-                            <p>Перевести на карту</p>
-                        </div>
-                    </button>
-                    <button class="action-card" onclick="openTransferModal()">
-                        <div class="action-icon">
-                            <i class="fas fa-exchange-alt"></i>
-                        </div>
-                        <div class="action-text">
-                            <h4>Перевести</h4>
-                            <p>Отправить другому пользователю</p>
-                        </div>
-                    </button>
-                    <button class="action-card" onclick="openHistoryModal()">
-                        <div class="action-icon">
-                            <i class="fas fa-history"></i>
-                        </div>
-                        <div class="action-text">
-                            <h4>История</h4>
-                            <p>Просмотр всех транзакций</p>
-                        </div>
-                    </button>
-                </div>
-            </section>
-
-            <!-- Recent Transactions -->
-            <section class="transactions-section">
-                <div class="section-header">
-                    <h2>Последние транзакции</h2>
-                    <div class="filter-tabs">
-                        <button class="filter-tab active" data-filter="all" onclick="filterTransactions('all')">Все</button>
-                        <button class="filter-tab" data-filter="income" onclick="filterTransactions('income')">Пополнения</button>
-                        <button class="filter-tab" data-filter="expense" onclick="filterTransactions('expense')">Расходы</button>
-                        <button class="filter-tab" data-filter="bonus" onclick="filterTransactions('bonus')">Бонусы</button>
-                    </div>
-                </div>
-                <div class="transactions-list" id="transactionsList">
-                    <!-- Transactions will be loaded here -->
-                </div>
-                <div class="load-more">
-                    <button class="btn btn-outline" onclick="loadMoreTransactions()">
-                        <i class="fas fa-plus"></i>
-                        Загрузить еще
-                    </button>
-                </div>
-            </section>
-
-            <!-- Payment Methods -->
-            <section class="payment-methods">
-                <div class="section-header">
-                    <h2>Способы оплаты</h2>
-                    <button class="btn btn-outline" onclick="addPaymentMethod()">
-                        <i class="fas fa-plus"></i>
-                        Добавить карту
-                    </button>
-                </div>
-                <div class="payment-cards" id="paymentCards">
-                    <!-- Payment methods will be loaded here -->
-                </div>
-            </section>
+            <div class="nav-toggle">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
         </div>
-    </main>
+    </nav>
+</header>
 
-    <!-- Top Up Modal -->
-    <div class="modal" id="topUpModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Пополнение счета</h2>
-                <button class="modal-close" onclick="closeTopUpModal()">
-                    <i class="fas fa-times"></i>
+<!-- Wallet Content -->
+<main class="wallet-main">
+    <div class="container">
+        <!-- Wallet Header -->
+        <section class="wallet-header">
+            <div class="wallet-title">
+                <h1 data-i18n="wallet.title">Мой кошелек</h1>
+                <p data-i18n="wallet.subtitle">Управляйте своими финансами и транзакциями</p>
+            </div>
+            <div class="wallet-actions">
+                <button class="btn btn-primary" onclick="openTopUpModal()">
+                    <i class="fas fa-plus"></i>
+                    <span data-i18n="wallet.topUp">Пополнить</span>
+                </button>
+                <button class="btn btn-secondary" onclick="openWithdrawModal()">
+                    <i class="fas fa-minus"></i>
+                    <span data-i18n="wallet.withdraw">Вывести</span>
                 </button>
             </div>
-            <div class="modal-body">
-                <form class="topup-form" id="topUpForm">
-                    <div class="amount-selection">
-                        <h3>Выберите сумму</h3>
-                        <div class="amount-buttons">
-                            <button type="button" class="amount-btn" data-amount="1000">1,000₽</button>
-                            <button type="button" class="amount-btn" data-amount="2500">2,500₽</button>
-                            <button type="button" class="amount-btn" data-amount="5000">5,000₽</button>
-                            <button type="button" class="amount-btn" data-amount="10000">10,000₽</button>
-                        </div>
-                        <div class="custom-amount">
-                            <label for="customAmount">Или введите сумму</label>
-                            <input type="number" id="customAmount" name="customAmount" placeholder="Введите сумму" min="100" max="100000">
-                        </div>
+        </section>
+
+        <!-- Balance Cards -->
+        <section class="balance-section">
+            <div class="balance-grid">
+                <div class="balance-card primary">
+                    <div class="balance-icon">
+                        <i class="fas fa-wallet"></i>
                     </div>
-                    <div class="payment-method-selection">
-                        <h3>Способ оплаты</h3>
-                        <div class="payment-options" id="paymentOptions">
-                            <!-- Payment options will be loaded here -->
-                        </div>
+                    <div class="balance-info">
+                        <h3 data-i18n="wallet.mainBalance">Основной баланс</h3>
+                        <div class="balance-amount" id="mainBalance">15,000BYN</div>
+                        <p data-i18n="wallet.available">Доступно для использования</p>
                     </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeTopUpModal()">Отмена</button>
-                        <button type="submit" class="btn btn-primary">Пополнить</button>
+                </div>
+                <div class="balance-card accent">
+                    <div class="balance-icon">
+                        <i class="fas fa-chart-line"></i>
                     </div>
-                </form>
+                    <div class="balance-info">
+                        <h3 data-i18n="wallet.thisMonth">За месяц</h3>
+                        <div class="balance-amount" id="monthlySpent">-8,500BYN</div>
+                        <p data-i18n="wallet.spentThisMonth">Потрачено в этом месяце</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Actions -->
+        <section class="quick-actions">
+            <h2 data-i18n="wallet.quickActions">Быстрые действия</h2>
+            <div class="actions-grid">
+                <button class="action-card" onclick="openTopUpModal()">
+                    <div class="action-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <div class="action-text">
+                        <h4 data-i18n="wallet.topUp">Пополнить</h4>
+                        <p data-i18n="wallet.addFunds">Добавить средства на счет</p>
+                    </div>
+                </button>
+                <button class="action-card" onclick="openWithdrawModal()">
+                    <div class="action-icon">
+                        <i class="fas fa-minus-circle"></i>
+                    </div>
+                    <div class="action-text">
+                        <h4 data-i18n="wallet.withdraw">Вывести</h4>
+                        <p data-i18n="wallet.transferToCard">Перевести на карту</p>
+                    </div>
+                </button>
+                <button class="action-card" onclick="openHistoryModal()">
+                    <div class="action-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="action-text">
+                        <h4 data-i18n="wallet.history">История</h4>
+                        <p data-i18n="wallet.viewAll">Просмотр всех транзакций</p>
+                    </div>
+                </button>
+            </div>
+        </section>
+
+        <!-- Transactions Section -->
+        <section class="transactions-section">
+            <div class="section-header">
+                <h2 data-i18n="wallet.recentTransactions">Последние транзакции</h2>
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all" onclick="filterTransactions('all')" data-i18n="wallet.all">Все</button>
+                    <button class="filter-tab" data-filter="income" onclick="filterTransactions('income')" data-i18n="wallet.income">Пополнения</button>
+                    <button class="filter-tab" data-filter="expense" onclick="filterTransactions('expense')" data-i18n="wallet.expense">Расходы</button>
+                </div>
+            </div>
+            <div class="transactions-list" id="transactionsList">
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- Top Up Modal -->
+<div class="modal" id="topUpModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 data-i18n="wallet.topUpTitle">Пополнение счета</h2>
+            <button class="modal-close" onclick="closeTopUpModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form class="topup-form" id="topUpForm">
+                <div class="amount-selection">
+                    <h3 data-i18n="wallet.selectAmount">Выберите сумму</h3>
+                    <div class="amount-buttons">
+                        <button type="button" class="amount-btn" data-amount="1000">1,000BYN</button>
+                        <button type="button" class="amount-btn" data-amount="2500">2,500BYN</button>
+                        <button type="button" class="amount-btn" data-amount="5000">5,000BYN</button>
+                        <button type="button" class="amount-btn" data-amount="10000">10,000BYN</button>
+                    </div>
+                    <div class="custom-amount">
+                        <label for="customAmount" data-i18n="wallet.orEnterAmount">Или введите сумму</label>
+                        <input type="number" id="customAmount" name="customAmount" data-i18n-placeholder="wallet.enterAmount" placeholder="Введите сумму" min="100" max="100000">
+                    </div>
+                </div>
+                <div class="payment-method-selection">
+                    <h3 data-i18n="wallet.paymentMethod">Способ оплаты</h3>
+                    <div class="payment-options" id="paymentOptions">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeTopUpModal()" data-i18n="common.cancel">Отмена</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="wallet.topUpButton">Пополнить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Withdraw Modal -->
+<div class="modal" id="withdrawModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 data-i18n="wallet.withdrawTitle">Вывод средств</h2>
+            <button class="modal-close" onclick="closeWithdrawModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form class="withdraw-form" id="withdrawForm">
+                <div class="form-group">
+                    <label for="withdrawAmount" data-i18n="wallet.withdrawAmount">Сумма к выводу</label>
+                    <input type="number" id="withdrawAmount" name="withdrawAmount" data-i18n-placeholder="wallet.enterAmount" placeholder="Введите сумму" min="10" required>
+                    <div class="balance-info">
+                        <span><span data-i18n="wallet.availableBalance">Доступно</span>: <strong id="availableBalance">15,000BYN</strong></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="cardNumber">
+                        <i class="fas fa-credit-card"></i>
+                        <span data-i18n="wallet.cardNumber">Номер карты</span>
+                    </label>
+                    <input
+                            type="text"
+                            id="cardNumber"
+                            name="cardNumber"
+                            class="form-control card-input"
+                            data-i18n-placeholder="wallet.cardPlaceholder"
+                            placeholder="0000 0000 0000 0000"
+                            maxlength="19"
+                            autocomplete="off"
+                            required
+                    >
+                    <div id="cardError" class="error-message"></div>
+                    <div class="card-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-i18n="wallet.cardHint">Поддерживаются карты Visa, Mastercard, МИР</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="withdrawComment" data-i18n="wallet.withdrawComment">Комментарий (необязательно)</label>
+                    <textarea id="withdrawComment" name="withdrawComment" rows="3" data-i18n-placeholder="wallet.withdrawCommentPlaceholder" placeholder="Укажите причину вывода средств"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeWithdrawModal()" data-i18n="common.cancel">Отмена</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="wallet.withdrawButton">Вывести</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- History Modal -->
+<div class="modal" id="historyModal">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <h2 data-i18n="wallet.historyTitle">История транзакций</h2>
+            <button class="modal-close" onclick="closeHistoryModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="history-filters">
+                <div class="filter-group">
+                    <label for="dateFrom" data-i18n="wallet.from">От</label>
+                    <input type="date" id="dateFrom" name="dateFrom">
+                </div>
+                <div class="filter-group">
+                    <label for="dateTo" data-i18n="wallet.to">До</label>
+                    <input type="date" id="dateTo" name="dateTo">
+                </div>
+                <div class="filter-group">
+                    <label for="typeFilter" data-i18n="wallet.type">Тип</label>
+                    <select id="typeFilter" name="typeFilter">
+                        <option value="" data-i18n="wallet.allTypes">Все типы</option>
+                        <option value="income" data-i18n="wallet.income">Пополнения</option>
+                        <option value="expense" data-i18n="wallet.expense">Расходы</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="applyHistoryFilters()">
+                    <i class="fas fa-search"></i>
+                    <span data-i18n="wallet.apply">Применить</span>
+                </button>
+            </div>
+            <div class="history-list" id="historyList">
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Withdraw Modal -->
-    <div class="modal" id="withdrawModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Вывод средств</h2>
-                <button class="modal-close" onclick="closeWithdrawModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form class="withdraw-form" id="withdrawForm">
-                    <div class="form-group">
-                        <label for="withdrawAmount">Сумма к выводу</label>
-                        <input type="number" id="withdrawAmount" name="withdrawAmount" placeholder="Введите сумму" min="100" required>
-                        <div class="balance-info">
-                            <span>Доступно: <strong id="availableBalance">15,000₽</strong></span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="withdrawCard">Карта для вывода</label>
-                        <select id="withdrawCard" name="withdrawCard" required>
-                            <option value="">Выберите карту</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="withdrawComment">Комментарий (необязательно)</label>
-                        <textarea id="withdrawComment" name="withdrawComment" rows="3" placeholder="Укажите причину вывода средств"></textarea>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeWithdrawModal()">Отмена</button>
-                        <button type="submit" class="btn btn-primary">Вывести</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Transfer Modal -->
-    <div class="modal" id="transferModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Перевод средств</h2>
-                <button class="modal-close" onclick="closeTransferModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form class="transfer-form" id="transferForm">
-                    <div class="form-group">
-                        <label for="transferEmail">Email получателя</label>
-                        <input type="email" id="transferEmail" name="transferEmail" placeholder="example@email.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="transferAmount">Сумма перевода</label>
-                        <input type="number" id="transferAmount" name="transferAmount" placeholder="Введите сумму" min="1" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="transferComment">Комментарий</label>
-                        <textarea id="transferComment" name="transferComment" rows="3" placeholder="Укажите цель перевода"></textarea>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeTransferModal()">Отмена</button>
-                        <button type="submit" class="btn btn-primary">Перевести</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- History Modal -->
-    <div class="modal" id="historyModal">
-        <div class="modal-content large">
-            <div class="modal-header">
-                <h2>История транзакций</h2>
-                <button class="modal-close" onclick="closeHistoryModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="history-filters">
-                    <div class="filter-group">
-                        <label for="dateFrom">От</label>
-                        <input type="date" id="dateFrom" name="dateFrom">
-                    </div>
-                    <div class="filter-group">
-                        <label for="dateTo">До</label>
-                        <input type="date" id="dateTo" name="dateTo">
-                    </div>
-                    <div class="filter-group">
-                        <label for="typeFilter">Тип</label>
-                        <select id="typeFilter" name="typeFilter">
-                            <option value="">Все типы</option>
-                            <option value="income">Пополнения</option>
-                            <option value="expense">Расходы</option>
-                            <option value="bonus">Бонусы</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-primary" onclick="applyHistoryFilters()">
-                        <i class="fas fa-search"></i>
-                        Применить
-                    </button>
-                </div>
-                <div class="history-list" id="historyList">
-                    <!-- History will be loaded here -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="../../js/menu/wallet.js"></script>
+<script src="../../js/menu/wallet.js"></script>
 </body>
 </html>
 

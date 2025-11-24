@@ -11,6 +11,8 @@ import com.hotel.booking.dto.response.admin.AdminBookingDetailsResponse;
 import com.hotel.booking.dto.response.admin.AdminReviewResponse;
 import com.hotel.booking.dto.response.admin.AdminRoomDetailsResponse;
 import com.hotel.booking.dto.response.admin.AdminUserDetailsResponse;
+import com.hotel.booking.exception.DuplicateEmailException;
+import com.hotel.booking.exception.DuplicateRoomNumberException;
 import com.hotel.booking.exception.ResourceNotFoundException;
 import com.hotel.booking.mapper.BookingMapper;
 import com.hotel.booking.mapper.ReviewMapper;
@@ -417,7 +419,7 @@ public class AdminServiceImpl implements AdminService {
 
     private void validateUserCreationRequest(AdminUserCreateRequest request) {
         if (userRepository.existsUserByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already exists: " + request.getEmail());
+            throw new DuplicateEmailException(request.getEmail());
         }
         if (userRepository.existsUserByPhone(request.getPhone())) {
             throw new IllegalArgumentException("Phone already exists: " + request.getPhone());
@@ -426,7 +428,7 @@ public class AdminServiceImpl implements AdminService {
 
     private void validateRoomCreationRequest(CreateRoomRequest request) {
         if (roomRepository.existsRoomByRoomNumber(request.getRoomNumber())) {
-            throw new IllegalArgumentException("Room number already exists: " + request.getRoomNumber());
+            throw new DuplicateRoomNumberException(request.getRoomNumber());
         }
     }
 

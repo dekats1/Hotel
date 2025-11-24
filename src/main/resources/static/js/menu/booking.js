@@ -26,16 +26,16 @@ async function apiCall(endpoint, options = {}) {
 
     if (response.status === 401) {
         localStorage.removeItem(USER_DATA_KEY);
-        showNotification('Сессия истекла. Войдите снова.', 'error');
+        showNotification(window.i18n?.t('errors.sessionExpired') || 'Сессия истекла. Войдите снова.', 'error');
         setTimeout(() => window.location.href = '/login', 1000);
-        throw new Error('Требуется авторизация');
+        throw new Error(window.i18n?.t('errors.authRequired') || 'Требуется авторизация');
     }
 
     if (!response.ok) {
         const errorText = await response.text();
 
         if (!errorText || errorText.trim() === '') {
-            throw new Error(`Ошибка ${response.status}: Сервер не вернул описание ошибки`);
+            throw new Error(`${window.i18n?.t('errors.error') || 'Ошибка'} ${response.status}: ${window.i18n?.t('errors.noErrorDescription') || 'Сервер не вернул описание ошибки'}`);
         }
 
         try {
@@ -90,7 +90,7 @@ async function loadUserBookings() {
         updateStatistics();
     } catch (error) {
         console.error('Ошибка загрузки бронирований:', error);
-        showNotification('Ошибка загрузки бронирований: ' + error.message, 'error');
+        showNotification((window.i18n?.t('errors.loadBookingsError') || 'Ошибка загрузки бронирований') + ': ' + error.message, 'error');
         bookings = [];
         displayBookings([]);
     }
@@ -108,12 +108,12 @@ async function loadUserReviews() {
 async function cancelBooking(bookingId) {
     try {
         await apiCall(`/booking/${bookingId}/cancel`, { method: 'PUT' });
-        showNotification('Бронирование отменено', 'success');
+        showNotification(window.i18n?.t('booking.cancelled') || 'Бронирование отменено', 'success');
         await loadUserBookings();
         await loadUserProfile();
     } catch (error) {
         console.error('Ошибка отмены бронирования:', error);
-        showNotification('Ошибка отмены: ' + error.message, 'error');
+        showNotification((window.i18n?.t('errors.cancelError') || 'Ошибка отмены') + ': ' + error.message, 'error');
     }
 }
 
@@ -132,7 +132,7 @@ async function submitReview(bookingId, rating, comment) {
             })
         });
 
-        showNotification('Отзыв успешно отправлен!', 'success');
+        showNotification(window.i18n?.t('booking.reviewSent') || 'Отзыв успешно отправлен!', 'success');
         closeReviewModal();
 
         await loadUserReviews();
@@ -141,12 +141,14 @@ async function submitReview(bookingId, rating, comment) {
         console.error('Ошибка отправки отзыва:', error);
 
         if (error.message.includes('уже оставлен отзыв') ||
-            error.message.includes('уже существует')) {
-            showNotification('Вы уже оставили отзыв на это бронирование', 'warning');
-        } else if (error.message.includes('завершённое бронирование')) {
-            showNotification('Отзыв можно оставить только на завершённое бронирование', 'warning');
+            error.message.includes('уже существует') ||
+            error.message.includes('already exists')) {
+            showNotification(window.i18n?.t('errors.reviewAlreadyExists') || 'Вы уже оставили отзыв на это бронирование', 'warning');
+        } else if (error.message.includes('завершённое бронирование') ||
+                   error.message.includes('completed booking')) {
+            showNotification(window.i18n?.t('errors.reviewOnlyCompleted') || 'Отзыв можно оставить только на завершённое бронирование', 'warning');
         } else {
-            showNotification('Ошибка при отправке отзыва: ' + error.message, 'error');
+            showNotification((window.i18n?.t('errors.reviewError') || 'Ошибка при отправке отзыва') + ': ' + error.message, 'error');
         }
     }
 }
@@ -155,6 +157,16 @@ async function submitReview(bookingId, rating, comment) {
 // ==============================================
 // ИНИЦИАЛИЗАЦИЯ
 // ==============================================
+
+// Listen for language changes
+window.addEventListener('languageChanged', function() {
+    if (typeof updateNavigation === 'function') {
+        updateNavigation();
+    }
+    if (typeof displayBookings === 'function' && typeof currentFilter === 'string') {
+        displayBookings(getFilteredBookings(currentFilter));
+    }
+});
 
 document.addEventListener('DOMContentLoaded', function() {
     const userData = localStorage.getItem(USER_DATA_KEY);
@@ -222,12 +234,12 @@ function updateUserInterface() {
                             </div>
                         </div>
                         <div class="dropdown-divider"></div>
-                        <a href="/profile" class="dropdown-item"><i class="fas fa-user"></i> Профиль</a>
-                        <a href="/booking" class="dropdown-item active"><i class="fas fa-calendar"></i> Бронирования</a>
-                        <a href="/wallet" class="dropdown-item"><i class="fas fa-wallet"></i> Кошелек</a>
-                        <a href="/setting" class="dropdown-item"><i class="fas fa-cog"></i> Настройки</a>
+                        <a href="/profile" class="dropdown-item"><i class="fas fa-user"></i> ${window.i18n?.t('common.profile') || 'Профиль'}</a>
+                        <a href="/booking" class="dropdown-item active"><i class="fas fa-calendar"></i> ${window.i18n?.t('common.bookings') || 'Бронирования'}</a>
+                        <a href="/wallet" class="dropdown-item"><i class="fas fa-wallet"></i> ${window.i18n?.t('common.wallet') || 'Кошелек'}</a>
+                        <a href="/setting" class="dropdown-item"><i class="fas fa-cog"></i> ${window.i18n?.t('common.settings') || 'Настройки'}</a>
                         <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item logout-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Выйти</a>
+                        <a href="#" class="dropdown-item logout-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i> ${window.i18n?.t('common.logout') || 'Выйти'}</a>
                     </div>
                 </div>
             </div>
@@ -244,7 +256,10 @@ function displayBookings(bookingsToShow) {
     if (!bookingsList) return;
 
     if (bookingsToShow.length === 0) {
-        bookingsList.innerHTML = '<div class="booking-card"><div class="booking-title-info"><h3>Нет бронирований</h3><p>У вас пока нет бронирований. <a href="/catalog">Забронировать номер</a></p></div></div>';
+        const noBookingsText = window.i18n?.t('booking.noBookings') || 'Нет бронирований';
+        const noBookingsDesc = window.i18n?.t('booking.noBookingsDesc') || 'У вас пока нет бронирований.';
+        const bookRoomText = window.i18n?.t('booking.bookRoom') || 'Забронировать номер';
+        bookingsList.innerHTML = `<div class="booking-card"><div class="booking-title-info"><h3>${noBookingsText}</h3><p>${noBookingsDesc} <a href="/catalog">${bookRoomText}</a></p></div></div>`;
         return;
     }
 
@@ -259,35 +274,35 @@ function displayBookings(bookingsToShow) {
                 <div class="booking-card ${status}">
                     <div class="booking-header-info">
                         <div class="booking-title-info">
-                            <h3>Номер ${booking.roomNumber || booking.roomId}</h3>
+                            <h3>${window.i18n?.t('booking.room') || 'Номер'} ${booking.roomNumber || booking.roomId}</h3>
                             <p>#${booking.id}</p>
                         </div>
                         <div class="booking-status ${status}">${getStatusText(status)}</div>
                     </div>
                     <div class="booking-details">
-                        <div class="booking-detail"><i class="fas fa-calendar-check"></i> Заезд: <strong>${formatDate(booking.checkInDate)}</strong></div>
-                        <div class="booking-detail"><i class="fas fa-calendar-times"></i> Выезд: <strong>${formatDate(booking.checkOutDate)}</strong></div>
-                        <div class="booking-detail"><i class="fas fa-users"></i> Гостей: <strong>${booking.guestsCount}</strong></div>
-                        <div class="booking-detail"><i class="fas fa-moon"></i> Ночей: <strong>${nights}</strong></div>
-                        <div class="booking-detail"><i class="fas fa-ruble-sign"></i> Сумма: <strong>${formatMoney(booking.totalPrice)}BYN</strong></div>
+                        <div class="booking-detail"><i class="fas fa-calendar-check"></i> ${window.i18n?.t('home.checkIn') || 'Заезд'}: <strong>${formatDate(booking.checkInDate)}</strong></div>
+                        <div class="booking-detail"><i class="fas fa-calendar-times"></i> ${window.i18n?.t('home.checkOut') || 'Выезд'}: <strong>${formatDate(booking.checkOutDate)}</strong></div>
+                        <div class="booking-detail"><i class="fas fa-users"></i> ${window.i18n?.t('booking.guests') || 'Гостей'}: <strong>${booking.guestsCount}</strong></div>
+                        <div class="booking-detail"><i class="fas fa-moon"></i> ${window.i18n?.t('booking.nights') || 'Ночей'}: <strong>${nights}</strong></div>
+                        <div class="booking-detail"><i class="fas fa-ruble-sign"></i> ${window.i18n?.t('booking.total') || 'Сумма'}: <strong>${formatMoney(booking.totalPrice)}BYN</strong></div>
                     </div>
                     <div class="booking-actions">
                         <button class="booking-action-btn" onclick="viewBookingDetails('${booking.id}')">
-                            <i class="fas fa-eye"></i> Подробнее
+                            <i class="fas fa-eye"></i> ${window.i18n?.t('booking.details') || 'Подробнее'}
                         </button>
                         ${status === 'upcoming' ? `
                             <button class="booking-action-btn" onclick="handleCancelBooking('${booking.id}')">
-                                <i class="fas fa-times"></i> Отменить
+                                <i class="fas fa-times"></i> ${window.i18n?.t('booking.cancel') || 'Отменить'}
                             </button>
                         ` : ''}
                         ${canReview ? `
                             <button class="booking-action-btn btn-review" onclick="openReviewModal('${booking.id}', '${booking.roomNumber || booking.roomId}')">
-                                <i class="fas fa-star"></i> Оставить отзыв
+                                <i class="fas fa-star"></i> ${window.i18n?.t('booking.leaveReview') || 'Оставить отзыв'}
                             </button>
                         ` : ''}
                         ${hasReviewForBooking(booking.id) ? `
                             <button class="booking-action-btn btn-reviewed" disabled>
-                                <i class="fas fa-check-circle"></i> Отзыв оставлен
+                                <i class="fas fa-check-circle"></i> ${window.i18n?.t('booking.reviewLeft') || 'Отзыв оставлен'}
                             </button>
                         ` : ''}
                     </div>
@@ -311,6 +326,15 @@ function getBookingStatus(booking) {
 }
 
 function getStatusText(status) {
+    if (window.i18n) {
+        const statusMap = {
+            upcoming: window.i18n.t('booking.upcoming') || 'Предстоящее',
+            current: window.i18n.t('booking.current') || 'Текущее',
+            completed: window.i18n.t('booking.completed') || 'Завершено',
+            cancelled: window.i18n.t('booking.cancelled') || 'Отменено'
+        };
+        return statusMap[status] || status;
+    }
     const texts = {
         upcoming: 'Предстоящее',
         current: 'Текущее',
@@ -372,25 +396,25 @@ function viewBookingDetails(bookingId) {
         content.innerHTML = `
             <div class="booking-details-full">
                 <div class="detail-section">
-                    <h3>Информация о бронировании</h3>
+                    <h3>${window.i18n?.t('booking.bookingInfo') || 'Информация о бронировании'}</h3>
                     <div class="detail-grid">
                         <div class="detail-item"><strong>ID:</strong> <span>#${booking.id}</span></div>
-                        <div class="detail-item"><strong>Номер:</strong> <span>${booking.roomNumber || booking.roomId}</span></div>
-                        <div class="detail-item"><strong>Заезд:</strong> <span>${formatDate(booking.checkInDate)}</span></div>
-                        <div class="detail-item"><strong>Выезд:</strong> <span>${formatDate(booking.checkOutDate)}</span></div>
-                        <div class="detail-item"><strong>Гостей:</strong> <span>${booking.guestsCount}</span></div>
-                        <div class="detail-item"><strong>Ночей:</strong> <span>${nights}</span></div>
-                        <div class="detail-item"><strong>Статус:</strong> <span class="booking-status ${status}">${getStatusText(status)}</span></div>
-                        <div class="detail-item"><strong>Создано:</strong> <span>${formatDate(booking.createdAt)}</span></div>
+                        <div class="detail-item"><strong>${window.i18n?.t('booking.room') || 'Номер'}:</strong> <span>${booking.roomNumber || booking.roomId}</span></div>
+                        <div class="detail-item"><strong>${window.i18n?.t('home.checkIn') || 'Заезд'}:</strong> <span>${formatDate(booking.checkInDate)}</span></div>
+                        <div class="detail-item"><strong>${window.i18n?.t('home.checkOut') || 'Выезд'}:</strong> <span>${formatDate(booking.checkOutDate)}</span></div>
+                        <div class="detail-item"><strong>${window.i18n?.t('booking.guests') || 'Гостей'}:</strong> <span>${booking.guestsCount}</span></div>
+                        <div class="detail-item"><strong>${window.i18n?.t('booking.nights') || 'Ночей'}:</strong> <span>${nights}</span></div>
+                        <div class="detail-item"><strong>${window.i18n?.t('booking.status') || 'Статус'}:</strong> <span class="booking-status ${status}">${getStatusText(status)}</span></div>
+                        <div class="detail-item"><strong>${window.i18n?.t('booking.created') || 'Создано'}:</strong> <span>${formatDate(booking.createdAt)}</span></div>
                     </div>
                 </div>
                 <div class="detail-section">
-                    <h3>Стоимость</h3>
+                    <h3>${window.i18n?.t('booking.price') || 'Стоимость'}</h3>
                     <div class="price-breakdown">
-                        <div class="price-item"><span>Цена за ночь:</span><span>${formatMoney(booking.pricePerNight)}BYN</span></div>
-                        <div class="price-item"><span>Количество ночей:</span><span>${nights}</span></div>
-                        ${booking.specialRequests ? `<div class="price-item"><span>Пожелания:</span><span>${booking.specialRequests}</span></div>` : ''}
-                        <div class="price-total"><strong>Итого:</strong><strong>${formatMoney(booking.totalPrice)}BYN</strong></div>
+                        <div class="price-item"><span>${window.i18n?.t('booking.pricePerNight') || 'Цена за ночь'}:</span><span>${formatMoney(booking.pricePerNight)}BYN</span></div>
+                        <div class="price-item"><span>${window.i18n?.t('booking.nightsCount') || 'Количество ночей'}:</span><span>${nights}</span></div>
+                        ${booking.specialRequests ? `<div class="price-item"><span>${window.i18n?.t('booking.requests') || 'Пожелания'}:</span><span>${booking.specialRequests}</span></div>` : ''}
+                        <div class="price-total"><strong>${window.i18n?.t('booking.total') || 'Итого'}:</strong><strong>${formatMoney(booking.totalPrice)}BYN</strong></div>
                     </div>
                 </div>
             </div>
@@ -448,7 +472,7 @@ function createReviewModal() {
         <div class="modal" id="reviewModal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2>Оставить отзыв</h2>
+                    <h2>${window.i18n?.t('booking.leaveReview') || 'Оставить отзыв'}</h2>
                     <button class="modal-close" onclick="closeReviewModal()">
                         <i class="fas fa-times"></i>
                     </button>
@@ -457,10 +481,10 @@ function createReviewModal() {
                     <input type="hidden" id="reviewBookingId">
                     <div class="review-form">
                         <div class="form-group">
-                            <label>Номер: <strong id="reviewRoomNumber"></strong></label>
+                            <label>${window.i18n?.t('booking.room') || 'Номер'}: <strong id="reviewRoomNumber"></strong></label>
                         </div>
                         <div class="form-group">
-                            <label>Ваша оценка:</label>
+                            <label>${window.i18n?.t('booking.yourRating') || 'Ваша оценка'}:</label>
                             <div class="star-rating" id="reviewRating" data-rating="0">
                                 <i class="fas fa-star" data-value="1"></i>
                                 <i class="fas fa-star" data-value="2"></i>
@@ -470,13 +494,13 @@ function createReviewModal() {
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="reviewComment">Ваш отзыв:</label>
-                            <textarea id="reviewComment" rows="5" placeholder="Поделитесь впечатлениями о вашем пребывании..." maxlength="500"></textarea>
+                            <label for="reviewComment">${window.i18n?.t('booking.yourReview') || 'Ваш отзыв'}:</label>
+                            <textarea id="reviewComment" rows="5" placeholder="${window.i18n?.t('booking.reviewPlaceholder') || 'Поделитесь впечатлениями о вашем пребывании...'}" maxlength="500"></textarea>
                             <small class="char-count">0 / 500</small>
                         </div>
                         <div class="form-actions">
-                            <button class="btn btn-secondary" onclick="closeReviewModal()">Отмена</button>
-                            <button class="btn btn-primary" onclick="handleSubmitReview()">Отправить отзыв</button>
+                            <button class="btn btn-secondary" onclick="closeReviewModal()">${window.i18n?.t('common.cancel') || 'Отмена'}</button>
+                            <button class="btn btn-primary" onclick="handleSubmitReview()">${window.i18n?.t('booking.submitReview') || 'Отправить отзыв'}</button>
                         </div>
                     </div>
                 </div>
@@ -532,17 +556,17 @@ async function handleSubmitReview() {
     const comment = document.getElementById('reviewComment')?.value.trim();
 
     if (!bookingId) {
-        showNotification('Ошибка: ID бронирования не найден', 'error');
+        showNotification(window.i18n?.t('errors.bookingIdNotFound') || 'Ошибка: ID бронирования не найден', 'error');
         return;
     }
 
     if (rating === 0) {
-        showNotification('Пожалуйста, выберите оценку', 'warning');
+        showNotification(window.i18n?.t('booking.selectRating') || 'Пожалуйста, выберите оценку', 'warning');
         return;
     }
 
     if (!comment || comment.length < 10) {
-        showNotification('Пожалуйста, напишите отзыв (минимум 10 символов)', 'warning');
+        showNotification(window.i18n?.t('booking.reviewMinLength') || 'Пожалуйста, напишите отзыв (минимум 10 символов)', 'warning');
         return;
     }
 
@@ -550,7 +574,7 @@ async function handleSubmitReview() {
 }
 
 async function handleCancelBooking(bookingId) {
-    if (confirm('Отменить бронирование?')) {
+    if (confirm(window.i18n?.t('booking.confirmCancel') || 'Отменить бронирование?')) {
         await cancelBooking(bookingId);
     }
 }

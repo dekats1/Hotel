@@ -33,7 +33,7 @@ async function apiClient(url, options = {}) {
         if (response.status === 401 || response.status === 403) {
             removeUserData();
             updateNavigation();
-            showNotification('Сессия истекла или токен недействителен. Пожалуйста, войдите снова.', 'error');
+            showNotification(window.i18n?.t('errors.sessionExpired') || 'Сессия истекла или токен недействителен. Пожалуйста, войдите снова.', 'error');
             throw new Error('Unauthorized or Forbidden');
         }
 
@@ -54,7 +54,6 @@ async function apiClient(url, options = {}) {
                             const text = await response.text();
                             errorMessage = text || errorMessage;
                         } catch (textError) {
-
                         }
                     }
                 }
@@ -77,16 +76,19 @@ async function apiClient(url, options = {}) {
 
 function checkAuthStatus() {
     const userData = getUserData();
-    const isAuthenticated = !!userData;
-    updateNavigation(isAuthenticated, userData);
-    return isAuthenticated;
+    updateNavigation();
+    return !!userData;
 }
 
-function updateNavigation(isAuthenticated, userData) {
-    const navAuth = document.querySelector('.nav-auth');
-    userData = userData || getUserData();
+window.addEventListener('languageChanged', function() {
+    updateNavigation();
+});
 
-    if (isAuthenticated && userData) {
+function updateNavigation() {
+    const navAuth = document.querySelector('.nav-auth');
+    const userData = getUserData();
+
+    if (userData) {
         navAuth.innerHTML = `
             <div class="user-profile">
                 <div class="user-info">
@@ -109,26 +111,26 @@ function updateNavigation(isAuthenticated, userData) {
                             </div>
                         </div>
                         <div class="dropdown-divider"></div>
-                       <a href="/profile" class="dropdown-item">
+                        <a href="/profile" class="dropdown-item" data-i18n-ignore>
                             <i class="fas fa-user"></i>
-                            Мой профиль
+                            <span data-i18n="common.profile">Мой профиль</span>
                         </a>
-                        <a href="/booking" class="dropdown-item">
+                        <a href="/booking" class="dropdown-item" data-i18n-ignore>
                             <i class="fas fa-calendar"></i>
-                            Мои бронирования
+                            <span data-i18n="common.bookings">Мои бронирования</span>
                         </a>
-                        <a href="/wallet" class="dropdown-item">
+                        <a href="/wallet" class="dropdown-item" data-i18n-ignore>
                             <i class="fas fa-wallet"></i>
-                            Кошелек
+                            <span data-i18n="common.wallet">Кошелек</span>
                         </a>
-                        <a href="/setting" class="dropdown-item">
+                        <a href="/setting" class="dropdown-item" data-i18n-ignore>
                             <i class="fas fa-cog"></i>
-                            Настройки
+                            <span data-i18n="common.settings">Настройки</span>
                         </a>
                         <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item logout-item" onclick="logout()">
+                        <a href="#" class="dropdown-item logout-item" onclick="logout()" data-i18n-ignore>
                             <i class="fas fa-sign-out-alt"></i>
-                            Выйти
+                            <span data-i18n="common.logout">Выйти</span>
                         </a>
                     </div>
                 </div>
@@ -136,15 +138,21 @@ function updateNavigation(isAuthenticated, userData) {
         `;
     } else {
         navAuth.innerHTML = `
-            <a href="/login" class="btn-auth btn-login">
+            <a href="/login" class="btn-auth btn-login" data-i18n-ignore>
                 <i class="fas fa-sign-in-alt"></i>
-                Войти
+                <span data-i18n="common.login">Войти</span>
             </a>
-            <a href="/register" class="btn-auth btn-register">
+            <a href="/register" class="btn-auth btn-register" data-i18n-ignore>
                 <i class="fas fa-user-plus"></i>
-                Регистрация
+                <span data-i18n="common.register">Регистрация</span>
             </a>
         `;
+    }
+
+    if (window.i18n && window.i18n.applyTranslations) {
+        setTimeout(() => {
+            window.i18n.applyTranslations();
+        }, 50);
     }
 }
 
@@ -155,8 +163,8 @@ async function logout() {
         });
 
         removeUserData();
-        updateNavigation(false);
-        showNotification('Вы успешно вышли из системы', 'success');
+        updateNavigation();
+        showNotification(window.i18n?.t('auth.logoutSuccess') || 'Вы успешно вышли из системы', 'success');
 
         const dropdown = document.getElementById('userDropdown');
         if (dropdown) {
@@ -169,8 +177,8 @@ async function logout() {
     } catch (error) {
         console.error('Logout failed:', error);
         removeUserData();
-        updateNavigation(false);
-        showNotification('Произошла ошибка при выходе, но локальная сессия очищена.', 'error');
+        updateNavigation();
+        showNotification(window.i18n?.t('errors.logoutError') || 'Произошла ошибка при выходе, но локальная сессия очищена.', 'error');
     }
 }
 
@@ -448,6 +456,11 @@ function toggleTheme() {
 
 async function init() {
     initTheme();
+
+    if (window.i18n && window.i18n.initI18n) {
+        await window.i18n.initI18n();
+    }
+
     checkAuthStatus();
 
     window.addEventListener('scroll', () => {

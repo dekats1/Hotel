@@ -108,17 +108,17 @@ async function apiCall(endpoint, options = {}) {
     });
 
     if (response.status === 401) {
-        showNotification('Сессия истекла. Пожалуйста, войдите снова.', 'error');
+        showNotification(window.i18n?.t('errors.sessionExpired') || 'Сессия истекла. Пожалуйста, войдите снова.', 'error');
         setTimeout(() => { window.location.href = '/login'; }, 2000);
-        throw new Error('Требуется авторизация');
+        throw new Error(window.i18n?.t('errors.authRequired') || 'Требуется авторизация');
     }
     if (response.status === 403) {
-        showNotification('Доступ запрещен', 'error');
-        throw new Error('Доступ запрещен');
+        showNotification(window.i18n?.t('errors.accessDenied') || 'Доступ запрещен', 'error');
+        throw new Error(window.i18n?.t('errors.accessDenied') || 'Доступ запрещен');
     }
     if (!response.ok) {
         const contentType = response.headers.get('content-type');
-        let errorText = `Ошибка: ${response.status}`;
+        let errorText = `${window.i18n?.t('errors.error') || 'Ошибка'}: ${response.status}`;
         if (contentType && contentType.includes('application/json')) {
             try {
                 const errorData = await response.json();
@@ -155,7 +155,9 @@ async function loadUserData() {
         updateUserInterface();
     } catch (error) {
         console.error('Failed to load user data:', error);
-        if (!error.message.includes('Требуется авторизация')) showNotification('Ошибка загрузки данных профиля: ' + error.message, 'error');
+        if (!error.message.includes('Требуется авторизация') && !error.message.includes('Authorization')) {
+            showNotification((window.i18n?.t('errors.profileLoadError') || 'Ошибка загрузки данных профиля') + ': ' + error.message, 'error');
+        }
     }
 }
 
@@ -247,7 +249,7 @@ async function loadDashboardData() {
         updateRoomStats();
     } catch (error) {
         console.error('Error loading dashboard data:', error);
-        showNotification('Ошибка загрузки данных дашборда', 'error');
+        showNotification(window.i18n?.t('admin.dashboardLoadError') || 'Ошибка загрузки данных дашборда', 'error');
     } finally {
         showLoading(false);
     }
@@ -267,13 +269,13 @@ function updateRecentBookings() {
     if (!container) return;
     const recent = [...bookings].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
     if (recent.length === 0) {
-        container.innerHTML = '<div class="recent-item">Нет недавних бронирований</div>';
+        container.innerHTML = `<div class="recent-item">${window.i18n?.t('admin.noRecentBookings') || 'Нет недавних бронирований'}</div>`;
         return;
     }
     container.innerHTML = recent.map(b => `
     <div class="recent-item">
       <div class="recent-item-info">
-        <h4>${escapeHtml(b.userEmail || '')} • Комната ${escapeHtml(b.roomNumber || '')}</h4>
+        <h4>${escapeHtml(b.userEmail || '')} • ${window.i18n?.t('admin.room') || 'Комната'} ${escapeHtml(b.roomNumber || '')}</h4>
         <p>${formatDate(b.checkInDate)} — ${formatDate(b.checkOutDate)}</p>
       </div>
       <div class="recent-item-status">
@@ -297,14 +299,14 @@ function updateRoomStats() {
     const container = document.getElementById('roomStats');
     if (!container) return;
     container.innerHTML = `
-    <div class="room-stat"><h4>${stats.total}</h4><p>Всего</p></div>
-    <div class="room-stat"><h4>${stats.active}</h4><p>Активные</p></div>
-    <div class="room-stat"><h4>${stats.inactive}</h4><p>Неактивные</p></div>
-    <div class="room-stat"><h4>${stats.standard}</h4><p>Стандарт</p></div>
-    <div class="room-stat"><h4>${stats.deluxe}</h4><p>Делюкс</p></div>
-    <div class="room-stat"><h4>${stats.suite}</h4><p>Люкс</p></div>
-    <div class="room-stat"><h4>${stats.apartment}</h4><p>Апартаменты</p></div>
-    <div class="room-stat"><h4>${stats.penthouse}</h4><p>Пентхаус</p></div>
+    <div class="room-stat"><h4>${stats.total}</h4><p>${window.i18n?.t('admin.total') || 'Всего'}</p></div>
+    <div class="room-stat"><h4>${stats.active}</h4><p>${window.i18n?.t('admin.active') || 'Активные'}</p></div>
+    <div class="room-stat"><h4>${stats.inactive}</h4><p>${window.i18n?.t('admin.inactive') || 'Неактивные'}</p></div>
+    <div class="room-stat"><h4>${stats.standard}</h4><p>${window.i18n?.t('roomTypes.STANDARD') || 'Стандарт'}</p></div>
+    <div class="room-stat"><h4>${stats.deluxe}</h4><p>${window.i18n?.t('roomTypes.DELUXE') || 'Делюкс'}</p></div>
+    <div class="room-stat"><h4>${stats.suite}</h4><p>${window.i18n?.t('roomTypes.SUITE') || 'Люкс'}</p></div>
+    <div class="room-stat"><h4>${stats.apartment}</h4><p>${window.i18n?.t('roomTypes.APARTMENT') || 'Апартаменты'}</p></div>
+    <div class="room-stat"><h4>${stats.penthouse}</h4><p>${window.i18n?.t('roomTypes.PENTHOUSE') || 'Пентхаус'}</p></div>
   `;
 }
 
@@ -315,7 +317,7 @@ async function loadUsers() {
         users = await apiCall('/users');
         displayUsers(users);
     } catch (e) {
-        showNotification('Ошибка загрузки пользователей', 'error');
+        showNotification(window.i18n?.t('admin.usersLoadError') || 'Ошибка загрузки пользователей', 'error');
     } finally {
         showLoading(false);
     }
@@ -325,7 +327,7 @@ function displayUsers(list) {
     const tbody = document.getElementById('usersTableBody');
     if (!tbody) return;
     if (!list || list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem">Нет данных</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem">${window.i18n?.t('admin.noData') || 'Нет данных'}</td></tr>`;
         return;
     }
     tbody.innerHTML = list.map(u => `
@@ -334,7 +336,7 @@ function displayUsers(list) {
       <td>${escapeHtml(`${u.firstName || ''} ${u.lastName || ''}`.trim())}</td>
       <td>${escapeHtml(u.email || '')}</td>
       <td>${escapeHtml(u.role || '')}</td>
-      <td><span class="status-badge ${u.isActive ? 'active' : 'inactive'}">${u.isActive ? 'Активен' : 'Неактивен'}</span></td>
+      <td><span class="status-badge ${u.isActive ? 'active' : 'inactive'}">${u.isActive ? (window.i18n?.t('admin.activeStatus') || 'Активен') : (window.i18n?.t('admin.inactiveStatus') || 'Неактивен')}</span></td>
       <td>${formatDate(u.createdAt)}</td>
       <td>
         <div class="action-buttons">
@@ -383,12 +385,12 @@ function openUserCreateModal() {
         const confirmPassword = formData.get('confirmPassword');
 
         if (password !== confirmPassword) {
-            showNotification('Пароли не совпадают', 'error');
+            showNotification(window.i18n?.t('errors.passwordsDoNotMatch') || 'Пароли не совпадают', 'error');
             return;
         }
 
         if (password.length < 6) {
-            showNotification('Пароль должен содержать минимум 6 символов', 'error');
+            showNotification(window.i18n?.t('validation.passwordMinLength') || 'Пароль должен содержать минимум 6 символов', 'error');
             return;
         }
 
@@ -410,7 +412,7 @@ function openUserCreateModal() {
                 method: 'POST',
                 body: JSON.stringify(payload)
             });
-            showNotification('Пользователь успешно создан', 'success');
+            showNotification(window.i18n?.t('admin.userCreated') || 'Пользователь успешно создан', 'success');
             closeUserCreateModal();
             loadUsers();
         } catch (err) {
@@ -451,7 +453,7 @@ async function editUser(userId) {
     document.getElementById('editBalance').value = user.balance || '0.00';
     document.getElementById('editIsActive').checked = user.isActive !== false;
     document.getElementById('editEmailVerified').checked = user.emailVerified === true;
-    document.getElementById('editLastLogin').value = user.lastLogin ? formatDate(user.lastLogin) : 'Никогда';
+    document.getElementById('editLastLogin').value = user.lastLogin ? formatDate(user.lastLogin) : (window.i18n?.t('admin.never') || 'Никогда');
 
     modal.classList.add('show');
 
@@ -478,7 +480,7 @@ async function editUser(userId) {
                 method: 'PUT',
                 body: JSON.stringify(payload)
             });
-            showNotification('Данные пользователя успешно обновлены', 'success');
+            showNotification(window.i18n?.t('admin.userUpdated') || 'Данные пользователя успешно обновлены', 'success');
             closeUserEditModal();
             loadUsers();
         } catch (err) {
@@ -500,12 +502,12 @@ function closeUserEditModal() {
  * Удалить пользователя
  */
 async function deleteUser(id) {
-    if (!confirm('Вы уверены, что хотите удалить этого пользователя?')) return;
+    if (!confirm(window.i18n?.t('admin.confirmDeleteUser') || 'Вы уверены, что хотите удалить этого пользователя?')) return;
 
     showLoading(true);
     try {
         await apiCall(`/users/${id}`, { method: 'DELETE' });
-        showNotification('Пользователь успешно удален', 'success');
+        showNotification(window.i18n?.t('admin.userDeleted') || 'Пользователь успешно удален', 'success');
         loadUsers();
     } catch (e) {
         showNotification(e.message, 'error');
@@ -522,7 +524,7 @@ async function loadRooms() {
         rooms = await apiCall('/rooms');
         displayRooms(rooms);
     } catch (e) {
-        showNotification('Ошибка загрузки номеров', 'error');
+        showNotification(window.i18n?.t('admin.roomsLoadError') || 'Ошибка загрузки номеров', 'error');
     } finally {
         showLoading(false);
     }
@@ -532,7 +534,7 @@ function displayRooms(roomsToShow) {
     const tbody = document.getElementById('roomsTableBody');
     if (!tbody) return;
     if (!roomsToShow || roomsToShow.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem">Нет данных</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem">${window.i18n?.t('admin.noData') || 'Нет данных'}</td></tr>`;
         return;
     }
     tbody.innerHTML = roomsToShow.map(room => `
@@ -541,7 +543,7 @@ function displayRooms(roomsToShow) {
       <td>${escapeHtml(room.roomNumber || '')}</td>
       <td>${getRoomTypeText(room.type)}</td>
       <td>${formatMoney(room.basePrice)}</td>
-      <td><span class="status-badge ${room.isActive ? 'active' : 'inactive'}">${room.isActive ? 'Свободна' : 'Занята'}</span></td>
+      <td><span class="status-badge ${room.isActive ? 'active' : 'inactive'}">${room.isActive ? (window.i18n?.t('admin.available') || 'Свободна') : (window.i18n?.t('admin.occupied') || 'Занята')}</span></td>
       <td>${room.capacity ?? ''}</td>
       <td>
         <div class="action-buttons">
@@ -575,7 +577,7 @@ function filterRooms() {
 function openRoomModal() {
     currentEditId = null;
     const modal = document.getElementById('roomModal');
-    document.getElementById('roomModalTitle').textContent = 'Добавить номер';
+    document.getElementById('roomModalTitle').textContent = window.i18n?.t('admin.addRoom') || 'Добавить номер';
     const form = document.getElementById('roomForm');
     form.reset();
 
@@ -600,7 +602,7 @@ async function editRoom(roomId) {
     if (!room) return;
     currentEditId = roomId;
     const modal = document.getElementById('roomModal');
-    document.getElementById('roomModalTitle').textContent = 'Редактировать номер';
+    document.getElementById('roomModalTitle').textContent = window.i18n?.t('admin.editRoom') || 'Редактировать номер';
     const form = document.getElementById('roomForm');
     form.reset();
 
@@ -676,7 +678,7 @@ async function onRoomFormSubmit(e) {
         } else {
             const created = await apiCall('/rooms', { method: 'POST', body: JSON.stringify(payload) });
             roomId = created?.id;
-            if (!roomId) throw new Error('Не получен ID созданного номера');
+            if (!roomId) throw new Error(window.i18n?.t('errors.roomIdNotFound') || 'Не получен ID созданного номера');
         }
 
         if (files.length > 0 && roomId) {
@@ -689,7 +691,7 @@ async function onRoomFormSubmit(e) {
             });
             if (!resp.ok) {
                 const t = await resp.text();
-                throw new Error(t || 'Ошибка загрузки фото');
+                throw new Error(t || (window.i18n?.t('admin.photoLoadError') || 'Ошибка загрузки фото'));
             }
         }
 
@@ -699,7 +701,7 @@ async function onRoomFormSubmit(e) {
             if (updated) loadRoomPhotos(updated.photos || []);
         }
 
-        showNotification(currentEditId ? 'Номер обновлен' : 'Номер создан', 'success');
+        showNotification(currentEditId ? (window.i18n?.t('admin.roomUpdated') || 'Номер обновлен') : (window.i18n?.t('admin.roomCreated') || 'Номер создан'), 'success');
 
         if (fileInput) fileInput.value = '';
 
@@ -715,20 +717,20 @@ async function onRoomFormSubmit(e) {
 
 function getRoomTypeText(type) {
     const map = {
-        STANDARD: 'Стандарт',
-        DELUXE: 'Делюкс',
-        SUITE: 'Люкс',
-        APARTMENT: 'Апартаменты',
-        PENTHOUSE: 'Пентхаус'
+        STANDARD: window.i18n?.t('roomTypes.STANDARD') || 'Стандарт',
+        DELUXE: window.i18n?.t('roomTypes.DELUXE') || 'Делюкс',
+        SUITE: window.i18n?.t('roomTypes.SUITE') || 'Люкс',
+        APARTMENT: window.i18n?.t('roomTypes.APARTMENT') || 'Апартаменты',
+        PENTHOUSE: window.i18n?.t('roomTypes.PENTHOUSE') || 'Пентхаус'
     };
     return map[type] || type || '';
 }
 
 async function deleteRoom(id) {
-    if (!confirm('Удалить номер?')) return;
+    if (!confirm(window.i18n?.t('admin.confirmDeleteRoom') || 'Удалить номер?')) return;
     try {
         await apiCall(`/rooms/${id}`, { method: 'DELETE' });
-        showNotification('Номер удален', 'success');
+        showNotification(window.i18n?.t('admin.roomDeleted') || 'Номер удален', 'success');
         loadRooms();
     } catch (e) {
         showNotification(e.message, 'error');
@@ -753,18 +755,18 @@ function loadRoomPhotos(photos) {
 
             const badge = document.createElement('span');
             badge.className = 'status-badge ' + (photo.isPrimary ? 'confirmed' : 'pending');
-            badge.textContent = photo.isPrimary ? 'Основное' : 'Дополнительное';
+            badge.textContent = photo.isPrimary ? (window.i18n?.t('admin.primaryPhoto') || 'Основное') : (window.i18n?.t('admin.additionalPhoto') || 'Дополнительное');
 
             const makePrimary = document.createElement('button');
             makePrimary.className = 'btn-action btn-view';
             makePrimary.innerHTML = '<i class="fas fa-star"></i>';
-            makePrimary.title = 'Сделать основным';
+            makePrimary.title = window.i18n?.t('admin.setPrimary') || 'Сделать основным';
             makePrimary.onclick = () => setPrimaryRoomPhoto(photo.id);
 
             const removeBtn = document.createElement('button');
             removeBtn.className = 'btn-action btn-delete';
             removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-            removeBtn.title = 'Удалить фото';
+            removeBtn.title = window.i18n?.t('admin.deletePhoto') || 'Удалить фото';
             removeBtn.onclick = () => removeRoomPhoto(photo.id);
 
             item.appendChild(img);
@@ -777,18 +779,18 @@ function loadRoomPhotos(photos) {
 
 async function removeRoomPhoto(photoId) {
     if (!currentEditId) {
-        showNotification('Сначала сохраните номер', 'warning');
+        showNotification(window.i18n?.t('admin.saveRoomFirst') || 'Сначала сохраните номер', 'warning');
         return;
     }
-    if (!confirm('Удалить фото?')) return;
+    if (!confirm(window.i18n?.t('admin.confirmDeletePhoto') || 'Удалить фото?')) return;
     try {
         await fetch(`${API_BASE_URL}/rooms/photos/${photoId}`, {
             method: 'DELETE',
             credentials: 'include'
         }).then(r => {
-            if (!r.ok) throw new Error('Ошибка удаления фото');
+            if (!r.ok) throw new Error(window.i18n?.t('admin.photoDeleteError') || 'Ошибка удаления фото');
         });
-        showNotification('Фото удалено', 'success');
+        showNotification(window.i18n?.t('admin.photoDeleted') || 'Фото удалено', 'success');
         const room = rooms.find(r => r.id === currentEditId);
         if (room) {
             room.photos = (room.photos || []).filter(p => p.id !== photoId);
@@ -801,7 +803,7 @@ async function removeRoomPhoto(photoId) {
 
 async function setPrimaryRoomPhoto(photoId) {
     if (!currentEditId) {
-        showNotification('Сначала сохраните номер', 'warning');
+        showNotification(window.i18n?.t('admin.saveRoomFirst') || 'Сначала сохраните номер', 'warning');
         return;
     }
     try {
@@ -809,9 +811,9 @@ async function setPrimaryRoomPhoto(photoId) {
             method: 'PUT',
             credentials: 'include'
         }).then(r => {
-            if (!r.ok) throw new Error('Ошибка установки основного фото');
+            if (!r.ok) throw new Error(window.i18n?.t('admin.setPrimaryError') || 'Ошибка установки основного фото');
         });
-        showNotification('Основное фото обновлено', 'success');
+        showNotification(window.i18n?.t('admin.primaryPhotoUpdated') || 'Основное фото обновлено', 'success');
         const room = rooms.find(r => r.id === currentEditId);
         if (room && room.photos) {
             room.photos = room.photos.map(p => ({ ...p, isPrimary: p.id === photoId }));
@@ -829,7 +831,7 @@ async function loadReviews() {
         reviews = await apiCall('/reviews');
         displayReviews(reviews);
     } catch (e) {
-        showNotification('Ошибка загрузки отзывов', 'error');
+        showNotification(window.i18n?.t('admin.reviewsLoadError') || 'Ошибка загрузки отзывов', 'error');
     } finally {
         showLoading(false);
     }
@@ -840,7 +842,7 @@ function displayReviews(list) {
     if (!tbody) return;
 
     if (!list || list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem">Нет отзывов</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem">${window.i18n?.t('admin.noReviews') || 'Нет отзывов'}</td></tr>`;
         return;
     }
 
@@ -850,13 +852,13 @@ function displayReviews(list) {
 
         if (r.isApproved === true) {
             statusBadge = 'approved';
-            statusText = 'Одобрен';
+            statusText = window.i18n?.t('admin.approved') || 'Одобрен';
         } else if (r.isApproved === false && r.isVisible === false) {
             statusBadge = 'rejected';
-            statusText = 'Отклонён';
+            statusText = window.i18n?.t('admin.rejected') || 'Отклонён';
         } else {
             statusBadge = 'pending';
-            statusText = 'На модерации';
+            statusText = window.i18n?.t('admin.pending') || 'На модерации';
         }
 
         return `
@@ -912,13 +914,13 @@ function openReviewModal(reviewId) {
     const modal = document.getElementById('reviewModal');
     const details = document.getElementById('reviewDetails');
     details.innerHTML = `
-    <div class="detail-row"><strong>Пользователь:</strong> ${escapeHtml(review.userName || review.userId || '')}</div>
-    <div class="detail-row"><strong>Номер:</strong> ${escapeHtml(review.roomNumber || review.roomId || '')}</div>
-    <div class="detail-row"><strong>Оценка:</strong> ${review.rating ?? ''}</div>
-    <div class="detail-row"><strong>Комментарий:</strong> ${escapeHtml(review.comment || '')}</div>
-    <div class="detail-row"><strong>Статус:</strong> ${review.isApproved ? 'Одобрен' : 'На модерации'}</div>
-    <div class="detail-row"><strong>Видимость:</strong> ${review.isVisible ? 'Виден' : 'Скрыт'}</div>
-    <div class="detail-row"><strong>Дата:</strong> ${formatDate(review.createdAt)}</div>
+    <div class="detail-row"><strong>${window.i18n?.t('admin.user') || 'Пользователь'}:</strong> ${escapeHtml(review.userName || review.userId || '')}</div>
+    <div class="detail-row"><strong>${window.i18n?.t('admin.room') || 'Номер'}:</strong> ${escapeHtml(review.roomNumber || review.roomId || '')}</div>
+    <div class="detail-row"><strong>${window.i18n?.t('admin.rating') || 'Оценка'}:</strong> ${review.rating ?? ''}</div>
+    <div class="detail-row"><strong>${window.i18n?.t('admin.comment') || 'Комментарий'}:</strong> ${escapeHtml(review.comment || '')}</div>
+    <div class="detail-row"><strong>${window.i18n?.t('admin.status') || 'Статус'}:</strong> ${review.isApproved ? (window.i18n?.t('admin.approved') || 'Одобрен') : (window.i18n?.t('admin.pending') || 'На модерации')}</div>
+    <div class="detail-row"><strong>${window.i18n?.t('admin.visibility') || 'Видимость'}:</strong> ${review.isVisible ? (window.i18n?.t('admin.visible') || 'Виден') : (window.i18n?.t('admin.hidden') || 'Скрыт')}</div>
+    <div class="detail-row"><strong>${window.i18n?.t('admin.date') || 'Дата'}:</strong> ${formatDate(review.createdAt)}</div>
   `;
     modal.dataset.reviewId = reviewId;
     modal.classList.add('show');
@@ -936,7 +938,7 @@ async function approveReview() {
     if (!id) return;
     try {
         await apiCall(`/reviews/${id}/approve?isApproved=true`, { method: 'PUT' });
-        showNotification('Отзыв одобрен', 'success');
+        showNotification(window.i18n?.t('admin.reviewApproved') || 'Отзыв одобрен', 'success');
         closeReviewModal();
 
         await loadReviews();
@@ -952,7 +954,7 @@ async function rejectReview() {
     try {
         await apiCall(`/reviews/${id}/approve?isApproved=false`, { method: 'PUT' });
         await apiCall(`/reviews/${id}/visibility?isVisible=false`, { method: 'PUT' });
-        showNotification('Отзыв отклонён', 'success');
+        showNotification(window.i18n?.t('admin.reviewRejected') || 'Отзыв отклонён', 'success');
         closeReviewModal();
 
         await loadReviews();
@@ -963,10 +965,10 @@ async function rejectReview() {
 
 
 async function deleteReview(id) {
-    if (!confirm('Удалить отзыв?')) return;
+    if (!confirm(window.i18n?.t('admin.confirmDeleteReview') || 'Удалить отзыв?')) return;
     try {
         await apiCall(`/reviews/${id}`, { method: 'DELETE' });
-        showNotification('Отзыв удален', 'success');
+        showNotification(window.i18n?.t('admin.reviewDeleted') || 'Отзыв удален', 'success');
         loadReviews();
     } catch (e) {
         showNotification(e.message, 'error');
@@ -980,7 +982,7 @@ async function loadBookings() {
         bookings = await apiCall('/bookings');
         displayBookings(bookings);
     } catch (e) {
-        showNotification('Ошибка загрузки бронирований', 'error');
+        showNotification(window.i18n?.t('admin.bookingsLoadError') || 'Ошибка загрузки бронирований', 'error');
     } finally {
         showLoading(false);
     }
@@ -990,10 +992,14 @@ function displayBookings(list) {
     const tbody = document.getElementById('bookingsTableBody');
     if (!tbody) return;
     if (!list || list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem">Нет данных</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem">${window.i18n?.t('admin.noData') || 'Нет данных'}</td></tr>`;
         return;
     }
-    tbody.innerHTML = list.map(b => `
+    tbody.innerHTML = list.map(b => {
+        // Проверяем, является ли бронирование выселенным или отмененным
+        const isFinalized = b.status === 'CHECKED_OUT' || b.status === 'CANCELLED';
+
+        return `
     <tr>
       <td>${b.id}</td>
       <td>${escapeHtml(b.userEmail || b.userId || '')}</td>
@@ -1004,16 +1010,51 @@ function displayBookings(list) {
       <td><span class="status-badge ${getBookingStatusClass(b.status)}">${getBookingStatusText(b.status)}</span></td>
       <td>
         <div class="action-buttons">
-          <button class="btn-action btn-view" onclick="openBookingModal('${b.id}')"><i class="fas fa-eye"></i></button>
-          <button class="btn-action btn-success" onclick="confirmBooking('${b.id}')"><i class="fas fa-check"></i></button>
-          <button class="btn-action btn-warning" onclick="checkInBooking('${b.id}')"><i class="fas fa-sign-in-alt"></i></button>
-          <button class="btn-action btn-info" onclick="checkOutBooking('${b.id}')"><i class="fas fa-sign-out-alt"></i></button>
-          <button class="btn-action btn-danger" onclick="cancelBooking('${b.id}')"><i class="fas fa-times"></i></button>
+          <button 
+            class="btn-action btn-view" 
+            onclick="openBookingModal('${b.id}')" 
+            title="${window.i18n?.t('admin.view') || 'Просмотр'}">
+            <i class="fas fa-eye"></i>
+          </button>
+          <button 
+            class="btn-action btn-success" 
+            onclick="confirmBooking('${b.id}')" 
+            ${isFinalized || b.status === 'CONFIRMED' || b.status === 'CHECKED_IN' ? 'disabled' : ''}
+            title="${window.i18n?.t('admin.confirm') || 'Подтвердить'}"
+            ${isFinalized || b.status === 'CONFIRMED' || b.status === 'CHECKED_IN' ? 'style="opacity:0.5;cursor:not-allowed"' : ''}>
+            <i class="fas fa-check"></i>
+          </button>
+          <button 
+            class="btn-action btn-warning" 
+            onclick="checkInBooking('${b.id}')" 
+            ${isFinalized || b.status === 'CHECKED_IN' || b.status === 'PENDING' ? 'disabled' : ''}
+            title="${window.i18n?.t('admin.checkIn') || 'Заселить'}"
+            ${isFinalized || b.status === 'CHECKED_IN' || b.status === 'PENDING' ? 'style="opacity:0.5;cursor:not-allowed"' : ''}>
+            <i class="fas fa-sign-in-alt"></i>
+          </button>
+          <button 
+            class="btn-action btn-info" 
+            onclick="checkOutBooking('${b.id}')" 
+            ${isFinalized || b.status !== 'CHECKED_IN' ? 'disabled' : ''}
+            title="${window.i18n?.t('admin.checkOut') || 'Выселить'}"
+            ${isFinalized || b.status !== 'CHECKED_IN' ? 'style="opacity:0.5;cursor:not-allowed"' : ''}>
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+          <button 
+            class="btn-action btn-danger" 
+            onclick="cancelBooking('${b.id}')" 
+            ${isFinalized ? 'disabled' : ''}
+            title="${window.i18n?.t('admin.cancel') || 'Отменить'}"
+            ${isFinalized ? 'style="opacity:0.5;cursor:not-allowed"' : ''}>
+            <i class="fas fa-times"></i>
+          </button>
         </div>
       </td>
     </tr>
-  `).join('');
+  `;
+    }).join('');
 }
+
 
 function filterBookings() {
     const search = (document.getElementById('bookingSearch').value || '').toLowerCase();
@@ -1044,18 +1085,18 @@ function openBookingModal(id) {
     const modal = document.getElementById('bookingModal');
     const details = document.getElementById('bookingDetails');
     details.innerHTML = `
-    <div class="detail-row"><strong>Пользователь:</strong> ${escapeHtml(b.userEmail || b.userId || '')}</div>
-    <div class="detail-row"><strong>Номер:</strong> ${escapeHtml(b.roomNumber || b.roomId || '')}</div>
-    <div class="detail-row"><strong>Даты:</strong> ${formatDate(b.checkInDate)} — ${formatDate(b.checkOutDate)}</div>
-    <div class="detail-row"><strong>Гостей:</strong> ${b.guestsCount ?? ''}</div>
-    <div class="detail-row"><strong>Ночей:</strong> ${b.totalNights ?? ''}</div>
-    <div class="detail-row"><strong>Цена/ночь:</strong> ${formatMoney(b.pricePerNight)}</div>
-    <div class="detail-row"><strong>Итого:</strong> ${formatMoney(b.totalPrice)} ${escapeHtml(b.currency || '')}</div>
-    <div class="detail-row"><strong>Статус:</strong> ${getBookingStatusText(b.status)}</div>
-    <div class="detail-row"><strong>Запросы:</strong> ${escapeHtml(b.specialRequests || '—')}</div>
-    <div class="detail-row"><strong>Создано:</strong> ${formatDate(b.createdAt)}</div>
-    ${b.cancelledAt ? `<div class="detail-row"><strong>Отменено:</strong> ${formatDate(b.cancelledAt)}</div>` : ''}
-    ${b.cancellationReason ? `<div class="detail-row"><strong>Причина отмены:</strong> ${escapeHtml(b.cancellationReason)}</div>` : ''}
+    <div class="detail-row"><strong>${window.i18n?.t('admin.user') || 'Пользователь'}:</strong> ${escapeHtml(b.userEmail || b.userId || '')}</div>
+    <div class="detail-row"><strong>${window.i18n?.t('admin.room') || 'Номер'}:</strong> ${escapeHtml(b.roomNumber || b.roomId || '')}</div>
+    <div class="detail-row"><strong>${window.i18n?.t('admin.dates') || 'Даты'}:</strong> ${formatDate(b.checkInDate)} — ${formatDate(b.checkOutDate)}</div>
+    <div class="detail-row"><strong>${window.i18n?.t('admin.guests') || 'Гостей'}:</strong> ${b.guestsCount ?? ''}</div>
+    <div class="detail-row"><strong>${window.i18n?.t('admin.nights') || 'Ночей'}:</strong> ${b.totalNights ?? ''}</div>
+    <div class="detail-row"><strong>${window.i18n?.t('admin.pricePerNight') || 'Цена/ночь'}:</strong> ${formatMoney(b.pricePerNight)}</div>
+    <div class="detail-row"><strong>${window.i18n?.t('admin.total') || 'Итого'}:</strong> ${formatMoney(b.totalPrice)} ${escapeHtml(b.currency || '')}</div>
+    <div class="detail-row"><strong>${window.i18n?.t('admin.status') || 'Статус'}:</strong> ${getBookingStatusText(b.status)}</div>
+    <div class="detail-row"><strong>${window.i18n?.t('admin.requests') || 'Запросы'}:</strong> ${escapeHtml(b.specialRequests || '—')}</div>
+    <div class="detail-row"><strong>${window.i18n?.t('admin.created') || 'Создано'}:</strong> ${formatDate(b.createdAt)}</div>
+    ${b.cancelledAt ? `<div class="detail-row"><strong>${window.i18n?.t('admin.cancelled') || 'Отменено'}:</strong> ${formatDate(b.cancelledAt)}</div>` : ''}
+    ${b.cancellationReason ? `<div class="detail-row"><strong>${window.i18n?.t('admin.cancellationReason') || 'Причина отмены'}:</strong> ${escapeHtml(b.cancellationReason)}</div>` : ''}
   `;
     modal.dataset.bookingId = id;
     modal.classList.add('show');
@@ -1070,23 +1111,90 @@ function closeBookingModal() {
 async function confirmBooking(id = null) {
     const bookingId = id || document.getElementById('bookingModal').dataset.bookingId;
     if (!bookingId) return;
-    await changeBookingStatus(bookingId, 'CONFIRMED', 'Бронирование подтверждено');
+
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return;
+
+    if (booking.status === 'CHECKED_OUT' || booking.status === 'CANCELLED') {
+        showNotification(window.i18n?.t('admin.cannotChangeFinalized') || 'Невозможно изменить статус завершенного бронирования', 'warning');
+        return;
+    }
+
+    if (booking.status === 'CONFIRMED' || booking.status === 'CHECKED_IN') {
+        showNotification(window.i18n?.t('admin.alreadyConfirmed') || 'Бронирование уже подтверждено', 'warning');
+        return;
+    }
+
+    await changeBookingStatus(bookingId, 'CONFIRMED', window.i18n?.t('admin.bookingConfirmed') || 'Бронирование подтверждено');
 }
+
 async function checkInBooking(id = null) {
     const bookingId = id || document.getElementById('bookingModal').dataset.bookingId;
     if (!bookingId) return;
-    await changeBookingStatus(bookingId, 'CHECKED_IN', 'Гость заселен');
+
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return;
+
+    if (booking.status === 'CHECKED_OUT' || booking.status === 'CANCELLED') {
+        showNotification('Невозможно изменить статус завершенного бронирования', 'warning');
+        return;
+    }
+
+    if (booking.status === 'PENDING') {
+        showNotification(window.i18n?.t('admin.confirmFirst') || 'Сначала подтвердите бронирование', 'warning');
+        return;
+    }
+
+    if (booking.status === 'CHECKED_IN') {
+        showNotification(window.i18n?.t('admin.alreadyCheckedIn') || 'Гость уже заселен', 'warning');
+        return;
+    }
+
+    await changeBookingStatus(bookingId, 'CHECKED_IN', window.i18n?.t('admin.guestCheckedIn') || 'Гость заселен');
 }
+
 async function checkOutBooking(id = null) {
     const bookingId = id || document.getElementById('bookingModal').dataset.bookingId;
     if (!bookingId) return;
-    await changeBookingStatus(bookingId, 'CHECKED_OUT', 'Гость выселен');
+
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return;
+
+    if (booking.status === 'CHECKED_OUT') {
+        showNotification(window.i18n?.t('admin.alreadyCheckedOut') || 'Гость уже выселен', 'warning');
+        return;
+    }
+
+    if (booking.status === 'CANCELLED') {
+        showNotification(window.i18n?.t('admin.bookingCancelled') || 'Бронирование отменено', 'warning');
+        return;
+    }
+
+    if (booking.status !== 'CHECKED_IN') {
+        showNotification(window.i18n?.t('admin.onlyCheckedIn') || 'Можно выселить только заселенных гостей', 'warning');
+        return;
+    }
+
+    await changeBookingStatus(bookingId, 'CHECKED_OUT', window.i18n?.t('admin.guestCheckedOut') || 'Гость выселен');
 }
+
 async function cancelBooking(id = null) {
     const bookingId = id || document.getElementById('bookingModal').dataset.bookingId;
     if (!bookingId) return;
-    await changeBookingStatus(bookingId, 'CANCELLED', 'Бронирование отменено');
+
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return;
+
+    if (booking.status === 'CHECKED_OUT' || booking.status === 'CANCELLED') {
+        showNotification(window.i18n?.t('admin.cannotChangeFinalized') || 'Невозможно отменить завершенное бронирование', 'warning');
+        return;
+    }
+
+    if (!confirm(window.i18n?.t('admin.confirmCancelBooking') || 'Вы уверены, что хотите отменить бронирование?')) return;
+
+    await changeBookingStatus(bookingId, 'CANCELLED', window.i18n?.t('admin.bookingCancelled') || 'Бронирование отменено');
 }
+
 
 async function changeBookingStatus(bookingId, status, successMessage) {
     try {
@@ -1100,6 +1208,9 @@ async function changeBookingStatus(bookingId, status, successMessage) {
 }
 
 function getBookingStatusText(s) {
+    if (window.i18n) {
+        return window.i18n.t(`bookingStatuses.${s}`) || s || '';
+    }
     const map = {
         PENDING: 'Ожидает',
         CONFIRMED: 'Подтверждено',
@@ -1297,3 +1408,27 @@ if (!document.querySelector('#notification-styles')) {
     `;
     document.head.appendChild(notificationStyles);
 }
+// Экспорт функций в глобальную область
+window.toggleTheme = toggleTheme;
+window.toggleUserMenu = toggleUserMenu;
+window.logout = logout;
+window.openUserCreateModal = openUserCreateModal;
+window.closeUserCreateModal = closeUserCreateModal;
+window.editUser = editUser;
+window.closeUserEditModal = closeUserEditModal;
+window.deleteUser = deleteUser;
+window.openRoomModal = openRoomModal;
+window.closeRoomModal = closeRoomModal;
+window.editRoom = editRoom;
+window.deleteRoom = deleteRoom;
+window.openReviewModal = openReviewModal;
+window.closeReviewModal = closeReviewModal;
+window.approveReview = approveReview;
+window.rejectReview = rejectReview;
+window.deleteReview = deleteReview;
+window.openBookingModal = openBookingModal;
+window.closeBookingModal = closeBookingModal;
+window.confirmBooking = confirmBooking;
+window.checkInBooking = checkInBooking;
+window.checkOutBooking = checkOutBooking;
+window.cancelBooking = cancelBooking;

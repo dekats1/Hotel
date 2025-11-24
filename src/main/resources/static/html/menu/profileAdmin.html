@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Админ-панель - Отель "Райский уголок"</title>
+    <title data-i18n="admin.title">Админ-панель - Отель "Райский уголок"</title>
     <link rel="stylesheet" href="../../css/menu/profileAdmin.css"/>
     <link rel="stylesheet" href="../../css/index.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+    <script src="../../js/i18n.js"></script>
     <script>
         (function() {
             const savedTheme = localStorage.getItem('theme') || 'light';
@@ -22,7 +23,7 @@
         <div class="nav-container">
             <div class="nav-logo">
                 <i class="fas fa-hotel"></i>
-                <span>Райский уголок - Админ</span>
+                <span data-i18n="admin.hotelAdmin">Райский уголок - Админ</span>
             </div>
             <div class="theme-toggle">
                 <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">
@@ -30,8 +31,8 @@
                 </button>
             </div>
             <ul class="nav-menu">
-                <li><a href="/home" class="nav-link">Главная</a></li>
-                <li><a href="/profile" class="nav-link">Профиль</a></li>
+                <li><a href="/home" class="nav-link" data-i18n="common.home">Главная</a></li>
+                <li><a href="/profile" class="nav-link" data-i18n="common.profile">Профиль</a></li>
             </ul>
             <div class="nav-auth">
                 <div class="user-profile">
@@ -40,37 +41,34 @@
                             <i class="fas fa-user"></i>
                         </div>
                         <div class="user-details">
-                            <div class="user-name" id="userName">Администратор</div>
-                            <div class="user-role">Админ-панель</div>
+                            <div class="user-name" id="userName" data-i18n="admin.administrator">Администратор</div>
+                            <div class="user-role" data-i18n="admin.adminPanel">Админ-панель</div>
                         </div>
                     </div>
                     <div class="user-menu">
-                        <button class="btn-auth btn-user" onclick="toggleUserMenu()">
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
                         <div class="user-dropdown" id="userDropdown">
                             <div class="dropdown-header">
                                 <div class="user-avatar-small" id="userAvatarSmall">
                                     <i class="fas fa-user"></i>
                                 </div>
                                 <div>
-                                    <div class="user-name-small" id="userNameSmall">Администратор</div>
+                                    <div class="user-name-small" id="userNameSmall" data-i18n="admin.administrator">Администратор</div>
                                     <div class="user-email-small" id="userEmailSmall">admin@hotel.com</div>
                                 </div>
                             </div>
                             <div class="dropdown-divider"></div>
                             <a href="/profile" class="dropdown-item">
                                 <i class="fas fa-user"></i>
-                                Мой профиль
+                                <span data-i18n="common.profile">Мой профиль</span>
                             </a>
                             <a href="/home" class="dropdown-item">
                                 <i class="fas fa-home"></i>
-                                На главную
+                                <span data-i18n="admin.toHome">На главную</span>
                             </a>
                             <div class="dropdown-divider"></div>
                             <a href="#" class="dropdown-item logout-item" onclick="logout()">
                                 <i class="fas fa-sign-out-alt"></i>
-                                Выйти
+                                <span data-i18n="common.logout">Выйти</span>
                             </a>
                         </div>
                     </div>
@@ -89,28 +87,28 @@
         <!-- Sidebar -->
         <aside class="admin-sidebar">
             <div class="sidebar-header">
-                <h3>Админ-панель</h3>
+                <h3 data-i18n="admin.adminPanel">Админ-панель</h3>
             </div>
             <nav class="sidebar-nav">
                 <a href="#dashboard" class="nav-item active" data-section="dashboard">
                     <i class="fas fa-tachometer-alt"></i>
-                    <span>Панель управления</span>
+                    <span data-i18n="admin.dashboard">Панель управления</span>
                 </a>
                 <a href="#users" class="nav-item" data-section="users">
                     <i class="fas fa-users"></i>
-                    <span>Пользователи</span>
+                    <span data-i18n="admin.users">Пользователи</span>
                 </a>
                 <a href="#rooms" class="nav-item" data-section="rooms">
                     <i class="fas fa-bed"></i>
-                    <span>Номера</span>
+                    <span data-i18n="admin.rooms">Номера</span>
                 </a>
                 <a href="#reviews" class="nav-item" data-section="reviews">
                     <i class="fas fa-star"></i>
-                    <span>Отзывы</span>
+                    <span data-i18n="admin.reviews">Отзывы</span>
                 </a>
                 <a href="#bookings" class="nav-item" data-section="bookings">
                     <i class="fas fa-calendar-check"></i>
-                    <span>Бронирования</span>
+                    <span data-i18n="admin.bookings">Бронирования</span>
                 </a>
             </nav>
         </aside>
@@ -120,8 +118,8 @@
             <!-- Dashboard Section -->
             <section id="dashboard-section" class="content-section active">
                 <div class="section-header">
-                    <h2>Панель управления</h2>
-                    <p>Обзор системы отеля</p>
+                    <h2 data-i18n="admin.dashboard">Панель управления</h2>
+                    <p data-i18n="admin.dashboardOverview">Обзор системы отеля</p>
                 </div>
 
                 <div class="stats-grid">
@@ -129,39 +127,39 @@
                         <div class="stat-icon"><i class="fas fa-users"></i></div>
                         <div class="stat-content">
                             <h3 id="totalUsers">0</h3>
-                            <p>Пользователей</p>
+                            <p data-i18n="admin.totalUsers">Пользователей</p>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon"><i class="fas fa-bed"></i></div>
                         <div class="stat-content">
                             <h3 id="totalRooms">0</h3>
-                            <p>Номеров</p>
+                            <p data-i18n="admin.totalRooms">Номеров</p>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
                         <div class="stat-content">
                             <h3 id="totalBookings">0</h3>
-                            <p>Бронирований</p>
+                            <p data-i18n="admin.totalBookings">Бронирований</p>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon"><i class="fas fa-star"></i></div>
                         <div class="stat-content">
                             <h3 id="averageRating">0.0</h3>
-                            <p>Средняя оценка</p>
+                            <p data-i18n="admin.averageRating">Средняя оценка</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="dashboard-grid">
                     <div class="dashboard-card">
-                        <h3>Последние бронирования</h3>
+                        <h3 data-i18n="admin.recentBookings">Последние бронирования</h3>
                         <div id="recentBookings" class="recent-list"></div>
                     </div>
                     <div class="dashboard-card">
-                        <h3>Статистика по номерам</h3>
+                        <h3 data-i18n="admin.roomStats">Статистика по номерам</h3>
                         <div id="roomStats" class="room-stats"></div>
                     </div>
                 </div>
@@ -170,26 +168,26 @@
             <!-- Users Section -->
             <section id="users-section" class="content-section">
                 <div class="section-header">
-                    <h2>Управление пользователями</h2>
+                    <h2 data-i18n="admin.userManagement">Управление пользователями</h2>
                     <button class="btn btn-primary" onclick="openUserCreateModal()">
-                        <i class="fas fa-plus"></i> Добавить пользователя
+                        <i class="fas fa-plus"></i> <span data-i18n="admin.addUser">Добавить пользователя</span>
                     </button>
                 </div>
 
                 <div class="filters-bar">
                     <div class="search-box">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="userSearch" placeholder="Поиск пользователей..."/>
+                        <input type="text" id="userSearch" data-i18n-placeholder="admin.searchUsers" placeholder="Поиск пользователей..."/>
                     </div>
                     <select id="userRoleFilter">
-                        <option value="">Все роли</option>
-                        <option value="USER">Пользователь</option>
-                        <option value="ADMIN">Администратор</option>
+                        <option value="" data-i18n="admin.allRoles">Все роли</option>
+                        <option value="USER" data-i18n="admin.userRole">Пользователь</option>
+                        <option value="ADMIN" data-i18n="admin.adminRole">Администратор</option>
                     </select>
                     <select id="userStatusFilter">
-                        <option value="">Все статусы</option>
-                        <option value="ACTIVE">Активные</option>
-                        <option value="INACTIVE">Неактивные</option>
+                        <option value="" data-i18n="admin.allStatuses">Все статусы</option>
+                        <option value="ACTIVE" data-i18n="admin.active">Активные</option>
+                        <option value="INACTIVE" data-i18n="admin.inactive">Неактивные</option>
                     </select>
                 </div>
 
@@ -197,13 +195,13 @@
                     <table class="data-table">
                         <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Имя</th>
-                            <th>Email</th>
-                            <th>Роль</th>
-                            <th>Статус</th>
-                            <th>Дата регистрации</th>
-                            <th>Действия</th>
+                            <th data-i18n="admin.id">ID</th>
+                            <th data-i18n="admin.name">Имя</th>
+                            <th data-i18n="admin.email">Email</th>
+                            <th data-i18n="admin.role">Роль</th>
+                            <th data-i18n="admin.status">Статус</th>
+                            <th data-i18n="admin.registrationDate">Дата регистрации</th>
+                            <th data-i18n="admin.actions">Действия</th>
                         </tr>
                         </thead>
                         <tbody id="usersTableBody"></tbody>
@@ -214,29 +212,29 @@
             <!-- Rooms Section -->
             <section id="rooms-section" class="content-section">
                 <div class="section-header">
-                    <h2>Управление номерами</h2>
+                    <h2 data-i18n="admin.roomManagement">Управление номерами</h2>
                     <button class="btn btn-primary" onclick="openRoomModal()">
-                        <i class="fas fa-plus"></i> Добавить номер
+                        <i class="fas fa-plus"></i> <span data-i18n="admin.addRoom">Добавить номер</span>
                     </button>
                 </div>
 
                 <div class="filters-bar">
                     <div class="search-box">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="roomSearch" placeholder="Поиск номеров..."/>
+                        <input type="text" id="roomSearch" data-i18n-placeholder="admin.searchRooms" placeholder="Поиск номеров..."/>
                     </div>
                     <select id="roomTypeFilter">
-                        <option value="">Все типы</option>
-                        <option value="STANDARD">Стандарт</option>
-                        <option value="DELUXE">Делюкс</option>
-                        <option value="SUITE">Люкс</option>
-                        <option value="APARTMENT">Апартаменты</option>
-                        <option value="PENTHOUSE">Пентхаус</option>
+                        <option value="" data-i18n="admin.allTypes">Все типы</option>
+                        <option value="STANDARD" data-i18n="roomTypes.STANDARD">Стандарт</option>
+                        <option value="DELUXE" data-i18n="roomTypes.DELUXE">Делюкс</option>
+                        <option value="SUITE" data-i18n="roomTypes.SUITE">Люкс</option>
+                        <option value="APARTMENT" data-i18n="roomTypes.APARTMENT">Апартаменты</option>
+                        <option value="PENTHOUSE" data-i18n="roomTypes.PENTHOUSE">Пентхаус</option>
                     </select>
                     <select id="roomStatusFilter">
-                        <option value="">Все статусы</option>
-                        <option value="ACTIVE">Активные</option>
-                        <option value="INACTIVE">Неактивные</option>
+                        <option value="" data-i18n="admin.allStatuses">Все статусы</option>
+                        <option value="ACTIVE" data-i18n="admin.active">Активные</option>
+                        <option value="INACTIVE" data-i18n="admin.inactive">Неактивные</option>
                     </select>
                 </div>
 
@@ -244,13 +242,13 @@
                     <table class="data-table">
                         <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Номер</th>
-                            <th>Тип</th>
-                            <th>Цена за ночь</th>
-                            <th>Статус</th>
-                            <th>Вместимость</th>
-                            <th>Действия</th>
+                            <th data-i18n="admin.id">ID</th>
+                            <th data-i18n="admin.roomNumber">Номер</th>
+                            <th data-i18n="admin.type">Тип</th>
+                            <th data-i18n="admin.pricePerNight">Цена за ночь</th>
+                            <th data-i18n="admin.status">Статус</th>
+                            <th data-i18n="admin.capacity">Вместимость</th>
+                            <th data-i18n="admin.actions">Действия</th>
                         </tr>
                         </thead>
                         <tbody id="roomsTableBody"></tbody>
@@ -261,27 +259,27 @@
             <!-- Reviews Section -->
             <section id="reviews-section" class="content-section">
                 <div class="section-header">
-                    <h2>Управление отзывами</h2>
+                    <h2 data-i18n="admin.reviewManagement">Управление отзывами</h2>
                 </div>
 
                 <div class="filters-bar">
                     <div class="search-box">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="reviewSearch" placeholder="Поиск отзывов..."/>
+                        <input type="text" id="reviewSearch" data-i18n-placeholder="admin.searchReviews" placeholder="Поиск отзывов..."/>
                     </div>
                     <select id="reviewRatingFilter">
-                        <option value="">Все оценки</option>
-                        <option value="5">5 звезд</option>
-                        <option value="4">4 звезды</option>
-                        <option value="3">3 звезды</option>
-                        <option value="2">2 звезды</option>
-                        <option value="1">1 звезда</option>
+                        <option value="" data-i18n="admin.allRatings">Все оценки</option>
+                        <option value="5" data-i18n="admin.stars5">5 звезд</option>
+                        <option value="4" data-i18n="admin.stars4">4 звезды</option>
+                        <option value="3" data-i18n="admin.stars3">3 звезды</option>
+                        <option value="2" data-i18n="admin.stars2">2 звезды</option>
+                        <option value="1" data-i18n="admin.stars1">1 звезда</option>
                     </select>
                     <select id="reviewStatusFilter">
-                        <option value="">Все статусы</option>
-                        <option value="APPROVED">Одобрены</option>
-                        <option value="PENDING">На модерации</option>
-                        <option value="REJECTED">Отклонены</option>
+                        <option value="" data-i18n="admin.allStatuses">Все статусы</option>
+                        <option value="APPROVED" data-i18n="admin.approved">Одобрены</option>
+                        <option value="PENDING" data-i18n="admin.pending">На модерации</option>
+                        <option value="REJECTED" data-i18n="admin.rejected">Отклонены</option>
                     </select>
                 </div>
 
@@ -289,14 +287,14 @@
                     <table class="data-table">
                         <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Пользователь</th>
-                            <th>Номер</th>
-                            <th>Оценка</th>
-                            <th>Комментарий</th>
-                            <th>Статус</th>
-                            <th>Дата</th>
-                            <th>Действия</th>
+                            <th data-i18n="admin.id">ID</th>
+                            <th data-i18n="admin.user">Пользователь</th>
+                            <th data-i18n="admin.room">Номер</th>
+                            <th data-i18n="admin.rating">Оценка</th>
+                            <th data-i18n="admin.comment">Комментарий</th>
+                            <th data-i18n="admin.status">Статус</th>
+                            <th data-i18n="admin.date">Дата</th>
+                            <th data-i18n="admin.actions">Действия</th>
                         </tr>
                         </thead>
                         <tbody id="reviewsTableBody"></tbody>
@@ -307,37 +305,37 @@
             <!-- Bookings Section -->
             <section id="bookings-section" class="content-section">
                 <div class="section-header">
-                    <h2>Управление бронированиями</h2>
+                    <h2 data-i18n="admin.bookingManagement">Управление бронированиями</h2>
                 </div>
 
                 <div class="filters-bar">
                     <div class="search-box">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="bookingSearch" placeholder="Поиск бронирований..."/>
+                        <input type="text" id="bookingSearch" data-i18n-placeholder="admin.searchBookings" placeholder="Поиск бронирований..."/>
                     </div>
                     <select id="bookingStatusFilter">
-                        <option value="">Все статусы</option>
-                        <option value="PENDING">Ожидает</option>
-                        <option value="CONFIRMED">Подтверждено</option>
-                        <option value="CHECKED_IN">Заселен</option>
-                        <option value="CHECKED_OUT">Выселен</option>
-                        <option value="CANCELLED">Отменено</option>
+                        <option value="" data-i18n="admin.allStatuses">Все статусы</option>
+                        <option value="PENDING" data-i18n="admin.waiting">Ожидает</option>
+                        <option value="CONFIRMED" data-i18n="admin.confirmed">Подтверждено</option>
+                        <option value="CHECKED_IN" data-i18n="admin.checkedIn">Заселен</option>
+                        <option value="CHECKED_OUT" data-i18n="admin.checkedOut">Выселен</option>
+                        <option value="CANCELLED" data-i18n="admin.cancelled">Отменено</option>
                     </select>
-                    <input type="date" id="bookingDateFilter" placeholder="Фильтр по дате"/>
+                    <input type="date" id="bookingDateFilter" data-i18n-placeholder="admin.filterByDate" placeholder="Фильтр по дате"/>
                 </div>
 
                 <div class="table-container">
                     <table class="data-table">
                         <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Пользователь</th>
-                            <th>Номер</th>
-                            <th>Заезд</th>
-                            <th>Выезд</th>
-                            <th>Сумма</th>
-                            <th>Статус</th>
-                            <th>Действия</th>
+                            <th data-i18n="admin.id">ID</th>
+                            <th data-i18n="admin.user">Пользователь</th>
+                            <th data-i18n="admin.room">Номер</th>
+                            <th data-i18n="admin.checkIn">Заезд</th>
+                            <th data-i18n="admin.checkOut">Выезд</th>
+                            <th data-i18n="admin.amount">Сумма</th>
+                            <th data-i18n="admin.status">Статус</th>
+                            <th data-i18n="admin.actions">Действия</th>
                         </tr>
                         </thead>
                         <tbody id="bookingsTableBody"></tbody>
@@ -352,7 +350,7 @@
 <div id="userCreateModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Добавить пользователя</h3>
+            <h3 data-i18n="admin.createUser">Добавить пользователя</h3>
             <button class="modal-close" onclick="closeUserCreateModal()">
                 <i class="fas fa-times"></i>
             </button>
@@ -360,71 +358,72 @@
         <form id="userCreateForm" class="modal-body">
             <div class="form-row">
                 <div class="form-group">
-                    <label for="createFirstName">Имя <span class="required">*</span></label>
+                    <label for="createFirstName"><span data-i18n="admin.firstName">Имя</span> <span class="required" data-i18n="admin.required">*</span></label>
                     <input type="text" id="createFirstName" name="firstName" required>
                 </div>
                 <div class="form-group">
-                    <label for="createLastName">Фамилия <span class="required">*</span></label>
+                    <label for="createLastName"><span data-i18n="admin.lastName">Фамилия</span> <span class="required" data-i18n="admin.required">*</span></label>
                     <input type="text" id="createLastName" name="lastName" required>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="createEmail">Email <span class="required">*</span></label>
+                <label for="createEmail"><span data-i18n="admin.email">Email</span> <span class="required" data-i18n="admin.required">*</span></label>
                 <input type="email" id="createEmail" name="email" required>
             </div>
 
             <div class="form-group">
-                <label for="createPhone">Телефон <span class="required">*</span></label>
+                <label for="createPhone"><span data-i18n="admin.phone">Телефон</span> <span class="required" data-i18n="admin.required">*</span></label>
                 <input type="tel" id="createPhone" name="phone"
                        pattern="^\+?[1-9]\d{1,14}$"
+                       data-i18n-placeholder="admin.phonePlaceholder"
                        placeholder="+7 (xxx) xxx-xx-xx" required>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="createBirthDate">Дата рождения <span class="required">*</span></label>
+                    <label for="createBirthDate"><span data-i18n="admin.birthDate">Дата рождения</span> <span class="required" data-i18n="admin.required">*</span></label>
                     <input type="date" id="createBirthDate" name="birthDate" required>
                 </div>
                 <div class="form-group">
-                    <label for="createGender">Пол <span class="required">*</span></label>
+                    <label for="createGender"><span data-i18n="admin.gender">Пол</span> <span class="required" data-i18n="admin.required">*</span></label>
                     <select id="createGender" name="gender" required>
-                        <option value="MALE">Мужской</option>
-                        <option value="FEMALE">Женский</option>
-                        <option value="OTHER">Другой</option>
+                        <option value="MALE" data-i18n="admin.male">Мужской</option>
+                        <option value="FEMALE" data-i18n="admin.female">Женский</option>
+                        <option value="OTHER" data-i18n="admin.other">Другой</option>
                     </select>
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="createRole">Роль <span class="required">*</span></label>
+                    <label for="createRole"><span data-i18n="admin.role">Роль</span> <span class="required" data-i18n="admin.required">*</span></label>
                     <select id="createRole" name="role" required>
-                        <option value="USER">Пользователь</option>
-                        <option value="ADMIN">Администратор</option>
+                        <option value="USER" data-i18n="admin.userRole">Пользователь</option>
+                        <option value="ADMIN" data-i18n="admin.adminRole">Администратор</option>
                     </select>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="createPassword">Пароль <span class="required">*</span></label>
+                <label for="createPassword"><span data-i18n="admin.password">Пароль</span> <span class="required" data-i18n="admin.required">*</span></label>
                 <input type="password" id="createPassword" name="password"
                        minlength="6" required>
-                <small class="form-hint">Минимум 6 символов</small>
+                <small class="form-hint" data-i18n="admin.passwordHint">Минимум 6 символов</small>
             </div>
 
             <div class="form-group">
-                <label for="createConfirmPassword">Подтвердите пароль <span class="required">*</span></label>
+                <label for="createConfirmPassword"><span data-i18n="admin.confirmPassword">Подтвердите пароль</span> <span class="required" data-i18n="admin.required">*</span></label>
                 <input type="password" id="createConfirmPassword" name="confirmPassword"
                        minlength="6" required>
             </div>
 
             <div class="form-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeUserCreateModal()">
-                    Отмена
+                    <span data-i18n="admin.cancel">Отмена</span>
                 </button>
                 <button type="submit" class="btn btn-primary">
-                    Создать пользователя
+                    <span data-i18n="admin.createUserBtn">Создать пользователя</span>
                 </button>
             </div>
         </form>
@@ -435,7 +434,7 @@
 <div id="userEditModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Редактировать пользователя</h3>
+            <h3 data-i18n="admin.editUser">Редактировать пользователя</h3>
             <button class="modal-close" onclick="closeUserEditModal()">
                 <i class="fas fa-times"></i>
             </button>
@@ -445,54 +444,54 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="editFirstName">Имя <span class="required">*</span></label>
+                    <label for="editFirstName"><span data-i18n="admin.firstName">Имя</span> <span class="required" data-i18n="admin.required">*</span></label>
                     <input type="text" id="editFirstName" name="firstName" required>
                 </div>
                 <div class="form-group">
-                    <label for="editLastName">Фамилия <span class="required">*</span></label>
+                    <label for="editLastName"><span data-i18n="admin.lastName">Фамилия</span> <span class="required" data-i18n="admin.required">*</span></label>
                     <input type="text" id="editLastName" name="lastName" required>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="editEmail">Email <span class="required">*</span></label>
+                <label for="editEmail"><span data-i18n="admin.email">Email</span> <span class="required" data-i18n="admin.required">*</span></label>
                 <input type="email" id="editEmail" name="email" required>
             </div>
 
             <div class="form-group">
-                <label for="editPhone">Телефон <span class="required">*</span></label>
+                <label for="editPhone"><span data-i18n="admin.phone">Телефон</span> <span class="required" data-i18n="admin.required">*</span></label>
                 <input type="tel" id="editPhone" name="phone"
                        pattern="^\+?[1-9]\d{1,14}$" required>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="editBirthDate">Дата рождения <span class="required">*</span></label>
+                    <label for="editBirthDate"><span data-i18n="admin.birthDate">Дата рождения</span> <span class="required" data-i18n="admin.required">*</span></label>
                     <input type="date" id="editBirthDate" name="birthDate" required>
                 </div>
                 <div class="form-group">
-                    <label for="editGender">Пол <span class="required">*</span></label>
+                    <label for="editGender"><span data-i18n="admin.gender">Пол</span> <span class="required" data-i18n="admin.required">*</span></label>
                     <select id="editGender" name="gender" required>
-                        <option value="MALE">Мужской</option>
-                        <option value="FEMALE">Женский</option>
-                        <option value="OTHER">Другой</option>
+                        <option value="MALE" data-i18n="admin.male">Мужской</option>
+                        <option value="FEMALE" data-i18n="admin.female">Женский</option>
+                        <option value="OTHER" data-i18n="admin.other">Другой</option>
                     </select>
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="editRole">Роль <span class="required">*</span></label>
+                    <label for="editRole"><span data-i18n="admin.role">Роль</span> <span class="required" data-i18n="admin.required">*</span></label>
                     <select id="editRole" name="role" required>
-                        <option value="USER">Пользователь</option>
-                        <option value="ADMIN">Администратор</option>
+                        <option value="USER" data-i18n="admin.userRole">Пользователь</option>
+                        <option value="ADMIN" data-i18n="admin.adminRole">Администратор</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="editBalance">Баланс</label>
+                    <label for="editBalance"><span data-i18n="admin.balance">Баланс</span></label>
                     <input type="number" id="editBalance" name="balance"
                            min="0" step="0.01" readonly>
-                    <small class="form-hint">Только для просмотра</small>
+                    <small class="form-hint" data-i18n="admin.viewOnly">Только для просмотра</small>
                 </div>
             </div>
 
@@ -500,29 +499,29 @@
                 <div class="form-group">
                     <label>
                         <input type="checkbox" id="editIsActive" name="isActive">
-                        Активен
+                        <span data-i18n="admin.isActive">Активен</span>
                     </label>
                 </div>
                 <div class="form-group">
                     <label>
                         <input type="checkbox" id="editEmailVerified" name="emailVerified">
-                        Email подтвержден
+                        <span data-i18n="admin.emailVerified">Email подтвержден</span>
                     </label>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="editLastLogin">Последний вход</label>
+                <label for="editLastLogin"><span data-i18n="admin.lastLogin">Последний вход</span></label>
                 <input type="text" id="editLastLogin" name="lastLogin" readonly>
-                <small class="form-hint">Только для просмотра</small>
+                <small class="form-hint" data-i18n="admin.viewOnly">Только для просмотра</small>
             </div>
 
             <div class="form-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeUserEditModal()">
-                    Отмена
+                    <span data-i18n="admin.cancel">Отмена</span>
                 </button>
                 <button type="submit" class="btn btn-primary">
-                    Сохранить изменения
+                    <span data-i18n="admin.saveChanges">Сохранить изменения</span>
                 </button>
             </div>
         </form>
@@ -534,115 +533,121 @@
 <div id="roomModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3 id="roomModalTitle">Добавить номер</h3>
+            <h3 id="roomModalTitle" data-i18n="admin.addRoomTitle">Добавить номер</h3>
             <button class="modal-close" onclick="closeRoomModal()"><i class="fas fa-times"></i></button>
         </div>
         <form id="roomForm" class="modal-body">
             <div class="form-group">
-                <label for="roomNumber">Номер комнаты *</label>
+                <label for="roomNumber"><span data-i18n="admin.roomNumberLabel">Номер комнаты</span> <span class="required">*</span></label>
                 <input type="text" id="roomNumber" name="roomNumber" maxlength="20" required/>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="roomType">Тип номера *</label>
+                    <label for="roomType"><span data-i18n="admin.roomTypeLabel">Тип номера</span> <span class="required">*</span></label>
                     <select id="roomType" name="type" required>
-                        <option value="STANDARD">Стандарт</option>
-                        <option value="DELUXE">Делюкс</option>
-                        <option value="SUITE">Люкс</option>
-                        <option value="APARTMENT">Апартаменты</option>
-                        <option value="PENTHOUSE">Пентхаус</option>
+                        <option value="STANDARD" data-i18n="roomTypes.STANDARD">Стандарт</option>
+                        <option value="DELUXE" data-i18n="roomTypes.DELUXE">Делюкс</option>
+                        <option value="SUITE" data-i18n="roomTypes.SUITE">Люкс</option>
+                        <option value="APARTMENT" data-i18n="roomTypes.APARTMENT">Апартаменты</option>
+                        <option value="PENTHOUSE" data-i18n="roomTypes.PENTHOUSE">Пентхаус</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="roomCapacity">Вместимость *</label>
+                    <label for="roomCapacity"><span data-i18n="admin.capacityLabel">Вместимость</span> <span class="required">*</span></label>
                     <input type="number" id="roomCapacity" name="capacity" min="1" max="10" required/>
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="roomBasePrice">Базовая цена за ночь *</label>
+                    <label for="roomBasePrice"><span data-i18n="admin.basePriceLabel">Базовая цена за ночь</span> <span class="required">*</span></label>
                     <input type="number" id="roomBasePrice" name="basePrice" min="0.01" step="0.01" required/>
                 </div>
                 <div class="form-group">
-                    <label for="roomArea">Площадь (м²)</label>
+                    <label for="roomArea"><span data-i18n="admin.areaLabel">Площадь (м²)</span></label>
                     <input type="number" id="roomArea" name="areaSqm" min="0" step="0.01"/>
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="roomFloor">Этаж (опционально)</label>
+                    <label for="roomFloor"><span data-i18n="admin.floorLabel">Этаж (опционально)</span></label>
                     <input type="number" id="roomFloor" name="floor" min="0"/>
                 </div>
                 <div class="form-group">
-                    <label for="roomActive">Статус активности</label>
+                    <label for="roomActive"><span data-i18n="admin.activeStatus">Статус активности</span></label>
                     <div class="checkbox-group">
                         <input type="checkbox" id="roomActive" name="isActive" checked/>
-                        <label for="roomActive">Активный номер</label>
+                        <label for="roomActive"><span data-i18n="admin.activeRoom">Активный номер</span></label>
                     </div>
                 </div>
             </div>
 
             <div class="form-group">
-                <label class="section-label">Удобства номера</label>
+                <label class="section-label" data-i18n="admin.amenities">Удобства номера</label>
                 <div class="amenities-grid">
                     <div class="checkbox-group">
                         <input type="checkbox" id="roomHasWifi" name="hasWifi" checked/>
-                        <label for="roomHasWifi">Wi‑Fi</label>
+                        <label for="roomHasWifi"><span data-i18n="admin.wifi">Wi-Fi</span></label>
                     </div>
                     <div class="checkbox-group">
                         <input type="checkbox" id="roomHasTv" name="hasTv" checked/>
-                        <label for="roomHasTv">Телевизор</label>
+                        <label for="roomHasTv"><span data-i18n="admin.tv">Телевизор</span></label>
                     </div>
                     <div class="checkbox-group">
                         <input type="checkbox" id="roomHasMinibar" name="hasMinibar"/>
-                        <label for="roomHasMinibar">Мини‑бар</label>
+                        <label for="roomHasMinibar"><span data-i18n="admin.minibar">Мини-бар</span></label>
                     </div>
                     <div class="checkbox-group">
                         <input type="checkbox" id="roomHasBalcony" name="hasBalcony"/>
-                        <label for="roomHasBalcony">Балкон</label>
+                        <label for="roomHasBalcony"><span data-i18n="admin.balcony">Балкон</span></label>
                     </div>
                     <div class="checkbox-group">
                         <input type="checkbox" id="roomHasSeaView" name="hasSeaView"/>
-                        <label for="roomHasSeaView">Вид на море</label>
+                        <label for="roomHasSeaView"><span data-i18n="admin.seaView">Вид на море</span></label>
                     </div>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="roomNameRu">Название (русский)</label>
-                <input type="text" id="roomNameRu" name="nameRu" maxlength="200" placeholder="Название на русском"/>
+                <label for="roomNameRu"><span data-i18n="admin.nameRu">Название (русский)</span></label>
+                <input type="text" id="roomNameRu" name="nameRu" maxlength="200" data-i18n-placeholder="admin.namePlaceholderRu" placeholder="Название на русском"/>
             </div>
             <div class="form-group">
-                <label for="roomDescription">Описание (русский)</label>
-                <textarea id="roomDescription" name="descriptionRu" rows="3" placeholder="Описание на русском языке"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="roomNameEn">Название (английский)</label>
-                <input type="text" id="roomNameEn" name="nameEn" maxlength="200" placeholder="Название на английском"/>
-            </div>
-            <div class="form-group">
-                <label for="roomDescriptionEn">Описание (английский)</label>
-                <textarea id="roomDescriptionEn" name="descriptionEn" rows="3" placeholder="Описание на английском языке"></textarea>
+                <label for="roomDescription"><span data-i18n="admin.descriptionRu">Описание (русский)</span></label>
+                <textarea id="roomDescription" name="descriptionRu" rows="3" data-i18n-placeholder="admin.descPlaceholderRu" placeholder="Описание на русском языке"></textarea>
             </div>
 
             <div class="form-group">
-                <label class="section-label">Загрузка фотографий</label>
+                <label for="roomNameEn"><span data-i18n="admin.nameEn">Название (английский)</span></label>
+                <input type="text" id="roomNameEn" name="nameEn" maxlength="200" data-i18n-placeholder="admin.namePlaceholderEn" placeholder="Название на английском"/>
+            </div>
+            <div class="form-group">
+                <label for="roomDescriptionEn"><span data-i18n="admin.descriptionEn">Описание (английский)</span></label>
+                <textarea id="roomDescriptionEn" name="descriptionEn" rows="3" data-i18n-placeholder="admin.descPlaceholderEn" placeholder="Описание на английском языке"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="section-label" data-i18n="admin.photoUpload">Загрузка фотографий</label>
                 <div class="photo-upload-area" id="photoUploadArea" onclick="document.getElementById('roomPhotos').click()">
                     <i class="fas fa-cloud-upload-alt"></i>
-                    <p>Перетащите фотографии сюда или кликните для выбора</p>
+                    <p data-i18n="admin.dragPhotos">Перетащите фотографии сюда или кликните для выбора</p>
                     <input type="file" id="roomPhotos" name="photos" multiple accept="image/*" style="display:none;"/>
-                    <button type="button" class="btn btn-outline" onclick="document.getElementById('roomPhotos').click()">Выбрать файлы</button>
+                    <button type="button" class="btn btn-outline" onclick="document.getElementById('roomPhotos').click()">
+                        <span data-i18n="admin.chooseFiles">Выбрать файлы</span>
+                    </button>
                 </div>
                 <div id="photoPreview" class="photo-preview"></div>
             </div>
 
             <div class="form-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeRoomModal()">Отмена</button>
-                <button type="submit" class="btn btn-primary">Сохранить</button>
+                <button type="button" class="btn btn-secondary" onclick="closeRoomModal()">
+                    <span data-i18n="admin.cancel">Отмена</span>
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <span data-i18n="admin.save">Сохранить</span>
+                </button>
             </div>
         </form>
     </div>
@@ -652,19 +657,21 @@
 <div id="reviewModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Просмотр отзыва</h3>
+            <h3 data-i18n="admin.viewReview">Просмотр отзыва</h3>
             <button class="modal-close" onclick="closeReviewModal()"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
             <div id="reviewDetails"></div>
             <div class="form-actions">
                 <button type="button" class="btn btn-success" onclick="approveReview()">
-                    <i class="fas fa-check"></i> Одобрить
+                    <i class="fas fa-check"></i> <span data-i18n="admin.approve">Одобрить</span>
                 </button>
                 <button type="button" class="btn btn-danger" onclick="rejectReview()">
-                    <i class="fas fa-times"></i> Отклонить
+                    <i class="fas fa-times"></i> <span data-i18n="admin.reject">Отклонить</span>
                 </button>
-                <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">Закрыть</button>
+                <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">
+                    <span data-i18n="admin.close">Закрыть</span>
+                </button>
             </div>
         </div>
     </div>
@@ -674,25 +681,27 @@
 <div id="bookingModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Детали бронирования</h3>
+            <h3 data-i18n="admin.bookingDetails">Детали бронирования</h3>
             <button class="modal-close" onclick="closeBookingModal()"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
             <div id="bookingDetails"></div>
             <div class="form-actions">
                 <button type="button" class="btn btn-success" onclick="confirmBooking()">
-                    <i class="fas fa-check"></i> Подтвердить
+                    <i class="fas fa-check"></i> <span data-i18n="admin.confirm">Подтвердить</span>
                 </button>
                 <button type="button" class="btn btn-warning" onclick="checkInBooking()">
-                    <i class="fas fa-sign-in-alt"></i> Заселить
+                    <i class="fas fa-sign-in-alt"></i> <span data-i18n="admin.checkInBtn">Заселить</span>
                 </button>
                 <button type="button" class="btn btn-info" onclick="checkOutBooking()">
-                    <i class="fas fa-sign-out-alt"></i> Выселить
+                    <i class="fas fa-sign-out-alt"></i> <span data-i18n="admin.checkOutBtn">Выселить</span>
                 </button>
                 <button type="button" class="btn btn-danger" onclick="cancelBooking()">
-                    <i class="fas fa-times"></i> Отменить
+                    <i class="fas fa-times"></i> <span data-i18n="admin.cancelBtn">Отменить</span>
                 </button>
-                <button type="button" class="btn btn-secondary" onclick="closeBookingModal()">Закрыть</button>
+                <button type="button" class="btn btn-secondary" onclick="closeBookingModal()">
+                    <span data-i18n="admin.close">Закрыть</span>
+                </button>
             </div>
         </div>
     </div>
@@ -702,11 +711,10 @@
 <div id="loadingOverlay" class="loading-overlay">
     <div class="loading-spinner">
         <i class="fas fa-spinner fa-spin"></i>
-        <p>Загрузка...</p>
+        <p data-i18n="admin.loading">Загрузка...</p>
     </div>
 </div>
 
 <script src="../../js/menu/profileAdmin.js"></script>
 </body>
 </html>
-

@@ -9,7 +9,6 @@ import com.hotel.booking.mapper.AuthResponseMapper;
 import com.hotel.booking.mapper.UserMapper;
 import com.hotel.booking.repository.UserRepository;
 import com.hotel.booking.security.JwtTokenProvider;
-import com.hotel.booking.service.impl.AuthServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

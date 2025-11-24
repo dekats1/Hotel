@@ -1,4 +1,3 @@
-// DOM Elements
 const navToggle = document.querySelector('.nav-toggle');
 const navMenu = document.querySelector('.nav-menu');
 const navLinks = document.querySelectorAll('.nav-link');
@@ -37,7 +36,7 @@ async function apiClient(url, options = {}) {
         if (response.status === 401) {
             removeAuthData();
             updateNavigation();
-            showNotification('Сессия истекла. Пожалуйста, войдите снова.', 'error');
+            showNotification(window.i18n?.t('errors.sessionExpired') || 'Сессия истекла. Пожалуйста, войдите снова.', 'error');
             throw new Error('Unauthorized');
         }
 
@@ -89,9 +88,7 @@ async function checkAuthStatus() {
 
     if (!userData) {
         try {
-
             const profileData = await apiClient('/api/users/profile', { method: 'GET' });
-
             setUserData(profileData);
             updateNavigation();
             return true;
@@ -102,9 +99,12 @@ async function checkAuthStatus() {
     }
 
     updateNavigation();
-
     return true;
 }
+
+window.addEventListener('languageChanged', function() {
+    updateNavigation();
+});
 
 function updateNavigation() {
     const navAuth = document.querySelector('.nav-auth');
@@ -133,46 +133,48 @@ function updateNavigation() {
                             </div>
                         </div>
                         <div class="dropdown-divider"></div>
-                        <a href="/profile" class="dropdown-item">
+                        <a href="/profile" class="dropdown-item" data-i18n-ignore>
                             <i class="fas fa-user"></i>
-                            Мой профиль
+                            <span data-i18n="common.profile">Мой профиль</span>
                         </a>
-                        <a href="/booking" class="dropdown-item">
+                        <a href="/booking" class="dropdown-item" data-i18n-ignore>
                             <i class="fas fa-calendar"></i>
-                            Мои бронирования
+                            <span data-i18n="common.bookings">Мои бронирования</span>
                         </a>
-                        <a href="/wallet" class="dropdown-item">
+                        <a href="/wallet" class="dropdown-item" data-i18n-ignore>
                             <i class="fas fa-wallet"></i>
-                            Кошелек
+                            <span data-i18n="common.wallet">Кошелек</span>
                         </a>
-                        <a href="/setting" class="dropdown-item">
+                        <a href="/setting" class="dropdown-item" data-i18n-ignore>
                             <i class="fas fa-cog"></i>
-                            Настройки
+                            <span data-i18n="common.settings">Настройки</span>
                         </a>
                         <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item logout-item" onclick="logout()">
+                        <a href="#" class="dropdown-item logout-item" onclick="logout()" data-i18n-ignore>
                             <i class="fas fa-sign-out-alt"></i>
-                            Выйти
+                            <span data-i18n="common.logout">Выйти</span>
                         </a>
                     </div>
                 </div>
             </div>
         `;
     } else {
-
         navAuth.innerHTML = `
-            <a href="/login" class="btn-auth btn-login">
+            <a href="/login" class="btn-auth btn-login" data-i18n-ignore>
                 <i class="fas fa-sign-in-alt"></i>
-                Войти
+                <span data-i18n="common.login">Войти</span>
             </a>
-            <a href="/register" class="btn-auth btn-register">
+            <a href="/register" class="btn-auth btn-register" data-i18n-ignore>
                 <i class="fas fa-user-plus"></i>
-                Регистрация
+                <span data-i18n="common.register">Регистрация</span>
             </a>
         `;
     }
-}
 
+    if (window.i18n && window.i18n.applyTranslations) {
+        window.i18n.applyTranslations();
+    }
+}
 
 async function login(email, password) {
     try {
@@ -181,27 +183,24 @@ async function login(email, password) {
             body: JSON.stringify({ email, password })
         });
 
-
-
         if (response && response.user) {
             setUserData(response.user);
             updateNavigation();
-            showNotification('Успешный вход!', 'success');
+            showNotification(window.i18n?.t('auth.loginSuccess') || 'Успешный вход!', 'success');
             return true;
         } else {
-
-            showNotification('Неверный ответ сервера после входа.', 'error');
+            showNotification(window.i18n?.t('errors.invalidServerResponse') || 'Неверный ответ сервера после входа.', 'error');
             return false;
         }
     } catch (error) {
         console.error('Login error:', error);
 
         if (error.message.includes('Unauthorized') || error.message.includes('401')) {
-            showNotification('Неверный email или пароль', 'error');
+            showNotification(window.i18n?.t('errors.invalidCredentials') || 'Неверный email или пароль', 'error');
         } else if (error.message.includes('Network Error')) {
-            showNotification('Ошибка сети. Проверьте подключение к интернету.', 'error');
+            showNotification(window.i18n?.t('errors.networkError') || 'Ошибка сети. Проверьте подключение к интернету.', 'error');
         } else {
-            showNotification(`Ошибка входа: ${error.message}`, 'error');
+            showNotification(`${window.i18n?.t('errors.loginError') || 'Ошибка входа'}: ${error.message}`, 'error');
         }
         return false;
     }
@@ -210,7 +209,7 @@ async function login(email, password) {
 async function register(userData) {
     try {
         if (userData.password !== userData.confirmPassword) {
-            showNotification('Пароли не совпадают', 'error');
+            showNotification(window.i18n?.t('errors.passwordsDoNotMatch') || 'Пароли не совпадают', 'error');
             return false;
         }
 
@@ -222,21 +221,21 @@ async function register(userData) {
         if (response && response.user) {
             setUserData(response.user);
             updateNavigation();
-            showNotification('Регистрация успешна! Добро пожаловать!', 'success');
+            showNotification(window.i18n?.t('auth.registrationSuccess') || 'Регистрация успешна! Добро пожаловать!', 'success');
             return true;
         } else {
-            showNotification('Ошибка регистрации. Неверный ответ сервера.', 'error');
+            showNotification(window.i18n?.t('errors.registrationError') || 'Ошибка регистрации. Неверный ответ сервера.', 'error');
             return false;
         }
     } catch (error) {
         console.error('Registration error:', error);
 
         if (error.message.includes('Bad Request') || error.message.includes('400')) {
-            showNotification('Пользователь с таким email или телефоном уже существует', 'error');
+            showNotification(window.i18n?.t('errors.userExists') || 'Пользователь с таким email или телефоном уже существует', 'error');
         } else if (error.message.includes('Network Error')) {
-            showNotification('Ошибка сети. Проверьте подключение к интернету.', 'error');
+            showNotification(window.i18n?.t('errors.networkError') || 'Ошибка сети. Проверьте подключение к интернету.', 'error');
         } else {
-            showNotification(`Ошибка регистрации: ${error.message}`, 'error');
+            showNotification(`${window.i18n?.t('errors.registrationError') || 'Ошибка регистрации'}: ${error.message}`, 'error');
         }
         return false;
     }
@@ -250,10 +249,10 @@ async function logout() {
 
         removeAuthData();
         updateNavigation();
-        showNotification('Вы успешно вышли из системы', 'success');
+        showNotification(window.i18n?.t('errors.loggedOut') || 'Вы успешно вышли из системы', 'success');
     } catch (error) {
         console.error('Logout failed but proceeding with client clear:', error);
-        showNotification('Ошибка выхода из системы. Очистка клиента...', 'error');
+        showNotification(window.i18n?.t('errors.logoutError') || 'Ошибка выхода из системы. Очистка клиента...', 'error');
         removeAuthData();
         updateNavigation();
     }
@@ -295,7 +294,6 @@ if (navToggle) {
 navLinks.forEach(link => {
     link.addEventListener('click', closeMobileMenu);
 });
-
 
 navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
@@ -402,22 +400,22 @@ function handleSearchForm(e) {
     };
 
     if (new Date(searchData.checkin) >= new Date(searchData.checkout)) {
-        showNotification('Дата выезда должна быть позже даты заезда', 'error');
+        showNotification(window.i18n?.t('errors.checkoutAfterCheckin') || 'Дата выезда должна быть позже даты заезда', 'error');
         return;
     }
 
     if (new Date(searchData.checkin) < new Date().setHours(0, 0, 0, 0)) {
-        showNotification('Дата заезда не может быть в прошлом', 'error');
+        showNotification(window.i18n?.t('errors.checkinNotPast') || 'Дата заезда не может быть в прошлом', 'error');
         return;
     }
 
     const submitBtn = searchForm.querySelector('.btn-search');
     const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<span class="loading"></span> Поиск...';
+    submitBtn.innerHTML = `<span class="loading"></span> ${window.i18n?.t('common.search') || 'Поиск'}...`;
     submitBtn.disabled = true;
 
     setTimeout(() => {
-        showNotification('Поиск номеров выполнен! Результаты будут показаны в следующем разделе.', 'success');
+        showNotification(window.i18n?.t('home.searchCompleted') || 'Поиск номеров выполнен! Результаты будут показаны в следующем разделе.', 'success');
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
 
@@ -436,22 +434,22 @@ function handleContactForm(e) {
     };
 
     if (!contactData.name || !contactData.email || !contactData.message) {
-        showNotification('Пожалуйста, заполните все поля', 'error');
+        showNotification(window.i18n?.t('errors.fillAllFields') || 'Пожалуйста, заполните все поля', 'error');
         return;
     }
 
     if (!isValidEmail(contactData.email)) {
-        showNotification('Пожалуйста, введите корректный email', 'error');
+        showNotification(window.i18n?.t('errors.invalidEmail') || 'Пожалуйста, введите корректный email', 'error');
         return;
     }
 
     const submitBtn = contactForm.querySelector('.btn-primary');
     const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<span class="loading"></span> Отправка...';
+    submitBtn.innerHTML = `<span class="loading"></span> ${window.i18n?.t('common.loading') || 'Отправка'}...`;
     submitBtn.disabled = true;
 
     setTimeout(() => {
-        showNotification('Сообщение успешно отправлено! Мы свяжемся с вами в ближайшее время.', 'success');
+        showNotification(window.i18n?.t('home.messageSent') || 'Сообщение успешно отправлено! Мы свяжемся с вами в ближайшее время.', 'success');
         contactForm.reset();
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
@@ -464,7 +462,6 @@ function isValidEmail(email) {
 }
 
 function showNotification(message, type = 'info') {
-
     const existingNotifications = document.querySelectorAll('.notification');
     existingNotifications.forEach(notification => notification.remove());
 
@@ -646,6 +643,10 @@ function toggleTheme() {
 async function init() {
     initTheme();
 
+    if (window.i18n && window.i18n.initI18n) {
+        await window.i18n.initI18n();
+    }
+
     await checkAuthStatus();
 
     window.addEventListener('scroll', () => {
@@ -730,7 +731,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.head.appendChild(rippleStyles);
 });
 
-
 function redirectToCatalog() {
     const checkIn = document.getElementById('checkIn')?.value;
     const checkOut = document.getElementById('checkOut')?.value;
@@ -768,7 +768,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    const galleryItems = document.querySelectorAll('.gallery-item');
 
+    galleryItems.forEach((item, index) => {
+        item.style.setProperty('--item-index', index);
+        item.style.opacity = '0';
+    });
+
+    const galleryObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+
+    galleryItems.forEach(item => galleryObserver.observe(item));
+});
 
 window.toggleTheme = toggleTheme;
 window.scrollToSearch = scrollToSearch;

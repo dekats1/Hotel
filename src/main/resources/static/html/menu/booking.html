@@ -3,26 +3,27 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Мои бронирования - Отель "Райский уголок"</title>
-        <link rel="stylesheet" href="../../css/index.css">
-        <link rel="stylesheet" href="../../css/menu/booking.css">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-        <script>
-            (function() {
-                const savedTheme = localStorage.getItem('theme') || 'light';
-                document.documentElement.setAttribute('data-theme', savedTheme);
-            })();
-        </script>
-    </head>
-    <body>
+    <title data-i18n="booking.title">Мои бронирования - Отель "Райский уголок"</title>
+    <link rel="stylesheet" href="../../css/index.css">
+    <link rel="stylesheet" href="../../css/menu/booking.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="../../js/i18n.js"></script>
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body>
     <!-- Header -->
     <header class="header">
         <nav class="navbar">
             <div class="nav-container">
                 <div class="nav-logo">
                     <i class="fas fa-hotel"></i>
-                    <span>Райский уголок</span>
+                    <span data-i18n="common.hotelName">Райский уголок</span>
                 </div>
                 <div class="theme-toggle">
                     <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">
@@ -30,21 +31,21 @@
                     </button>
                 </div>
                 <ul class="nav-menu">
-                    <li><a href="/" class="nav-link">Главная</a></li>
-                    <li><a href="/#rooms" class="nav-link">Номера</a></li>
-                    <li><a href="/#services" class="nav-link">Услуги</a></li>
-                    <li><a href="/aboutUs" class="nav-link">О нас</a></li>
-                    <li><a href="/#contact" class="nav-link">Контакты</a></li>
+                    <li><a href="/" class="nav-link" data-i18n="common.home">Главная</a></li>
+                    <li><a href="/#rooms" class="nav-link" data-i18n="common.rooms">Номера</a></li>
+                    <li><a href="/#services" class="nav-link" data-i18n="common.services">Услуги</a></li>
+                    <li><a href="/aboutUs" class="nav-link" data-i18n="common.about">О нас</a></li>
+                    <li><a href="/#contact" class="nav-link" data-i18n="common.contact">Контакты</a></li>
                 </ul>
                 <div class="nav-auth">
                     <div class="user-profile">
                         <div class="user-info">
                             <div class="user-avatar" id="userAvatar">👤</div>
                             <div class="user-details">
-                                <div class="user-name" id="userName">Пользователь</div>
+                                <div class="user-name" id="userName"></div>
                                 <div class="user-wallet">
                                     <i class="fas fa-wallet"></i>
-                                    <span id="userWallet">0₽</span>
+                                    <span id="userWallet">BYN</span>
                                 </div>
                             </div>
                         </div>
@@ -56,31 +57,31 @@
                                 <div class="dropdown-header">
                                     <div class="user-avatar-small" id="userAvatarSmall">👤</div>
                                     <div>
-                                        <div class="user-name-small" id="userNameSmall">Пользователь</div>
+                                        <div class="user-name-small" id="userNameSmall"></div>
                                         <div class="user-email-small" id="userEmailSmall">user@example.com</div>
                                     </div>
                                 </div>
                                 <div class="dropdown-divider"></div>
                                 <a href="/profile" class="dropdown-item">
                                     <i class="fas fa-user"></i>
-                                    Мой профиль
+                                    <span data-i18n="common.profile">Мой профиль</span>
                                 </a>
                                 <a href="/booking" class="dropdown-item active">
                                     <i class="fas fa-calendar"></i>
-                                    Мои бронирования
+                                    <span data-i18n="common.bookings">Мои бронирования</span>
                                 </a>
                                 <a href="/wallet" class="dropdown-item">
                                     <i class="fas fa-wallet"></i>
-                                    Кошелек
+                                    <span data-i18n="common.wallet">Кошелек</span>
                                 </a>
                                 <a href="/setting" class="dropdown-item">
                                     <i class="fas fa-cog"></i>
-                                    Настройки
+                                    <span data-i18n="common.settings">Настройки</span>
                                 </a>
                                 <div class="dropdown-divider"></div>
                                 <a href="#" class="dropdown-item logout-item" onclick="logout()">
                                     <i class="fas fa-sign-out-alt"></i>
-                                    Выйти
+                                    <span data-i18n="common.logout">Выйти</span>
                                 </a>
                             </div>
                         </div>
@@ -101,13 +102,13 @@
             <!-- Booking Header -->
             <section class="booking-header">
                 <div class="booking-title">
-                    <h1>Мои бронирования</h1>
-                    <p>Управляйте своими бронированиями и историей поездок</p>
+                    <h1 data-i18n="booking.title">Мои бронирования</h1>
+                    <p data-i18n="booking.subtitle">Управляйте своими бронированиями и историей поездок</p>
                 </div>
                 <div class="booking-actions">
                     <a href="/catalog" class="btn btn-primary">
                         <i class="fas fa-plus"></i>
-                        Новое бронирование
+                        <span data-i18n="booking.newBooking">Новое бронирование</span>
                     </a>
                 </div>
             </section>
@@ -117,23 +118,23 @@
                 <div class="filter-tabs">
                     <button class="filter-tab active" data-filter="all" onclick="filterBookings('all')">
                         <i class="fas fa-list"></i>
-                        Все бронирования
+                        <span data-i18n="booking.all">Все бронирования</span>
                     </button>
                     <button class="filter-tab" data-filter="upcoming" onclick="filterBookings('upcoming')">
                         <i class="fas fa-calendar-check"></i>
-                        Предстоящие
+                        <span data-i18n="booking.upcoming">Предстоящие</span>
                     </button>
                     <button class="filter-tab" data-filter="current" onclick="filterBookings('current')">
                         <i class="fas fa-bed"></i>
-                        Текущие
+                        <span data-i18n="booking.current">Текущие</span>
                     </button>
                     <button class="filter-tab" data-filter="completed" onclick="filterBookings('completed')">
                         <i class="fas fa-check-circle"></i>
-                        Завершенные
+                        <span data-i18n="booking.completed">Завершенные</span>
                     </button>
                     <button class="filter-tab" data-filter="cancelled" onclick="filterBookings('cancelled')">
                         <i class="fas fa-times-circle"></i>
-                        Отмененные
+                        <span data-i18n="booking.cancelled">Отмененные</span>
                     </button>
                 </div>
             </section>
@@ -147,7 +148,7 @@
 
             <!-- Statistics -->
             <section class="statistics-section">
-                <h2>Статистика бронирований</h2>
+                <h2 data-i18n="booking.statistics">Статистика бронирований</h2>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon">
@@ -155,7 +156,7 @@
                         </div>
                         <div class="stat-info">
                             <div class="stat-number" id="totalBookings">0</div>
-                            <div class="stat-label">Всего бронирований</div>
+                            <div class="stat-label" data-i18n="booking.totalBookings">Всего бронирований</div>
                         </div>
                     </div>
                     <div class="stat-card">
@@ -164,7 +165,7 @@
                         </div>
                         <div class="stat-info">
                             <div class="stat-number" id="totalNights">0</div>
-                            <div class="stat-label">Ночей прожито</div>
+                            <div class="stat-label" data-i18n="booking.nightsStayed">Ночей прожито</div>
                         </div>
                     </div>
                     <div class="stat-card">
@@ -172,8 +173,8 @@
                             <i class="fas fa-ruble-sign"></i>
                         </div>
                         <div class="stat-info">
-                            <div class="stat-number" id="totalSpent">0₽</div>
-                            <div class="stat-label">Потрачено</div>
+                            <div class="stat-number" id="totalSpent">0BYN</div>
+                            <div class="stat-label" data-i18n="booking.spent">Потрачено</div>
                         </div>
                     </div>
                     <div class="stat-card">
@@ -182,7 +183,7 @@
                         </div>
                         <div class="stat-info">
                             <div class="stat-number" id="averageRating">0.0</div>
-                            <div class="stat-label">Средняя оценка</div>
+                            <div class="stat-label" data-i18n="booking.averageRating">Средняя оценка</div>
                         </div>
                     </div>
                 </div>
@@ -194,7 +195,7 @@
     <div class="modal" id="bookingDetailsModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Детали бронирования</h2>
+                <h2 data-i18n="booking.details">Детали бронирования</h2>
                 <button class="modal-close" onclick="closeBookingDetailsModal()">
                     <i class="fas fa-times"></i>
                 </button>

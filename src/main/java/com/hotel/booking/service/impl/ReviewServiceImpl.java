@@ -6,6 +6,8 @@ import com.hotel.booking.domain.entity.User;
 import com.hotel.booking.domain.enums.BookingStatus;
 import com.hotel.booking.dto.request.review.CreateReviewRequest;
 import com.hotel.booking.dto.request.review.ReviewResponse;
+import com.hotel.booking.exception.ReviewAlreadyExistsException;
+import com.hotel.booking.exception.ReviewNotAllowedException;
 import com.hotel.booking.mapper.ReviewMapper;
 import com.hotel.booking.repository.BookingRepository;
 import com.hotel.booking.repository.ReviewRepository;
@@ -45,7 +47,7 @@ public class ReviewServiceImpl implements ReviewService {
             .orElseThrow(() -> new RuntimeException("Бронирование не найдено"));
 
     if (reviewRepository.existsByBookingId(booking.getId())) {
-      throw new IllegalStateException("На это бронирование уже оставлен отзыв");
+      throw new ReviewAlreadyExistsException(booking.getId());
     }
 
     LocalDate today = LocalDate.now();
@@ -56,7 +58,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     if (!booking.isCompleted()) {
-      throw new IllegalStateException("Отзыв можно оставить только на завершённое бронирование");
+      throw new ReviewNotAllowedException("Cannot leave review: booking not completed");
     }
 
     Review review = Review.builder()

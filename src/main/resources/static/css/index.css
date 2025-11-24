@@ -159,10 +159,10 @@ body {
 .nav-menu {
     display: flex;
     list-style: none;
-    gap: 1.5rem;
+    gap: 1rem;
     justify-content: center;
     flex: 1;
-    max-width: 400px;
+    max-width: 500px;
 }
 
 .nav-link {

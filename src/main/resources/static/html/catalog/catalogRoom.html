@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Каталог номеров</title>
+    <title data-i18n="catalog.title">Каталог номеров</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/index.css">
     <link rel="stylesheet" href="/css/catalog/catalogRoom.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="/js/i18n.js"></script>
     <script>
         (function() {
             const savedTheme = localStorage.getItem('theme') || 'light';
@@ -23,7 +24,7 @@
             <div class="nav-container">
                 <div class="nav-logo">
                     <i class="fas fa-hotel"></i>
-                    <span>Райский уголок</span>
+                    <span data-i18n="common.hotelName">Райский уголок</span>
                 </div>
                 <div class="theme-toggle">
                     <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">
@@ -31,20 +32,20 @@
                     </button>
                 </div>
                 <ul class="nav-menu">
-                    <li><a href="/" class="nav-link">Главная</a></li>
-                    <li><a href="/#rooms" class="nav-link">Номера</a></li>
-                    <li><a href="/#services" class="nav-link">Услуги</a></li>
-                    <li><a href="/html/aboutUs.html" class="nav-link">О нас</a></li>
-                    <li><a href="/#contact" class="nav-link">Контакты</a></li>
+                    <li><a href="/" class="nav-link" data-i18n="common.home">Главная</a></li>
+                    <li><a href="/#rooms" class="nav-link" data-i18n="common.rooms">Номера</a></li>
+                    <li><a href="/#services" class="nav-link" data-i18n="common.services">Услуги</a></li>
+                    <li><a href="/html/aboutUs.html" class="nav-link" data-i18n="common.about">О нас</a></li>
+                    <li><a href="/#contact" class="nav-link" data-i18n="common.contact">Контакты</a></li>
                 </ul>
                 <div class="nav-auth">
                     <a href="/login" class="btn-auth btn-login">
                         <i class="fas fa-sign-in-alt"></i>
-                        Войти
+                        <span data-i18n="common.login">Войти</span>
                     </a>
                     <a href="/register" class="btn-auth btn-register">
                         <i class="fas fa-user-plus"></i>
-                        Регистрация
+                        <span data-i18n="common.register">Регистрация</span>
                     </a>
                 </div>
                 <div class="nav-toggle" onclick="document.querySelector('.nav-menu').classList.toggle('active')">
@@ -58,37 +59,53 @@
     <main class="catalog">
         <section class="catalog-hero">
             <div class="container">
-                <h1 class="catalog-title">Подберите идеальный номер</h1>
-                <p class="catalog-subtitle">Фильтруйте, сортируйте и находите лучшее предложение</p>
+                <h1 class="catalog-title" data-i18n="catalog.findPerfectRoom">Подберите идеальный номер</h1>
+                <p class="catalog-subtitle" data-i18n="catalog.filterSubtitle">Фильтруйте, сортируйте и находите лучшее предложение</p>
                 <form id="filtersForm" class="filters">
                     <div class="filters-row">
                         <div class="form-group">
-                            <label for="searchQuery">Поиск</label>
-                            <input id="searchQuery" type="text" placeholder="Название, номер, тип...">
+                            <label for="searchQuery" data-i18n="catalog.search">Поиск</label>
+                            <input id="searchQuery" type="text" data-i18n-placeholder="catalog.searchPlaceholder" placeholder="Название, номер, тип...">
                         </div>
                         <div class="form-group">
-                            <label for="typeFilter">Тип номера</label>
+                            <label for="typeFilter" data-i18n="catalog.roomType">Тип номера</label>
                             <select id="typeFilter">
-                                <option value="">Все</option>
-                                <option value="STANDARD">Стандарт</option>
-                                <option value="DELUXE">Делюкс</option>
-                                <option value="SUITE">Люкс</option>
-                                <option value="APARTMENT">Апартаменты</option>
-                                <option value="PENTHOUSE">Пентхаус</option>
+                                <option value="" data-i18n="catalog.all">Все</option>
+                                <option value="STANDARD" data-i18n="roomTypes.STANDARD">Стандарт</option>
+                                <option value="DELUXE" data-i18n="roomTypes.DELUXE">Делюкс</option>
+                                <option value="SUITE" data-i18n="roomTypes.SUITE">Люкс</option>
+                                <option value="APARTMENT" data-i18n="roomTypes.APARTMENT">Апартаменты</option>
+                                <option value="PENTHOUSE" data-i18n="roomTypes.PENTHOUSE">Пентхаус</option>
                             </select>
                         </div>
+                        <div class="filter-group">
+                            <label for="checkInFilter">
+                                <i class="fas fa-calendar-check"></i>
+                                <span data-i18n="home.checkIn">Дата заезда</span>
+                            </label>
+                            <input type="date" id="checkInFilter" name="checkInFilter">
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="checkOutFilter">
+                                <i class="fas fa-calendar-times"></i>
+                                <span data-i18n="home.checkOut">Дата выезда</span>
+                            </label>
+                            <input type="date" id="checkOutFilter" name="checkOutFilter">
+                        </div>
+
                         <div class="form-group">
-                            <label>Цена за ночь (₽)</label>
+                            <label data-i18n="catalog.pricePerNight">Цена за ночь (BYN)</label>
                             <div class="price-range">
-                                <input id="priceMin" type="number" min="0" placeholder="От">
+                                <input id="priceMin" type="number" min="0" data-i18n-placeholder="catalog.from" placeholder="От">
                                 <span class="delimiter">—</span>
-                                <input id="priceMax" type="number" min="0" placeholder="До">
+                                <input id="priceMax" type="number" min="0" data-i18n-placeholder="catalog.to" placeholder="До">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="capacityFilter">Вместимость</label>
+                            <label for="capacityFilter" data-i18n="catalog.capacity">Вместимость</label>
                             <select id="capacityFilter">
-                                <option value="">Любая</option>
+                                <option value="" data-i18n="catalog.any">Любая</option>
                                 <option value="1">1</option>
                                 <option value="2">2</option>
                                 <option value="3">3</option>
@@ -97,25 +114,25 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="sortBy">Сортировка</label>
+                            <label for="sortBy" data-i18n="catalog.sortBy">Сортировка</label>
                             <select id="sortBy">
-                                <option value="POPULAR">Популярные</option>
-                                <option value="PRICE_ASC">Цена: по возрастанию</option>
-                                <option value="PRICE_DESC">Цена: по убыванию</option>
-                                <option value="AREA_DESC">Площадь</option>
-                                <option value="RATING_DESC">Рейтинг</option>
+                                <option value="POPULAR" data-i18n="catalog.popular">Популярные</option>
+                                <option value="PRICE_ASC" data-i18n="catalog.priceAsc">Цена: по возрастанию</option>
+                                <option value="PRICE_DESC" data-i18n="catalog.priceDesc">Цена: по убыванию</option>
+                                <option value="AREA_DESC" data-i18n="catalog.area">Площадь</option>
+                                <option value="RATING_DESC" data-i18n="catalog.rating">Рейтинг</option>
                             </select>
                         </div>
                     </div>
                     <div class="filters-row amenities">
-                        <label class="amenity"><input type="checkbox" id="fWifi"> <span><i class="fas fa-wifi"></i> Wi‑Fi</span></label>
-                        <label class="amenity"><input type="checkbox" id="fTv"> <span><i class="fas fa-tv"></i> ТВ</span></label>
-                        <label class="amenity"><input type="checkbox" id="fMinibar"> <span><i class="fas fa-wine-glass"></i> Минибар</span></label>
-                        <label class="amenity"><input type="checkbox" id="fBalcony"> <span><i class="fas fa-door-open"></i> Балкон</span></label>
-                        <label class="amenity"><input type="checkbox" id="fSea"> <span><i class="fas fa-water"></i> Вид на море</span></label>
+                        <label class="amenity"><input type="checkbox" id="fWifi"> <span><i class="fas fa-wifi"></i> <span data-i18n="catalog.wifi">Wi‑Fi</span></span></label>
+                        <label class="amenity"><input type="checkbox" id="fTv"> <span><i class="fas fa-tv"></i> <span data-i18n="catalog.tv">ТВ</span></span></label>
+                        <label class="amenity"><input type="checkbox" id="fMinibar"> <span><i class="fas fa-wine-glass"></i> <span data-i18n="catalog.minibar">Минибар</span></span></label>
+                        <label class="amenity"><input type="checkbox" id="fBalcony"> <span><i class="fas fa-door-open"></i> <span data-i18n="catalog.balcony">Балкон</span></span></label>
+                        <label class="amenity"><input type="checkbox" id="fSea"> <span><i class="fas fa-water"></i> <span data-i18n="catalog.seaView">Вид на море</span></span></label>
                         <div class="filters-actions">
-                            <button type="button" id="btnReset" class="btn btn-secondary">Сбросить</button>
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Применить</button>
+                            <button type="button" id="btnReset" class="btn btn-secondary" data-i18n="common.reset">Сбросить</button>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> <span data-i18n="common.apply">Применить</span></button>
                         </div>
                     </div>
                 </form>
@@ -125,7 +142,7 @@
         <div id="bookingModal" class="modal">
             <div class="modal-content booking-modal">
                 <div class="modal-header">
-                    <h2>Бронирование номера</h2>
+                    <h2 data-i18n="catalog.bookingTitle">Бронирование номера</h2>
                     <button class="modal-close" onclick="closeBookingModal()">
                         <i class="fas fa-times"></i>
                     </button>
@@ -133,15 +150,15 @@
 
                 <div class="modal-body">
                     <div class="booking-room-info">
-                        <h3 id="bookingRoomName">Номер</h3>
-                        <p id="bookingRoomPrice" class="room-price">0 BYN/ночь</p>
+                        <h3 id="bookingRoomName" data-i18n="catalog.room">Номер</h3>
+                        <p id="bookingRoomPrice" class="room-price">0 <span data-i18n="catalog.perNight">BYN/ночь</span></p>
                     </div>
 
                     <form id="bookingForm" class="booking-form" onsubmit="event.preventDefault(); submitBooking();">
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="checkInDate">
-                                    <i class="fas fa-calendar-check"></i> Дата заезда
+                                    <i class="fas fa-calendar-check"></i> <span data-i18n="home.checkIn">Дата заезда</span>
                                 </label>
                                 <input
                                     type="date"
@@ -153,7 +170,7 @@
 
                             <div class="form-group">
                                 <label for="checkOutDate">
-                                    <i class="fas fa-calendar-times"></i> Дата выезда
+                                    <i class="fas fa-calendar-times"></i> <span data-i18n="home.checkOut">Дата выезда</span>
                                 </label>
                                 <input
                                     type="date"
@@ -167,7 +184,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="guestsCount">
-                                    <i class="fas fa-users"></i> Количество гостей
+                                    <i class="fas fa-users"></i> <span data-i18n="catalog.guestsCount">Количество гостей</span>
                                 </label>
                                 <input
                                     type="number"
@@ -182,46 +199,47 @@
 
                             <div class="form-group">
                                 <label for="currency">
-                                    <i class="fas fa-money-bill-wave"></i> Валюта
+                                    <i class="fas fa-money-bill-wave"></i> <span data-i18n="catalog.currency">Валюта</span>
                                 </label>
                                 <select id="currency" name="currency" required>
-                                    <option value="BYN">Белорусский рубль (BYN)</option>
-                                    <option value="USD">Доллар США ($)</option>
+                                    <option value="BYN" data-i18n="catalog.belarusRuble">Белорусский рубль (BYN)</option>
+                                    <option value="USD" data-i18n="catalog.usd">Доллар США ($)</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label for="specialRequests">
-                                <i class="fas fa-clipboard-list"></i> Особые пожелания (необязательно)
+                                <i class="fas fa-clipboard-list"></i> <span data-i18n="catalog.specialRequests">Особые пожелания (необязательно)</span>
                             </label>
                             <textarea
                                 id="specialRequests"
                                 name="specialRequests"
                                 rows="3"
+                                data-i18n-placeholder="catalog.specialRequestsPlaceholder"
                                 placeholder="Например: ранний заезд, дополнительная кровать, гипоаллергенные подушки..."
                                 maxlength="500"
                             ></textarea>
-                            <small class="form-hint">Максимум 500 символов</small>
+                            <small class="form-hint" data-i18n="catalog.maxChars">Максимум 500 символов</small>
                         </div>
 
                         <div class="booking-summary">
                             <div class="summary-row">
-                                <span>Количество ночей:</span>
+                                <span data-i18n="catalog.nights">Количество ночей:</span>
                                 <strong id="totalNights">0</strong>
                             </div>
                             <div class="summary-row total">
-                                <span>Итоговая стоимость:</span>
+                                <span data-i18n="catalog.totalPrice">Итоговая стоимость:</span>
                                 <strong id="totalPrice">0 BYN</strong>
                             </div>
                         </div>
 
                         <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" onclick="closeBookingModal()">
+                            <button type="button" class="btn btn-secondary" onclick="closeBookingModal()" data-i18n="common.cancel">
                                 Отмена
                             </button>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-check"></i> Забронировать
+                                <i class="fas fa-check"></i> <span data-i18n="catalog.book">Забронировать</span>
                             </button>
                         </div>
                     </form>
@@ -230,13 +248,13 @@
         </div>
         <section class="catalog-results">
             <div class="container">
-                <div id="roomsCount" class="results-header">Найдено: 0</div>
+                <div id="roomsCount" class="results-header"><span data-i18n="catalog.found">Найдено</span>: 0</div>
                 <div id="roomsGrid" class="rooms-grid"></div>
                 <div id="emptyState" class="empty-state" style="display:none">
                     <div class="empty-card">
                         <i class="fas fa-search"></i>
-                        <h3>Ничего не найдено</h3>
-                        <p>Попробуйте изменить параметры фильтров</p>
+                        <h3 data-i18n="catalog.nothingFound">Ничего не найдено</h3>
+                        <p data-i18n="catalog.tryFilters">Попробуйте изменить параметры фильтров</p>
                     </div>
                 </div>
             </div>
@@ -271,8 +289,10 @@
     <div id="roomModal" class="modal">
         <div class="modal-content large">
             <div class="modal-header">
-                <h2 id="modalTitle">Информация о номере</h2>
-                <button class="modal-close" onclick="document.getElementById('roomModal').classList.remove('show')"><i class="fas fa-times"></i></button>
+                <h2 id="modalTitle" data-i18n="catalog.roomInfo">Информация о номере</h2>
+                <button class="modal-close" onclick="closeRoomModal()">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="modal-grid">
@@ -285,21 +305,29 @@
                     </div>
                     <div class="details">
                         <h3 id="roomName"></h3>
+
+                        <!-- ДОБАВЛЕН БЛОК РЕЙТИНГА -->
+                        <div class="room-rating" id="roomRating"></div>
+
                         <div class="details-meta">
                             <span><i class="fas fa-vector-square"></i> <span id="roomArea"></span> м²</span>
-                            <span><i class="fas fa-user-friends"></i> до <span id="roomCapacity"></span> гостей</span>
+                            <span><i class="fas fa-user-friends"></i> <span data-i18n="catalog.guests">до</span> <span id="roomCapacity"></span> <span data-i18n="catalog.guestsSuffix">гостей</span></span>
                         </div>
                         <p id="roomDescription" class="room-description"></p>
+                        <h4 data-i18n="catalog.amenities">Удобства</h4>
                         <ul id="roomAmenities" class="amenities-list"></ul>
                         <div class="details-actions">
-                            <button id="btnBook" class="btn btn-primary"><i class="fas fa-calendar-check"></i> Забронировать</button>
-                            <button class="btn btn-secondary" onclick="document.getElementById('roomModal').classList.remove('show')">Закрыть</button>
+                            <button class="btn btn-secondary" onclick="closeRoomModal()" data-i18n="common.close">Закрыть</button>
+                            <button id="btnBook" class="btn btn-primary">
+                                <i class="fas fa-calendar-check"></i> <span data-i18n="catalog.book">Забронировать</span>
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
 
     <div id="loadingOverlay" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);z-index:20000">
         <div class="loading"></div>

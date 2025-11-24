@@ -135,7 +135,7 @@ firstNameInput.addEventListener('input', function() {
     if (validateName(name)) {
         showSuccess('firstName');
     } else {
-        showError('firstName', 'Имя должно содержать минимум 2 символа');
+        showError('firstName', window.i18n?.t('validation.firstNameMinLength') || 'Имя должно содержать минимум 2 символа');
     }
 });
 
@@ -150,7 +150,7 @@ lastNameInput.addEventListener('input', function() {
     if (validateName(name)) {
         showSuccess('lastName');
     } else {
-        showError('lastName', 'Фамилия должна содержать минимум 2 символа');
+        showError('lastName', window.i18n?.t('validation.lastNameMinLength') || 'Фамилия должна содержать минимум 2 символа');
     }
 });
 
@@ -165,7 +165,7 @@ birthDateInput.addEventListener('change', function() {
     if (validateBirthDate(date)) {
         showSuccess('birthDate');
     } else {
-        showError('birthDate', 'Возраст должен быть от 14 до 120 лет');
+        showError('birthDate', window.i18n?.t('validation.ageRange') || 'Возраст должен быть от 14 до 120 лет');
     }
 });
 
@@ -190,7 +190,7 @@ emailInput.addEventListener('input', function() {
     if (validateEmail(email)) {
         showSuccess('email');
     } else {
-        showError('email', 'Введите корректный email адрес');
+        showError('email', window.i18n?.t('errors.invalidEmail') || 'Введите корректный email адрес');
     }
 });
 
@@ -205,7 +205,7 @@ phoneInput.addEventListener('input', function() {
     if (validatePhone(phone)) {
         showSuccess('phone');
     } else {
-        showError('phone', 'Введите корректный номер телефона');
+        showError('phone', window.i18n?.t('validation.phoneInvalid') || 'Введите корректный номер телефона');
     }
 });
 
@@ -214,14 +214,14 @@ passwordInput.addEventListener('input', function() {
 
     if (password === '') {
         clearError('password');
-        updatePasswordStrength('', 'Введите пароль');
+        updatePasswordStrength('', window.i18n?.t('auth.passwordStrength') || 'Введите пароль');
         return;
     }
 
     if (validatePassword(password)) {
         showSuccess('password');
     } else {
-        showError('password', 'Пароль должен содержать минимум 6 символов');
+        showError('password', window.i18n?.t('validation.passwordMinLength') || 'Пароль должен содержать минимум 6 символов');
     }
 
     updatePasswordStrength(password);
@@ -239,7 +239,7 @@ confirmPasswordInput.addEventListener('input', function() {
     if (password === confirmPassword) {
         showSuccess('confirmPassword');
     } else {
-        showError('confirmPassword', 'Пароли не совпадают');
+        showError('confirmPassword', window.i18n?.t('errors.passwordsDoNotMatch') || 'Пароли не совпадают');
     }
 });
 
@@ -253,7 +253,7 @@ function updatePasswordStrength(password, customText = null) {
 
     if (!password) {
         strengthFill.className = 'strength-fill';
-        strengthText.textContent = customText || 'Введите пароль';
+        strengthText.textContent = customText || (window.i18n?.t('auth.passwordStrength') || 'Введите пароль');
         strengthText.className = 'strength-text';
         return;
     }
@@ -264,10 +264,10 @@ function updatePasswordStrength(password, customText = null) {
     strengthText.className = `strength-text ${strength}`;
 
     const strengthTexts = {
-        weak: 'Слабый пароль',
-        fair: 'Средний пароль',
-        good: 'Хороший пароль',
-        strong: 'Надежный пароль'
+        weak: window.i18n?.t('auth.passwordWeak') || 'Слабый пароль',
+        fair: window.i18n?.t('auth.passwordFair') || 'Средний пароль',
+        good: window.i18n?.t('auth.passwordGood') || 'Хороший пароль',
+        strong: window.i18n?.t('auth.passwordStrong') || 'Надежный пароль'
     };
 
     strengthText.textContent = strengthTexts[strength];
@@ -446,68 +446,68 @@ registerForm.addEventListener('submit', async function(e) {
     let isValid = true;
 
     if (!firstName) {
-        showError('firstName', 'Введите имя');
+        showError('firstName', window.i18n?.t('validation.firstNameRequired') || 'Введите имя');
         isValid = false;
     } else if (!validateName(firstName)) {
-        showError('firstName', 'Имя должно содержать минимум 2 символа');
+        showError('firstName', window.i18n?.t('validation.firstNameMinLength') || 'Имя должно содержать минимум 2 символа');
         isValid = false;
     }
 
     if (!lastName) {
-        showError('lastName', 'Введите фамилию');
+        showError('lastName', window.i18n?.t('validation.lastNameRequired') || 'Введите фамилию');
         isValid = false;
     } else if (!validateName(lastName)) {
-        showError('lastName', 'Фамилия должна содержать минимум 2 символа');
+        showError('lastName', window.i18n?.t('validation.lastNameMinLength') || 'Фамилия должна содержать минимум 2 символа');
         isValid = false;
     }
 
     if (!birthDate) {
-        showError('birthDate', 'Введите дату рождения');
+        showError('birthDate', window.i18n?.t('validation.birthDateRequired') || 'Введите дату рождения');
         isValid = false;
     } else if (!validateBirthDate(birthDate)) {
-        showError('birthDate', 'Возраст должен быть от 14 до 120 лет');
+        showError('birthDate', window.i18n?.t('validation.ageRange') || 'Возраст должен быть от 14 до 120 лет');
         isValid = false;
     }
 
     if (!gender) {
-        showError('gender', 'Выберите пол');
+        showError('gender', window.i18n?.t('validation.genderRequired') || 'Выберите пол');
         isValid = false;
     }
 
     if (!email) {
-        showError('email', 'Введите email адрес');
+        showError('email', window.i18n?.t('validation.emailRequired') || 'Введите email адрес');
         isValid = false;
     } else if (!validateEmail(email)) {
-        showError('email', 'Введите корректный email адрес');
+        showError('email', window.i18n?.t('errors.invalidEmail') || 'Введите корректный email адрес');
         isValid = false;
     }
 
     if (!phone) {
-        showError('phone', 'Введите номер телефона');
+        showError('phone', window.i18n?.t('validation.phoneRequired') || 'Введите номер телефона');
         isValid = false;
     } else if (!validatePhone(phone)) {
-        showError('phone', 'Введите корректный номер телефона');
+        showError('phone', window.i18n?.t('validation.phoneInvalid') || 'Введите корректный номер телефона');
         isValid = false;
     }
 
     if (!password) {
-        showError('password', 'Введите пароль');
+        showError('password', window.i18n?.t('validation.passwordRequired') || 'Введите пароль');
         isValid = false;
     } else if (!validatePassword(password)) {
-        showError('password', 'Пароль должен содержать минимум 6 символов');
+        showError('password', window.i18n?.t('validation.passwordMinLength') || 'Пароль должен содержать минимум 6 символов');
         isValid = false;
     }
 
     if (!confirmPassword) {
-        showError('confirmPassword', 'Подтвердите пароль');
+        showError('confirmPassword', window.i18n?.t('validation.confirmPasswordRequired') || 'Подтвердите пароль');
         isValid = false;
     } else if (password !== confirmPassword) {
-        showError('confirmPassword', 'Пароли не совпадают');
+        showError('confirmPassword', window.i18n?.t('errors.passwordsDoNotMatch') || 'Пароли не совпадают');
         isValid = false;
     }
 
     if (!terms) {
-        showError('terms', 'Необходимо согласиться с условиями использования');
+        showError('terms', window.i18n?.t('validation.termsRequired') || 'Необходимо согласиться с условиями использования');
         isValid = false;
     }
 
@@ -534,24 +534,24 @@ registerForm.addEventListener('submit', async function(e) {
         if (authResponse && authResponse.user) {
             storeAuthData(authResponse);
 
-            showNotification('Регистрация успешно завершена! Добро пожаловать!', 'success');
+            showNotification(window.i18n?.t('auth.registrationSuccess') || 'Регистрация успешно завершена! Добро пожаловать!', 'success');
 
             setTimeout(() => {
                 window.location.href = '/';
             }, 2000);
         } else {
-            throw new Error('Неверный ответ от сервера');
+            throw new Error(window.i18n?.t('errors.invalidServerResponse') || 'Неверный ответ от сервера');
         }
 
     } catch (error) {
         console.error('Registration error:', error);
 
         if (error.message.includes('400') || error.message.includes('Bad Request')) {
-            showNotification('Пользователь с таким email или телефоном уже существует', 'error');
+            showNotification(window.i18n?.t('errors.userExists') || 'Пользователь с таким email или телефоном уже существует', 'error');
         } else if (error.message.includes('Network Error')) {
-            showNotification('Ошибка сети. Проверьте подключение к интернету.', 'error');
+            showNotification(window.i18n?.t('errors.networkError') || 'Ошибка сети. Проверьте подключение к интернету.', 'error');
         } else {
-            showNotification(error.message || 'Ошибка регистрации. Попробуйте еще раз.', 'error');
+            showNotification(error.message || (window.i18n?.t('errors.registrationError') || 'Ошибка регистрации. Попробуйте еще раз.'), 'error');
         }
 
         setLoadingState(false);
@@ -559,16 +559,16 @@ registerForm.addEventListener('submit', async function(e) {
 });
 
 document.querySelector('.social-google')?.addEventListener('click', function() {
-    showNotification('Функция регистрации через Google будет добавлена позже', 'info');
+    showNotification(window.i18n?.t('auth.googleComingSoon') || 'Функция регистрации через Google будет добавлена позже', 'info');
 });
 
 document.querySelector('.social-facebook')?.addEventListener('click', function() {
-    showNotification('Функция регистрации через Facebook будет добавлена позже', 'info');
+    showNotification(window.i18n?.t('auth.facebookComingSoon') || 'Функция регистрации через Facebook будет добавлена позже', 'info');
 });
 
 document.querySelector('.terms-link')?.addEventListener('click', function(e) {
     e.preventDefault();
-    showNotification('Страница с условиями использования будет добавлена позже', 'info');
+    showNotification(window.i18n?.t('auth.termsComingSoon') || 'Страница с условиями использования будет добавлена позже', 'info');
 });
 
 // ==============================================
@@ -614,7 +614,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const userData = getUserData();
     if (userData) {
-        showNotification('Вы уже входили в систему. Если Cookie валиден, вы будете аутентифицированы.', 'info');
+        showNotification(window.i18n?.t('auth.alreadyLoggedIn') || 'Вы уже входили в систему. Если Cookie валиден, вы будете аутентифицированы.', 'info');
     }
 
     const authCard = document.querySelector('.auth-card');

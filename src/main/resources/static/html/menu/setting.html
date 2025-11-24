@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Настройки - Отель "Райский уголок"</title>
+    <title data-i18n="settings.title">Настройки - Отель "Райский уголок"</title>
     <link rel="stylesheet" href="../../css/index.css">
     <link rel="stylesheet" href="../../css/menu/setting.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="../../js/i18n.js"></script>
     <script>
         // Apply theme immediately to prevent flash
         (function() {
@@ -23,7 +24,7 @@
             <div class="nav-container">
                 <div class="nav-logo">
                     <i class="fas fa-hotel"></i>
-                    <span>Райский уголок</span>
+                    <span data-i18n="common.hotelName">Райский уголок</span>
                 </div>
                 <div class="theme-toggle">
                     <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">
@@ -31,11 +32,11 @@
                     </button>
                 </div>
                 <ul class="nav-menu">
-                    <li><a href="/" class="nav-link">Главная</a></li>
-                    <li><a href="/#rooms" class="nav-link">Номера</a></li>
-                    <li><a href="/#services" class="nav-link">Услуги</a></li>
-                    <li><a href="aboutUs" class="nav-link">О нас</a></li>
-                    <li><a href="/#contact" class="nav-link">Контакты</a></li>
+                    <li><a href="/" class="nav-link" data-i18n="common.home">Главная</a></li>
+                    <li><a href="/#rooms" class="nav-link" data-i18n="common.rooms">Номера</a></li>
+                    <li><a href="/#services" class="nav-link" data-i18n="common.services">Услуги</a></li>
+                    <li><a href="aboutUs" class="nav-link" data-i18n="common.about">О нас</a></li>
+                    <li><a href="/#contact" class="nav-link" data-i18n="common.contact">Контакты</a></li>
                 </ul>
                 <div class="nav-auth">
                     <div class="user-profile">
@@ -45,7 +46,7 @@
                                 <div class="user-name" id="userName">Пользователь</div>
                                 <div class="user-wallet">
                                     <i class="fas fa-wallet"></i>
-                                    <span id="userWallet">0₽</span>
+                                    <span id="userWallet">0BYN</span>
                                 </div>
                             </div>
                         </div>
@@ -57,31 +58,31 @@
                                 <div class="dropdown-header">
                                     <div class="user-avatar-small" id="userAvatarSmall">👤</div>
                                     <div>
-                                        <div class="user-name-small" id="userNameSmall">Пользователь</div>
+                                        <div class="user-name-small" id="userNameSmall"></div>
                                         <div class="user-email-small" id="userEmailSmall">user@example.com</div>
                                     </div>
                                 </div>
                                 <div class="dropdown-divider"></div>
-                                <a href="profile.html" class="dropdown-item">
+                                <a href="/profile" class="dropdown-item">
                                     <i class="fas fa-user"></i>
-                                    Мой профиль
+                                    <span data-i18n="common.profile">Мой профиль</span>
                                 </a>
-                                <a href="booking.html" class="dropdown-item">
+                                <a href="/booking" class="dropdown-item">
                                     <i class="fas fa-calendar"></i>
-                                    Мои бронирования
+                                    <span data-i18n="common.bookings">Мои бронирования</span>
                                 </a>
-                                <a href="wallet.html" class="dropdown-item">
+                                <a href="/wallet" class="dropdown-item">
                                     <i class="fas fa-wallet"></i>
-                                    Кошелек
+                                    <span data-i18n="common.wallet">Кошелек</span>
                                 </a>
-                                <a href="setting.html" class="dropdown-item active">
+                                <a href="/setting" class="dropdown-item">
                                     <i class="fas fa-cog"></i>
-                                    Настройки
+                                    <span data-i18n="common.settings">Настройки</span>
                                 </a>
                                 <div class="dropdown-divider"></div>
                                 <a href="#" class="dropdown-item logout-item" onclick="logout()">
                                     <i class="fas fa-sign-out-alt"></i>
-                                    Выйти
+                                    <span data-i18n="common.logout">Выйти</span>
                                 </a>
                             </div>
                         </div>
@@ -100,18 +101,18 @@
     <main class="settings-main">
         <div class="container">
             <div class="settings-header">
-                <h1>Настройки</h1>
-                <p>Управляйте настройками вашего аккаунта</p>
+                <h1 data-i18n="settings.title">Настройки</h1>
+                <p data-i18n="settings.subtitle">Управляйте настройками вашего аккаунта</p>
             </div>
 
                 <div class="settings-card">
-                    <h2>Общие настройки</h2>
-                    <p>Основные параметры приложения</p>
+                    <h2 data-i18n="settings.general">Общие настройки</h2>
+                    <p data-i18n="settings.generalDesc">Основные параметры приложения</p>
                     <div class="settings-options">
                         <div class="setting-item">
                             <div class="setting-info">
-                                <h3>Тема оформления</h3>
-                                <p>Выберите светлую или темную тему</p>
+                                <h3 data-i18n="settings.theme">Тема оформления</h3>
+                                <p data-i18n="settings.themeDesc">Выберите светлую или темную тему</p>
                             </div>
                             <div class="setting-control">
                                 <label class="switch">
@@ -122,25 +123,25 @@
                         </div>
                         <div class="setting-item">
                             <div class="setting-info">
-                                <h3>Язык интерфейса</h3>
-                                <p>Выберите предпочитаемый язык</p>
+                                <h3 data-i18n="settings.language">Язык интерфейса</h3>
+                                <p data-i18n="settings.languageDesc">Выберите предпочитаемый язык</p>
                             </div>
                             <div class="setting-control">
                                 <select id="languageSetting">
-                                    <option value="ru" selected>Русский</option>
-                                    <option value="en">English</option>
+                                    <option value="ru" selected data-i18n="settings.russian">Русский</option>
+                                    <option value="en" data-i18n="settings.english">English</option>
                                 </select>
                             </div>
                         </div>
                         <div class="setting-item">
                             <div class="setting-info">
-                                <h3>Валюта</h3>
-                                <p>Выберите предпочитаемую валюту</p>
+                                <h3 data-i18n="settings.currency">Валюта</h3>
+                                <p data-i18n="settings.currencyDesc">Выберите предпочитаемую валюту</p>
                             </div>
                             <div class="setting-control">
                                 <select id="currencySetting">
-                                    <option value="BYN" selected>Белорусский рубль (BYN)</option>
-                                    <option value="USD">Доллар США (USD)</option>
+                                    <option value="BYN" selected data-i18n="settings.belarusRuble">Белорусский рубль (BYN)</option>
+                                    <option value="USD" data-i18n="settings.usd">Доллар США (USD)</option>
                                 </select>
                             </div>
                         </div>
@@ -148,13 +149,13 @@
                 </div>
 
                 <div class="settings-card">
-                    <h2>Конфиденциальность</h2>
-                    <p>Управление приватностью и безопасностью</p>
+                    <h2 data-i18n="settings.privacy">Конфиденциальность</h2>
+                    <p data-i18n="settings.privacyDesc">Управление приватностью и безопасностью</p>
                     <div class="settings-options">
                         <div class="setting-item">
                             <div class="setting-info">
-                                <h3>Аналитика</h3>
-                                <p>Разрешить сбор анонимной аналитики</p>
+                                <h3 data-i18n="settings.analytics">Аналитика</h3>
+                                <p data-i18n="settings.analyticsDesc">Разрешить сбор анонимной аналитики</p>
                             </div>
                             <div class="setting-control">
                                 <label class="switch">
