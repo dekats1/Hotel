@@ -474,3 +474,187 @@
         align-items: flex-start;
     }
 }
+
+/* Forgot Password Modal */
+.forgot-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 2000;
+}
+
+.forgot-modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.forgot-modal {
+    width: 100%;
+    max-width: 480px;
+    background: var(--bg-card);
+    border-radius: 20px;
+    box-shadow: var(--shadow-xl);
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: fadeInUp 0.35s ease;
+}
+
+.modal-header {
+    padding: 2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+    margin: 0 0 0.5rem;
+    color: var(--text-primary);
+}
+
+.modal-header p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.modal-body {
+    padding: 1.5rem 2rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.modal-status {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.modal-status.success {
+    border-color: rgba(16, 185, 129, 0.4);
+    background: rgba(16, 185, 129, 0.08);
+    color: #047857;
+}
+
+.modal-status.error {
+    border-color: rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.08);
+    color: #b91c1c;
+}
+
+.modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(148, 163, 184, 0.1);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--primary-color);
+}
+
+.forgot-form {
+    display: none;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.forgot-form.active {
+    display: flex;
+}
+
+.forgot-form-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.modal-btn {
+    flex: 1;
+    padding: 0.9rem 1rem;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.modal-btn.primary {
+    background: var(--gradient-primary);
+    color: white;
+    border-color: transparent;
+}
+
+.modal-btn.primary:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.modal-btn.ghost {
+    background: transparent;
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+.modal-btn.ghost:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.modal-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 540px) {
+    .forgot-modal {
+        max-width: 100%;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .forgot-form-actions {
+        flex-direction: column;
+    }
+
+    .modal-btn {
+        width: 100%;
+    }
+}

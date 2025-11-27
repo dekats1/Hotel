@@ -68,7 +68,7 @@
                             <span class="checkmark"></span>
                             <span class="checkbox-text" data-i18n="auth.rememberMe">Запомнить меня</span>
                         </label>
-                        <a href="#" class="forgot-link" data-i18n="auth.forgotPassword">Забыли пароль?</a>
+                        <a href="#" class="forgot-link" data-i18n="auth.forgotPassword" id="forgotPasswordTrigger">Забыли пароль?</a>
                     </div>
 
                     <button type="submit" class="auth-btn auth-btn-primary">
@@ -101,6 +101,76 @@
                         <span data-i18n="auth.backToHome">Вернуться на главную</span>
                     </a>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="forgot-modal-overlay" id="forgotPasswordModal" aria-hidden="true">
+        <div class="forgot-modal" role="dialog" aria-labelledby="forgotModalTitle">
+            <button type="button" class="modal-close" id="forgotModalClose" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header">
+                <h2 id="forgotModalTitle" data-i18n="auth.forgotModalTitle">Восстановление доступа</h2>
+                <p data-i18n="auth.forgotModalSubtitle">Укажите email, и мы отправим код подтверждения</p>
+            </div>
+            <div class="modal-body">
+                <div class="modal-status" id="forgotStatus" data-i18n="auth.forgotStatusHint">
+                    Введите email, который вы использовали при регистрации
+                </div>
+
+                <form id="forgotRequestForm" class="forgot-form active" data-step="request">
+                    <div class="form-group">
+                        <label for="forgotEmail" class="form-label">
+                            <i class="fas fa-envelope"></i>
+                            <span data-i18n="auth.email">Email</span>
+                        </label>
+                        <input type="email" id="forgotEmail" class="form-input" required data-i18n-placeholder="auth.enterEmail" placeholder="Введите ваш email">
+                    </div>
+                    <button type="submit" class="modal-btn primary" id="forgotRequestBtn">
+                        <span data-i18n="auth.sendResetCode">Отправить код</span>
+                    </button>
+                </form>
+
+                <form id="forgotResetForm" class="forgot-form" data-step="reset" aria-hidden="true">
+                    <div class="form-group">
+                        <label for="resetEmail" class="form-label">
+                            <i class="fas fa-envelope-open"></i>
+                            <span data-i18n="auth.email">Email</span>
+                        </label>
+                        <input type="email" id="resetEmail" class="form-input" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="verificationCode" class="form-label">
+                            <i class="fas fa-key"></i>
+                            <span data-i18n="auth.verificationCode">Код подтверждения</span>
+                        </label>
+                        <input type="text" id="verificationCode" class="form-input" data-i18n-placeholder="auth.enterVerificationCode" placeholder="Введите код" maxlength="6" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword" class="form-label">
+                            <i class="fas fa-lock"></i>
+                            <span data-i18n="auth.newPassword">Новый пароль</span>
+                        </label>
+                        <input type="password" id="newPassword" class="form-input" data-i18n-placeholder="auth.enterNewPassword" placeholder="Введите новый пароль" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmNewPassword" class="form-label">
+                            <i class="fas fa-lock"></i>
+                            <span data-i18n="auth.confirmNewPassword">Подтвердите пароль</span>
+                        </label>
+                        <input type="password" id="confirmNewPassword" class="form-input" data-i18n-placeholder="auth.confirmNewPassword" placeholder="Подтвердите пароль" required>
+                    </div>
+                    <div class="forgot-form-actions">
+                        <button type="button" class="modal-btn ghost" id="forgotBackBtn">
+                            <i class="fas fa-arrow-left"></i>
+                            <span data-i18n="auth.backToEmailStep">Назад</span>
+                        </button>
+                        <button type="submit" class="modal-btn primary" id="forgotResetBtn">
+                            <span data-i18n="auth.resetPasswordBtn">Сменить пароль</span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

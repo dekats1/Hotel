@@ -177,10 +177,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 
-    // НОВЫЙ ОБРАБОТЧИК ДЛЯ FAVICON
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<Void> handleNoResourceFoundException(NoResourceFoundException ex) {
-        // Игнорируем ошибку для favicon и других статических ресурсов
         if (ex.getMessage().contains("favicon.ico")) {
             log.debug("Favicon not found - ignoring");
         } else {

@@ -9,6 +9,20 @@ const rememberCheckbox = document.getElementById('remember');
 const submitBtn = document.querySelector('.auth-btn-primary');
 const API_BASE_URL = '/api';
 const USER_DATA_KEY = 'user_data';
+const forgotModal = document.getElementById('forgotPasswordModal');
+const forgotTrigger = document.getElementById('forgotPasswordTrigger');
+const forgotCloseBtn = document.getElementById('forgotModalClose');
+const forgotRequestForm = document.getElementById('forgotRequestForm');
+const forgotResetForm = document.getElementById('forgotResetForm');
+const forgotStatus = document.getElementById('forgotStatus');
+const forgotEmailInput = document.getElementById('forgotEmail');
+const resetEmailInput = document.getElementById('resetEmail');
+const verificationCodeInput = document.getElementById('verificationCode');
+const newPasswordModalInput = document.getElementById('newPassword');
+const confirmNewPasswordModalInput = document.getElementById('confirmNewPassword');
+const forgotBackBtn = document.getElementById('forgotBackBtn');
+const forgotRequestBtn = document.getElementById('forgotRequestBtn');
+const forgotResetBtn = document.getElementById('forgotResetBtn');
 
 // ==============================================
 // STORAGE FUNCTIONS
@@ -120,6 +134,66 @@ async function loginUser(credentials) {
 
     } catch (error) {
         console.error('Login error:', error);
+        throw error;
+    }
+}
+
+async function requestPasswordResetCode(email) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/password/forgot`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
+        });
+
+        if (!response.ok) {
+            let errorMessage = window.i18n?.t('errors.passwordResetError') || 'Не удалось отправить код подтверждения';
+
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                errorMessage = await response.text() || errorMessage;
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        return response.json();
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        throw error;
+    }
+}
+
+async function resetPasswordWithCode(payload) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/password/reset`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            let errorMessage = window.i18n?.t('errors.passwordResetError') || 'Не удалось обновить пароль';
+
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                errorMessage = await response.text() || errorMessage;
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        return response.json();
+    } catch (error) {
+        console.error('Reset password error:', error);
         throw error;
     }
 }
@@ -256,6 +330,83 @@ function setButtonLoading(button, isLoading) {
     }
 }
 
+function setModalButtonLoading(button, isLoading, textKey, fallbackText) {
+    if (!button) {
+        return;
+    }
+
+    if (isLoading) {
+        button.disabled = true;
+        button.dataset.originalText = button.innerHTML;
+        const loadingText = window.i18n?.t(textKey) || fallbackText;
+        button.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${loadingText}`;
+    } else {
+        button.disabled = false;
+        button.innerHTML = button.dataset.originalText || fallbackText;
+    }
+}
+
+function toggleForgotModal(show) {
+    if (!forgotModal) {
+        return;
+    }
+
+    if (show) {
+        forgotModal.classList.add('open');
+        forgotModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        const rememberedEmail = emailInput?.value?.trim();
+        if (rememberedEmail && forgotEmailInput) {
+            forgotEmailInput.value = rememberedEmail;
+        }
+        updateForgotStatus(window.i18n?.t('auth.forgotStatusHint') || 'Введите email, который вы использовали при регистрации');
+        setForgotStep('request');
+        forgotEmailInput?.focus();
+    } else {
+        forgotModal.classList.remove('open');
+        forgotModal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        forgotRequestForm?.reset();
+        forgotResetForm?.reset();
+        resetEmailInput && (resetEmailInput.value = '');
+    }
+}
+
+function setForgotStep(step) {
+    if (!forgotRequestForm || !forgotResetForm) {
+        return;
+    }
+
+    if (step === 'reset') {
+        forgotRequestForm.classList.remove('active');
+        forgotResetForm.classList.add('active');
+        forgotResetForm.setAttribute('aria-hidden', 'false');
+        forgotRequestForm.setAttribute('aria-hidden', 'true');
+        verificationCodeInput?.focus();
+    } else {
+        forgotResetForm.classList.remove('active');
+        forgotRequestForm.classList.add('active');
+        forgotRequestForm.setAttribute('aria-hidden', 'false');
+        forgotResetForm.setAttribute('aria-hidden', 'true');
+        forgotEmailInput?.focus();
+    }
+}
+
+function updateForgotStatus(message, type = 'info') {
+    if (!forgotStatus) {
+        return;
+    }
+
+    forgotStatus.textContent = message;
+    forgotStatus.classList.remove('success', 'error');
+
+    if (type === 'success') {
+        forgotStatus.classList.add('success');
+    } else if (type === 'error') {
+        forgotStatus.classList.add('error');
+    }
+}
+
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -321,6 +472,156 @@ if (loginForm) {
         } catch (error) {
             showNotification(error.message, 'error');
             setButtonLoading(submitBtn, false);
+        }
+    });
+}
+
+if (forgotTrigger) {
+    forgotTrigger.addEventListener('click', (event) => {
+        event.preventDefault();
+        toggleForgotModal(true);
+    });
+}
+
+if (forgotCloseBtn) {
+    forgotCloseBtn.addEventListener('click', () => toggleForgotModal(false));
+}
+
+if (forgotModal) {
+    forgotModal.addEventListener('click', (event) => {
+        if (event.target === forgotModal) {
+            toggleForgotModal(false);
+        }
+    });
+}
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && forgotModal?.classList.contains('open')) {
+        toggleForgotModal(false);
+    }
+});
+
+if (forgotBackBtn) {
+    forgotBackBtn.addEventListener('click', () => {
+        setForgotStep('request');
+        updateForgotStatus(window.i18n?.t('auth.forgotStatusHint') || 'Введите email, который вы использовали при регистрации');
+    });
+}
+
+if (forgotRequestForm) {
+    forgotRequestForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const email = forgotEmailInput?.value.trim();
+        if (!email || !isValidEmail(email)) {
+            const invalidEmailMessage = window.i18n?.t('errors.invalidEmail') || 'Пожалуйста, введите корректный email';
+            updateForgotStatus(invalidEmailMessage, 'error');
+            showNotification(invalidEmailMessage, 'error');
+            return;
+        }
+
+        setModalButtonLoading(
+            forgotRequestBtn,
+            true,
+            'auth.sendingCode',
+            window.i18n?.t('auth.sendingCode') || 'Отправляем...'
+        );
+
+        try {
+            await requestPasswordResetCode(email);
+            resetEmailInput && (resetEmailInput.value = email);
+
+            const successMessage = `${window.i18n?.t('auth.resetCodeSentHint') || 'Код отправлен на адрес'} ${email}`;
+            updateForgotStatus(successMessage, 'success');
+            showNotification(window.i18n?.t('auth.resetCodeSent') || 'Код успешно отправлен', 'success');
+
+            setForgotStep('reset');
+        } catch (error) {
+            updateForgotStatus(error.message, 'error');
+            showNotification(error.message, 'error');
+        } finally {
+            setModalButtonLoading(
+                forgotRequestBtn,
+                false,
+                'auth.sendResetCode',
+                window.i18n?.t('auth.sendResetCode') || 'Отправить код'
+            );
+        }
+    });
+}
+
+if (forgotResetForm) {
+    forgotResetForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const email = resetEmailInput?.value.trim();
+        const code = verificationCodeInput?.value.trim();
+        const newPassword = newPasswordModalInput?.value || '';
+        const confirmPassword = confirmNewPasswordModalInput?.value || '';
+
+        if (!email) {
+            updateForgotStatus(window.i18n?.t('auth.forgotStatusHint') || 'Введите email, который вы использовали при регистрации', 'error');
+            setForgotStep('request');
+            return;
+        }
+
+        if (!code) {
+            const codeMessage = window.i18n?.t('validation.verificationCodeRequired') || 'Введите код подтверждения';
+            updateForgotStatus(codeMessage, 'error');
+            showNotification(codeMessage, 'error');
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            const passwordMessage = window.i18n?.t('validation.passwordMinLength') || 'Пароль должен содержать минимум 6 символов';
+            updateForgotStatus(passwordMessage, 'error');
+            showNotification(passwordMessage, 'error');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            const mismatchMessage = window.i18n?.t('errors.passwordsDoNotMatch') || 'Пароли не совпадают';
+            updateForgotStatus(mismatchMessage, 'error');
+            showNotification(mismatchMessage, 'error');
+            return;
+        }
+
+        setModalButtonLoading(
+            forgotResetBtn,
+            true,
+            'auth.resettingPassword',
+            window.i18n?.t('auth.resettingPassword') || 'Обновляем...'
+        );
+
+        try {
+            await resetPasswordWithCode({
+                email,
+                code,
+                newPassword,
+                confirmPassword
+            });
+
+            const successMessage = window.i18n?.t('auth.passwordResetSuccess') || 'Пароль успешно обновлен. Войдите с новым паролем.';
+            updateForgotStatus(successMessage, 'success');
+            showNotification(successMessage, 'success');
+
+            if (emailInput) {
+                emailInput.value = email;
+            }
+
+            setTimeout(() => {
+                toggleForgotModal(false);
+            }, 800);
+        } catch (error) {
+            updateForgotStatus(error.message, 'error');
+            showNotification(error.message, 'error');
+        } finally {
+            setModalButtonLoading(
+                forgotResetBtn,
+                false,
+                'auth.resetPasswordBtn',
+                window.i18n?.t('auth.resetPasswordBtn') || 'Сменить пароль'
+            );
         }
     });
 }

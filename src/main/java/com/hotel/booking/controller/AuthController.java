@@ -1,16 +1,25 @@
 package com.hotel.booking.controller;
 
+import com.hotel.booking.dto.request.auth.ForgotPasswordRequest;
 import com.hotel.booking.dto.request.auth.LoginRequest;
 import com.hotel.booking.dto.request.auth.RegisterRequest;
+import com.hotel.booking.dto.request.auth.ResetPasswordRequest;
 import com.hotel.booking.dto.response.auth.AuthResponse;
+import com.hotel.booking.exception.BadRequestException;
 import com.hotel.booking.service.AuthService;
+import com.hotel.booking.service.PasswordResetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -19,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
     private static final int COOKIE_MAX_AGE = 24 * 60 * 60;
     private static final String JWT_COOKIE_NAME = "auth_jwt";
@@ -75,5 +85,24 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .build();
+    }
+
+    @PostMapping("/password/forgot")
+    public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        log.info("Forgot password request for: {}", request.getEmail());
+        passwordResetService.requestPasswordReset(request.getEmail());
+        return ResponseEntity.ok(Map.of("message", "Код для восстановления пароля отправлен на email"));
+    }
+
+    @PostMapping("/password/reset")
+    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        log.info("Reset password request for: {}", request.getEmail());
+
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new BadRequestException("Пароли не совпадают");
+        }
+
+        passwordResetService.resetPassword(request.getEmail(), request.getCode(), request.getNewPassword());
+        return ResponseEntity.ok(Map.of("message", "Пароль успешно обновлен"));
     }
 }

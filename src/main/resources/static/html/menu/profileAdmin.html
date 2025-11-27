@@ -30,10 +30,7 @@
                     <i class="fas fa-sun" id="themeIcon"></i>
                 </button>
             </div>
-            <ul class="nav-menu">
-                <li><a href="/home" class="nav-link" data-i18n="common.home">Главная</a></li>
-                <li><a href="/profile" class="nav-link" data-i18n="common.profile">Профиль</a></li>
-            </ul>
+            <!-- Убрано навигационное меню -->
             <div class="nav-auth">
                 <div class="user-profile">
                     <div class="user-info">
@@ -46,31 +43,10 @@
                         </div>
                     </div>
                     <div class="user-menu">
-                        <div class="user-dropdown" id="userDropdown">
-                            <div class="dropdown-header">
-                                <div class="user-avatar-small" id="userAvatarSmall">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                                <div>
-                                    <div class="user-name-small" id="userNameSmall" data-i18n="admin.administrator">Администратор</div>
-                                    <div class="user-email-small" id="userEmailSmall">admin@hotel.com</div>
-                                </div>
-                            </div>
-                            <div class="dropdown-divider"></div>
-                            <a href="/profile" class="dropdown-item">
-                                <i class="fas fa-user"></i>
-                                <span data-i18n="common.profile">Мой профиль</span>
-                            </a>
-                            <a href="/home" class="dropdown-item">
-                                <i class="fas fa-home"></i>
-                                <span data-i18n="admin.toHome">На главную</span>
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a href="#" class="dropdown-item logout-item" onclick="logout()">
-                                <i class="fas fa-sign-out-alt"></i>
-                                <span data-i18n="common.logout">Выйти</span>
-                            </a>
-                        </div>
+                        <button class="btn-auth btn-logout" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span data-i18n="common.logout">Выйти</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -346,6 +322,7 @@
     </div>
 </main>
 
+<!-- Все модальные окна остаются без изменений -->
 <!-- User Create Modal -->
 <div id="userCreateModal" class="modal">
     <div class="modal-content">

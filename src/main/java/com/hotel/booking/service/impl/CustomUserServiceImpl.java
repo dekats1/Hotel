@@ -1,4 +1,4 @@
-package com.hotel.booking.security;
+package com.hotel.booking.service.impl;
 
 import com.hotel.booking.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

@@ -122,6 +122,97 @@ async function loadUserData() {
     }
 }
 
+// ==============================================
+// UPDATE UI
+// ==============================================
+
+function updateUserInterface() {
+    if (!currentUser) return;
+
+    // Update navigation for logged in user
+    updateNavigationForLoggedInUser(currentUser);
+
+    // Update user info in settings if needed
+    updateUserInfoInSettings();
+}
+
+function updateNavigationForLoggedInUser(user) {
+    const navAuth = document.querySelector('.nav-auth');
+    if (!navAuth) return;
+
+    navAuth.innerHTML = `
+        <div class="user-profile">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">${user.avatar || '👤'}</div>
+                <div class="user-details">
+                    <div class="user-name" id="userName">${user.name || (window.i18n?.t('common.user') || 'Пользователь')}</div>
+                    <div class="user-wallet">
+                        <i class="fas fa-wallet"></i>
+                        <span id="navWalletAmount">${formatCurrency(user.wallet || 0)}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="user-menu">
+                <button class="btn-auth btn-user" onclick="toggleUserMenu()">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-header">
+                        <div class="user-avatar-small">${user.avatar || '👤'}</div>
+                        <div>
+                            <div class="user-name-small">${user.name || (window.i18n?.t('common.user') || 'Пользователь')}</div>
+                            <div class="user-email-small">${user.email || ''}</div>
+                        </div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a href="/profile" class="dropdown-item">
+                        <i class="fas fa-user"></i>
+                        ${window.i18n?.t('common.profile') || 'Мой профиль'}
+                    </a>
+                    <a href="/booking" class="dropdown-item">
+                        <i class="fas fa-calendar"></i>
+                        ${window.i18n?.t('common.bookings') || 'Мои бронирования'}
+                    </a>
+                    <a href="/wallet" class="dropdown-item">
+                        <i class="fas fa-wallet"></i>
+                        ${window.i18n?.t('common.wallet') || 'Кошелек'}
+                    </a>
+                    <a href="/setting" class="dropdown-item active">
+                        <i class="fas fa-cog"></i>
+                        ${window.i18n?.t('common.settings') || 'Настройки'}
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item logout-item" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        ${window.i18n?.t('common.logout') || 'Выйти'}
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function updateUserInfoInSettings() {
+    if (!currentUser) return;
+
+    // Update user stats if they exist on the settings page
+    const statsElements = {
+        'userBookingsCount': currentUser.stats?.bookings || 0,
+        'userRating': currentUser.stats?.rating || 4.9,
+        'userYearsWithUs': currentUser.stats?.yearsWithUs || 1
+    };
+
+    Object.entries(statsElements).forEach(([elementId, value]) => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = value;
+        }
+    });
+
+    // Update currency displays
+    updateAllCurrencyDisplays();
+}
+
 function transformUserData(apiData) {
     return {
         id: apiData.id,

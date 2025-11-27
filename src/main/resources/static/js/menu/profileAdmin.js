@@ -14,6 +14,7 @@ let rooms = [];
 let reviews = [];
 let bookings = [];
 let currentEditId = null;
+const USER_KEY = 'user_data';
 
 document.addEventListener('DOMContentLoaded', function () {
     initializeAdmin();
@@ -44,6 +45,11 @@ document.getElementById('roomPhotos')?.addEventListener('change', function () {
     });
 });
 
+function removeAuthData() {
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem('auth_token');
+}
+
 function setupEventListeners() {
     setupSearchAndFilters();
 
@@ -52,6 +58,7 @@ function setupEventListeners() {
             if (userDropdown) userDropdown.classList.remove('show');
         }
     });
+
 }
 
 function initializeAdmin() {
@@ -103,13 +110,15 @@ function setupSearchAndFilters() {
 async function apiCall(endpoint, options = {}) {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json', ...options.headers },
+        headers: {'Content-Type': 'application/json', ...options.headers},
         ...options
     });
 
     if (response.status === 401) {
         showNotification(window.i18n?.t('errors.sessionExpired') || 'Сессия истекла. Пожалуйста, войдите снова.', 'error');
-        setTimeout(() => { window.location.href = '/login'; }, 2000);
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, 2000);
         throw new Error(window.i18n?.t('errors.authRequired') || 'Требуется авторизация');
     }
     if (response.status === 403) {
@@ -136,12 +145,18 @@ async function apiCall(endpoint, options = {}) {
 }
 
 function getUserDataFromStorage() {
-    try { return JSON.parse(localStorage.getItem('user_data') || 'null'); }
-    catch { return null; }
+    try {
+        return JSON.parse(localStorage.getItem('user_data') || 'null');
+    } catch {
+        return null;
+    }
 }
+
 function saveUserDataToStorage(userData) {
-    try { localStorage.setItem('user_data', JSON.stringify(userData)); }
-    catch {}
+    try {
+        localStorage.setItem('user_data', JSON.stringify(userData));
+    } catch {
+    }
 }
 
 async function loadUserData() {
@@ -150,7 +165,13 @@ async function loadUserData() {
     try {
         const data = await apiCall('/users/profile');
         currentUser = transformUserData(data);
-        const basic = { id: currentUser.id, email: currentUser.email, firstName: currentUser.firstName, lastName: currentUser.lastName, role: data.role || 'ADMIN' };
+        const basic = {
+            id: currentUser.id,
+            email: currentUser.email,
+            firstName: currentUser.firstName,
+            lastName: currentUser.lastName,
+            role: data.role || 'ADMIN'
+        };
         saveUserDataToStorage(basic);
         updateUserInterface();
     } catch (error) {
@@ -237,7 +258,7 @@ async function loadDashboardData() {
             apiCall('/reviews')
         ]);
 
-        console.log('📊 Data loaded:', { usersData, roomsData, bookingsData, reviewsData });
+        console.log('📊 Data loaded:', {usersData, roomsData, bookingsData, reviewsData});
 
         users = usersData;
         rooms = roomsData;
@@ -273,16 +294,16 @@ function updateRecentBookings() {
         return;
     }
     container.innerHTML = recent.map(b => `
-    <div class="recent-item">
-      <div class="recent-item-info">
-        <h4>${escapeHtml(b.userEmail || '')} • ${window.i18n?.t('admin.room') || 'Комната'} ${escapeHtml(b.roomNumber || '')}</h4>
-        <p>${formatDate(b.checkInDate)} — ${formatDate(b.checkOutDate)}</p>
-      </div>
-      <div class="recent-item-status">
-        <span class="status-badge ${getBookingStatusClass(b.status)}">${getBookingStatusText(b.status)}</span>
-      </div>
-    </div>
-  `).join('');
+        <div class="recent-item">
+          <div class="recent-item-info">
+            <h4>${escapeHtml(b.userEmail || '')} • ${window.i18n?.t('admin.room') || 'Комната'} ${escapeHtml(b.roomNumber || '')}</h4>
+            <p>${formatDate(b.checkInDate)} — ${formatDate(b.checkOutDate)}</p>
+          </div>
+          <div class="recent-item-status">
+            <span class="status-badge ${getBookingStatusClass(b.status)}">${getBookingStatusText(b.status)}</span>
+          </div>
+        </div>
+      `).join('');
 }
 
 function updateRoomStats() {
@@ -299,15 +320,15 @@ function updateRoomStats() {
     const container = document.getElementById('roomStats');
     if (!container) return;
     container.innerHTML = `
-    <div class="room-stat"><h4>${stats.total}</h4><p>${window.i18n?.t('admin.total') || 'Всего'}</p></div>
-    <div class="room-stat"><h4>${stats.active}</h4><p>${window.i18n?.t('admin.active') || 'Активные'}</p></div>
-    <div class="room-stat"><h4>${stats.inactive}</h4><p>${window.i18n?.t('admin.inactive') || 'Неактивные'}</p></div>
-    <div class="room-stat"><h4>${stats.standard}</h4><p>${window.i18n?.t('roomTypes.STANDARD') || 'Стандарт'}</p></div>
-    <div class="room-stat"><h4>${stats.deluxe}</h4><p>${window.i18n?.t('roomTypes.DELUXE') || 'Делюкс'}</p></div>
-    <div class="room-stat"><h4>${stats.suite}</h4><p>${window.i18n?.t('roomTypes.SUITE') || 'Люкс'}</p></div>
-    <div class="room-stat"><h4>${stats.apartment}</h4><p>${window.i18n?.t('roomTypes.APARTMENT') || 'Апартаменты'}</p></div>
-    <div class="room-stat"><h4>${stats.penthouse}</h4><p>${window.i18n?.t('roomTypes.PENTHOUSE') || 'Пентхаус'}</p></div>
-  `;
+        <div class="room-stat"><h4>${stats.total}</h4><p>${window.i18n?.t('admin.total') || 'Всего'}</p></div>
+        <div class="room-stat"><h4>${stats.active}</h4><p>${window.i18n?.t('admin.active') || 'Активные'}</p></div>
+        <div class="room-stat"><h4>${stats.inactive}</h4><p>${window.i18n?.t('admin.inactive') || 'Неактивные'}</p></div>
+        <div class="room-stat"><h4>${stats.standard}</h4><p>${window.i18n?.t('roomTypes.STANDARD') || 'Стандарт'}</p></div>
+        <div class="room-stat"><h4>${stats.deluxe}</h4><p>${window.i18n?.t('roomTypes.DELUXE') || 'Делюкс'}</p></div>
+        <div class="room-stat"><h4>${stats.suite}</h4><p>${window.i18n?.t('roomTypes.SUITE') || 'Люкс'}</p></div>
+        <div class="room-stat"><h4>${stats.apartment}</h4><p>${window.i18n?.t('roomTypes.APARTMENT') || 'Апартаменты'}</p></div>
+        <div class="room-stat"><h4>${stats.penthouse}</h4><p>${window.i18n?.t('roomTypes.PENTHOUSE') || 'Пентхаус'}</p></div>
+      `;
 }
 
 // ==================== USERS ====================
@@ -331,21 +352,21 @@ function displayUsers(list) {
         return;
     }
     tbody.innerHTML = list.map(u => `
-    <tr>
-      <td>${u.id}</td>
-      <td>${escapeHtml(`${u.firstName || ''} ${u.lastName || ''}`.trim())}</td>
-      <td>${escapeHtml(u.email || '')}</td>
-      <td>${escapeHtml(u.role || '')}</td>
-      <td><span class="status-badge ${u.isActive ? 'active' : 'inactive'}">${u.isActive ? (window.i18n?.t('admin.activeStatus') || 'Активен') : (window.i18n?.t('admin.inactiveStatus') || 'Неактивен')}</span></td>
-      <td>${formatDate(u.createdAt)}</td>
-      <td>
-        <div class="action-buttons">
-          <button class="btn-action btn-edit" onclick="editUser('${u.id}')"><i class="fas fa-edit"></i></button>
-          <button class="btn-action btn-delete" onclick="deleteUser('${u.id}')"><i class="fas fa-trash"></i></button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+        <tr>
+          <td>${u.id}</td>
+          <td>${escapeHtml(`${u.firstName || ''} ${u.lastName || ''}`.trim())}</td>
+          <td>${escapeHtml(u.email || '')}</td>
+          <td>${escapeHtml(u.role || '')}</td>
+          <td><span class="status-badge ${u.isActive ? 'active' : 'inactive'}">${u.isActive ? (window.i18n?.t('admin.activeStatus') || 'Активен') : (window.i18n?.t('admin.inactiveStatus') || 'Неактивен')}</span></td>
+          <td>${formatDate(u.createdAt)}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-action btn-edit" onclick="editUser('${u.id}')"><i class="fas fa-edit"></i></button>
+              <button class="btn-action btn-delete" onclick="deleteUser('${u.id}')"><i class="fas fa-trash"></i></button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
 }
 
 function filterUsers() {
@@ -376,7 +397,7 @@ function openUserCreateModal() {
     form.reset();
     modal.classList.add('show');
 
-    form.onsubmit = async function(e) {
+    form.onsubmit = async function (e) {
         e.preventDefault();
         const formData = new FormData(form);
 
@@ -457,7 +478,7 @@ async function editUser(userId) {
 
     modal.classList.add('show');
 
-    form.onsubmit = async function(e) {
+    form.onsubmit = async function (e) {
         e.preventDefault();
         const formData = new FormData(form);
 
@@ -506,7 +527,7 @@ async function deleteUser(id) {
 
     showLoading(true);
     try {
-        await apiCall(`/users/${id}`, { method: 'DELETE' });
+        await apiCall(`/users/${id}`, {method: 'DELETE'});
         showNotification(window.i18n?.t('admin.userDeleted') || 'Пользователь успешно удален', 'success');
         loadUsers();
     } catch (e) {
@@ -538,21 +559,21 @@ function displayRooms(roomsToShow) {
         return;
     }
     tbody.innerHTML = roomsToShow.map(room => `
-    <tr>
-      <td>${room.id}</td>
-      <td>${escapeHtml(room.roomNumber || '')}</td>
-      <td>${getRoomTypeText(room.type)}</td>
-      <td>${formatMoney(room.basePrice)}</td>
-      <td><span class="status-badge ${room.isActive ? 'active' : 'inactive'}">${room.isActive ? (window.i18n?.t('admin.available') || 'Свободна') : (window.i18n?.t('admin.occupied') || 'Занята')}</span></td>
-      <td>${room.capacity ?? ''}</td>
-      <td>
-        <div class="action-buttons">
-          <button class="btn-action btn-edit" onclick="editRoom('${room.id}')"><i class="fas fa-edit"></i></button>
-          <button class="btn-action btn-delete" onclick="deleteRoom('${room.id}')"><i class="fas fa-trash"></i></button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+        <tr>
+          <td>${room.id}</td>
+          <td>${escapeHtml(room.roomNumber || '')}</td>
+          <td>${getRoomTypeText(room.type)}</td>
+          <td>${formatMoney(room.basePrice)}</td>
+          <td><span class="status-badge ${room.isActive ? 'active' : 'inactive'}">${room.isActive ? (window.i18n?.t('admin.available') || 'Свободна') : (window.i18n?.t('admin.occupied') || 'Занята')}</span></td>
+          <td>${room.capacity ?? ''}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-action btn-edit" onclick="editRoom('${room.id}')"><i class="fas fa-edit"></i></button>
+              <button class="btn-action btn-delete" onclick="deleteRoom('${room.id}')"><i class="fas fa-trash"></i></button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
 }
 
 function filterRooms() {
@@ -661,11 +682,11 @@ async function onRoomFormSubmit(e) {
 
     const nameRu = formData.get('nameRu');
     const descRu = formData.get('descriptionRu');
-    if (nameRu || descRu) payload.translations.RU = { name: nameRu || '', description: descRu || '' };
+    if (nameRu || descRu) payload.translations.RU = {name: nameRu || '', description: descRu || ''};
 
     const nameEn = formData.get('nameEn');
     const descEn = formData.get('descriptionEn');
-    if (nameEn || descEn) payload.translations.EN = { name: nameEn || '', description: descEn || '' };
+    if (nameEn || descEn) payload.translations.EN = {name: nameEn || '', description: descEn || ''};
 
     const fileInput = document.getElementById('roomPhotos');
     const files = fileInput?.files || [];
@@ -674,9 +695,9 @@ async function onRoomFormSubmit(e) {
     try {
         let roomId = currentEditId;
         if (currentEditId) {
-            await apiCall(`/rooms/${currentEditId}`, { method: 'PUT', body: JSON.stringify(payload) });
+            await apiCall(`/rooms/${currentEditId}`, {method: 'PUT', body: JSON.stringify(payload)});
         } else {
-            const created = await apiCall('/rooms', { method: 'POST', body: JSON.stringify(payload) });
+            const created = await apiCall('/rooms', {method: 'POST', body: JSON.stringify(payload)});
             roomId = created?.id;
             if (!roomId) throw new Error(window.i18n?.t('errors.roomIdNotFound') || 'Не получен ID созданного номера');
         }
@@ -729,7 +750,7 @@ function getRoomTypeText(type) {
 async function deleteRoom(id) {
     if (!confirm(window.i18n?.t('admin.confirmDeleteRoom') || 'Удалить номер?')) return;
     try {
-        await apiCall(`/rooms/${id}`, { method: 'DELETE' });
+        await apiCall(`/rooms/${id}`, {method: 'DELETE'});
         showNotification(window.i18n?.t('admin.roomDeleted') || 'Номер удален', 'success');
         loadRooms();
     } catch (e) {
@@ -816,7 +837,7 @@ async function setPrimaryRoomPhoto(photoId) {
         showNotification(window.i18n?.t('admin.primaryPhotoUpdated') || 'Основное фото обновлено', 'success');
         const room = rooms.find(r => r.id === currentEditId);
         if (room && room.photos) {
-            room.photos = room.photos.map(p => ({ ...p, isPrimary: p.id === photoId }));
+            room.photos = room.photos.map(p => ({...p, isPrimary: p.id === photoId}));
             loadRoomPhotos(room.photos);
         }
     } catch (e) {
@@ -862,26 +883,26 @@ function displayReviews(list) {
         }
 
         return `
-            <tr>
-                <td>${r.id}</td>
-                <td>${escapeHtml(r.userName || r.userId)}</td>
-                <td>${escapeHtml(r.roomNumber || r.roomId)}</td>
-                <td>${r.rating ?? '-'}</td>
-                <td>${escapeHtml(r.comment)}</td>
-                <td><span class="status-badge ${statusBadge}">${statusText}</span></td>
-                <td>${formatDate(r.createdAt)}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-view" onclick="openReviewModal('${r.id}')">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn-action btn-delete" onclick="deleteReview('${r.id}')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
+                <tr>
+                    <td>${r.id}</td>
+                    <td>${escapeHtml(r.userName || r.userId)}</td>
+                    <td>${escapeHtml(r.roomNumber || r.roomId)}</td>
+                    <td>${r.rating ?? '-'}</td>
+                    <td>${escapeHtml(r.comment)}</td>
+                    <td><span class="status-badge ${statusBadge}">${statusText}</span></td>
+                    <td>${formatDate(r.createdAt)}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-view" onclick="openReviewModal('${r.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-action btn-delete" onclick="deleteReview('${r.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
     }).join('');
 }
 
@@ -914,14 +935,14 @@ function openReviewModal(reviewId) {
     const modal = document.getElementById('reviewModal');
     const details = document.getElementById('reviewDetails');
     details.innerHTML = `
-    <div class="detail-row"><strong>${window.i18n?.t('admin.user') || 'Пользователь'}:</strong> ${escapeHtml(review.userName || review.userId || '')}</div>
-    <div class="detail-row"><strong>${window.i18n?.t('admin.room') || 'Номер'}:</strong> ${escapeHtml(review.roomNumber || review.roomId || '')}</div>
-    <div class="detail-row"><strong>${window.i18n?.t('admin.rating') || 'Оценка'}:</strong> ${review.rating ?? ''}</div>
-    <div class="detail-row"><strong>${window.i18n?.t('admin.comment') || 'Комментарий'}:</strong> ${escapeHtml(review.comment || '')}</div>
-    <div class="detail-row"><strong>${window.i18n?.t('admin.status') || 'Статус'}:</strong> ${review.isApproved ? (window.i18n?.t('admin.approved') || 'Одобрен') : (window.i18n?.t('admin.pending') || 'На модерации')}</div>
-    <div class="detail-row"><strong>${window.i18n?.t('admin.visibility') || 'Видимость'}:</strong> ${review.isVisible ? (window.i18n?.t('admin.visible') || 'Виден') : (window.i18n?.t('admin.hidden') || 'Скрыт')}</div>
-    <div class="detail-row"><strong>${window.i18n?.t('admin.date') || 'Дата'}:</strong> ${formatDate(review.createdAt)}</div>
-  `;
+        <div class="detail-row"><strong>${window.i18n?.t('admin.user') || 'Пользователь'}:</strong> ${escapeHtml(review.userName || review.userId || '')}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.room') || 'Номер'}:</strong> ${escapeHtml(review.roomNumber || review.roomId || '')}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.rating') || 'Оценка'}:</strong> ${review.rating ?? ''}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.comment') || 'Комментарий'}:</strong> ${escapeHtml(review.comment || '')}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.status') || 'Статус'}:</strong> ${review.isApproved ? (window.i18n?.t('admin.approved') || 'Одобрен') : (window.i18n?.t('admin.pending') || 'На модерации')}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.visibility') || 'Видимость'}:</strong> ${review.isVisible ? (window.i18n?.t('admin.visible') || 'Виден') : (window.i18n?.t('admin.hidden') || 'Скрыт')}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.date') || 'Дата'}:</strong> ${formatDate(review.createdAt)}</div>
+      `;
     modal.dataset.reviewId = reviewId;
     modal.classList.add('show');
 }
@@ -937,7 +958,7 @@ async function approveReview() {
     const id = modal.dataset.reviewId;
     if (!id) return;
     try {
-        await apiCall(`/reviews/${id}/approve?isApproved=true`, { method: 'PUT' });
+        await apiCall(`/reviews/${id}/approve?isApproved=true`, {method: 'PUT'});
         showNotification(window.i18n?.t('admin.reviewApproved') || 'Отзыв одобрен', 'success');
         closeReviewModal();
 
@@ -952,8 +973,8 @@ async function rejectReview() {
     const id = modal.dataset.reviewId;
     if (!id) return;
     try {
-        await apiCall(`/reviews/${id}/approve?isApproved=false`, { method: 'PUT' });
-        await apiCall(`/reviews/${id}/visibility?isVisible=false`, { method: 'PUT' });
+        await apiCall(`/reviews/${id}/approve?isApproved=false`, {method: 'PUT'});
+        await apiCall(`/reviews/${id}/visibility?isVisible=false`, {method: 'PUT'});
         showNotification(window.i18n?.t('admin.reviewRejected') || 'Отзыв отклонён', 'success');
         closeReviewModal();
 
@@ -967,7 +988,7 @@ async function rejectReview() {
 async function deleteReview(id) {
     if (!confirm(window.i18n?.t('admin.confirmDeleteReview') || 'Удалить отзыв?')) return;
     try {
-        await apiCall(`/reviews/${id}`, { method: 'DELETE' });
+        await apiCall(`/reviews/${id}`, {method: 'DELETE'});
         showNotification(window.i18n?.t('admin.reviewDeleted') || 'Отзыв удален', 'success');
         loadReviews();
     } catch (e) {
@@ -1000,58 +1021,58 @@ function displayBookings(list) {
         const isFinalized = b.status === 'CHECKED_OUT' || b.status === 'CANCELLED';
 
         return `
-    <tr>
-      <td>${b.id}</td>
-      <td>${escapeHtml(b.userEmail || b.userId || '')}</td>
-      <td>${escapeHtml(b.roomNumber || b.roomId || '')}</td>
-      <td>${formatDate(b.checkInDate)}</td>
-      <td>${formatDate(b.checkOutDate)}</td>
-      <td>${formatMoney(b.totalPrice)}</td>
-      <td><span class="status-badge ${getBookingStatusClass(b.status)}">${getBookingStatusText(b.status)}</span></td>
-      <td>
-        <div class="action-buttons">
-          <button 
-            class="btn-action btn-view" 
-            onclick="openBookingModal('${b.id}')" 
-            title="${window.i18n?.t('admin.view') || 'Просмотр'}">
-            <i class="fas fa-eye"></i>
-          </button>
-          <button 
-            class="btn-action btn-success" 
-            onclick="confirmBooking('${b.id}')" 
-            ${isFinalized || b.status === 'CONFIRMED' || b.status === 'CHECKED_IN' ? 'disabled' : ''}
-            title="${window.i18n?.t('admin.confirm') || 'Подтвердить'}"
-            ${isFinalized || b.status === 'CONFIRMED' || b.status === 'CHECKED_IN' ? 'style="opacity:0.5;cursor:not-allowed"' : ''}>
-            <i class="fas fa-check"></i>
-          </button>
-          <button 
-            class="btn-action btn-warning" 
-            onclick="checkInBooking('${b.id}')" 
-            ${isFinalized || b.status === 'CHECKED_IN' || b.status === 'PENDING' ? 'disabled' : ''}
-            title="${window.i18n?.t('admin.checkIn') || 'Заселить'}"
-            ${isFinalized || b.status === 'CHECKED_IN' || b.status === 'PENDING' ? 'style="opacity:0.5;cursor:not-allowed"' : ''}>
-            <i class="fas fa-sign-in-alt"></i>
-          </button>
-          <button 
-            class="btn-action btn-info" 
-            onclick="checkOutBooking('${b.id}')" 
-            ${isFinalized || b.status !== 'CHECKED_IN' ? 'disabled' : ''}
-            title="${window.i18n?.t('admin.checkOut') || 'Выселить'}"
-            ${isFinalized || b.status !== 'CHECKED_IN' ? 'style="opacity:0.5;cursor:not-allowed"' : ''}>
-            <i class="fas fa-sign-out-alt"></i>
-          </button>
-          <button 
-            class="btn-action btn-danger" 
-            onclick="cancelBooking('${b.id}')" 
-            ${isFinalized ? 'disabled' : ''}
-            title="${window.i18n?.t('admin.cancel') || 'Отменить'}"
-            ${isFinalized ? 'style="opacity:0.5;cursor:not-allowed"' : ''}>
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      </td>
-    </tr>
-  `;
+        <tr>
+          <td>${b.id}</td>
+          <td>${escapeHtml(b.userEmail || b.userId || '')}</td>
+          <td>${escapeHtml(b.roomNumber || b.roomId || '')}</td>
+          <td>${formatDate(b.checkInDate)}</td>
+          <td>${formatDate(b.checkOutDate)}</td>
+          <td>${formatMoney(b.totalPrice)}</td>
+          <td><span class="status-badge ${getBookingStatusClass(b.status)}">${getBookingStatusText(b.status)}</span></td>
+          <td>
+            <div class="action-buttons">
+              <button 
+                class="btn-action btn-view" 
+                onclick="openBookingModal('${b.id}')" 
+                title="${window.i18n?.t('admin.view') || 'Просмотр'}">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button 
+                class="btn-action btn-success" 
+                onclick="confirmBooking('${b.id}')" 
+                ${isFinalized || b.status === 'CONFIRMED' || b.status === 'CHECKED_IN' ? 'disabled' : ''}
+                title="${window.i18n?.t('admin.confirm') || 'Подтвердить'}"
+                ${isFinalized || b.status === 'CONFIRMED' || b.status === 'CHECKED_IN' ? 'style="opacity:0.5;cursor:not-allowed"' : ''}>
+                <i class="fas fa-check"></i>
+              </button>
+              <button 
+                class="btn-action btn-warning" 
+                onclick="checkInBooking('${b.id}')" 
+                ${isFinalized || b.status === 'CHECKED_IN' || b.status === 'PENDING' ? 'disabled' : ''}
+                title="${window.i18n?.t('admin.checkIn') || 'Заселить'}"
+                ${isFinalized || b.status === 'CHECKED_IN' || b.status === 'PENDING' ? 'style="opacity:0.5;cursor:not-allowed"' : ''}>
+                <i class="fas fa-sign-in-alt"></i>
+              </button>
+              <button 
+                class="btn-action btn-info" 
+                onclick="checkOutBooking('${b.id}')" 
+                ${isFinalized || b.status !== 'CHECKED_IN' ? 'disabled' : ''}
+                title="${window.i18n?.t('admin.checkOut') || 'Выселить'}"
+                ${isFinalized || b.status !== 'CHECKED_IN' ? 'style="opacity:0.5;cursor:not-allowed"' : ''}>
+                <i class="fas fa-sign-out-alt"></i>
+              </button>
+              <button 
+                class="btn-action btn-danger" 
+                onclick="cancelBooking('${b.id}')" 
+                ${isFinalized ? 'disabled' : ''}
+                title="${window.i18n?.t('admin.cancel') || 'Отменить'}"
+                ${isFinalized ? 'style="opacity:0.5;cursor:not-allowed"' : ''}>
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
     }).join('');
 }
 
@@ -1085,19 +1106,19 @@ function openBookingModal(id) {
     const modal = document.getElementById('bookingModal');
     const details = document.getElementById('bookingDetails');
     details.innerHTML = `
-    <div class="detail-row"><strong>${window.i18n?.t('admin.user') || 'Пользователь'}:</strong> ${escapeHtml(b.userEmail || b.userId || '')}</div>
-    <div class="detail-row"><strong>${window.i18n?.t('admin.room') || 'Номер'}:</strong> ${escapeHtml(b.roomNumber || b.roomId || '')}</div>
-    <div class="detail-row"><strong>${window.i18n?.t('admin.dates') || 'Даты'}:</strong> ${formatDate(b.checkInDate)} — ${formatDate(b.checkOutDate)}</div>
-    <div class="detail-row"><strong>${window.i18n?.t('admin.guests') || 'Гостей'}:</strong> ${b.guestsCount ?? ''}</div>
-    <div class="detail-row"><strong>${window.i18n?.t('admin.nights') || 'Ночей'}:</strong> ${b.totalNights ?? ''}</div>
-    <div class="detail-row"><strong>${window.i18n?.t('admin.pricePerNight') || 'Цена/ночь'}:</strong> ${formatMoney(b.pricePerNight)}</div>
-    <div class="detail-row"><strong>${window.i18n?.t('admin.total') || 'Итого'}:</strong> ${formatMoney(b.totalPrice)} ${escapeHtml(b.currency || '')}</div>
-    <div class="detail-row"><strong>${window.i18n?.t('admin.status') || 'Статус'}:</strong> ${getBookingStatusText(b.status)}</div>
-    <div class="detail-row"><strong>${window.i18n?.t('admin.requests') || 'Запросы'}:</strong> ${escapeHtml(b.specialRequests || '—')}</div>
-    <div class="detail-row"><strong>${window.i18n?.t('admin.created') || 'Создано'}:</strong> ${formatDate(b.createdAt)}</div>
-    ${b.cancelledAt ? `<div class="detail-row"><strong>${window.i18n?.t('admin.cancelled') || 'Отменено'}:</strong> ${formatDate(b.cancelledAt)}</div>` : ''}
-    ${b.cancellationReason ? `<div class="detail-row"><strong>${window.i18n?.t('admin.cancellationReason') || 'Причина отмены'}:</strong> ${escapeHtml(b.cancellationReason)}</div>` : ''}
-  `;
+        <div class="detail-row"><strong>${window.i18n?.t('admin.user') || 'Пользователь'}:</strong> ${escapeHtml(b.userEmail || b.userId || '')}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.room') || 'Номер'}:</strong> ${escapeHtml(b.roomNumber || b.roomId || '')}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.dates') || 'Даты'}:</strong> ${formatDate(b.checkInDate)} — ${formatDate(b.checkOutDate)}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.guests') || 'Гостей'}:</strong> ${b.guestsCount ?? ''}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.nights') || 'Ночей'}:</strong> ${b.totalNights ?? ''}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.pricePerNight') || 'Цена/ночь'}:</strong> ${formatMoney(b.pricePerNight)}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.total') || 'Итого'}:</strong> ${formatMoney(b.totalPrice)} ${escapeHtml(b.currency || '')}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.status') || 'Статус'}:</strong> ${getBookingStatusText(b.status)}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.requests') || 'Запросы'}:</strong> ${escapeHtml(b.specialRequests || '—')}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.created') || 'Создано'}:</strong> ${formatDate(b.createdAt)}</div>
+        ${b.cancelledAt ? `<div class="detail-row"><strong>${window.i18n?.t('admin.cancelled') || 'Отменено'}:</strong> ${formatDate(b.cancelledAt)}</div>` : ''}
+        ${b.cancellationReason ? `<div class="detail-row"><strong>${window.i18n?.t('admin.cancellationReason') || 'Причина отмены'}:</strong> ${escapeHtml(b.cancellationReason)}</div>` : ''}
+      `;
     modal.dataset.bookingId = id;
     modal.classList.add('show');
 }
@@ -1198,7 +1219,7 @@ async function cancelBooking(id = null) {
 
 async function changeBookingStatus(bookingId, status, successMessage) {
     try {
-        await apiCall(`/bookings/${bookingId}/status?status=${encodeURIComponent(status)}`, { method: 'PUT' });
+        await apiCall(`/bookings/${bookingId}/status?status=${encodeURIComponent(status)}`, {method: 'PUT'});
         showNotification(successMessage, 'success');
         closeBookingModal();
         loadBookings();
@@ -1220,6 +1241,7 @@ function getBookingStatusText(s) {
     };
     return map[s] || s || '';
 }
+
 function getBookingStatusClass(s) {
     const map = {
         PENDING: 'pending',
@@ -1239,6 +1261,7 @@ function initializeTheme() {
         updateThemeIcon();
     }
 }
+
 function toggleTheme() {
     const current = document.documentElement.getAttribute('data-theme') || 'light';
     const next = current === 'light' ? 'dark' : 'light';
@@ -1246,54 +1269,167 @@ function toggleTheme() {
     localStorage.setItem('theme', next);
     updateThemeIcon();
 }
+
 function updateThemeIcon() {
     const icon = document.getElementById('themeIcon');
     const current = document.documentElement.getAttribute('data-theme') || 'light';
     if (icon) icon.className = current === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
 }
+
 function toggleMobileMenu() {
     document.body.classList.toggle('menu-open');
 }
+
 function closeMobileMenu() {
     document.body.classList.remove('menu-open');
 }
+
 function toggleUserMenu() {
     if (userDropdown) userDropdown.classList.toggle('show');
 }
-function logout() {
-    fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
-        .finally(() => window.location.href = '/login');
+
+function updateNavigation() {
+    const navAuth = document.querySelector('.nav-auth');
+    const userData = getUserData();
+
+    if (userData) {
+        navAuth.innerHTML = `
+                <div class="user-profile">
+                    <div class="user-info">
+                        <div class="user-avatar">${userData.firstName?.charAt(0) || '👤'}</div>
+                        <div class="user-details">
+                            <div class="user-name">${userData.firstName} ${userData.lastName}</div>
+                            <div class="user-email">${userData.email}</div>
+                        </div>
+                    </div>
+                    <div class="user-menu">
+                        <button class="btn-auth btn-user" onclick="toggleUserMenu()">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="user-dropdown" id="userDropdown">
+                            <div class="dropdown-header">
+                                <div class="user-avatar-small">${userData.firstName?.charAt(0) || '👤'}</div>
+                                <div>
+                                    <div class="user-name-small">${userData.firstName} ${userData.lastName}</div>
+                                    <div class="user-email-small">${userData.email}</div>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="/profile" class="dropdown-item" data-i18n-ignore>
+                                <i class="fas fa-user"></i>
+                                <span data-i18n="common.profile">Мой профиль</span>
+                            </a>
+                            <a href="/booking" class="dropdown-item" data-i18n-ignore>
+                                <i class="fas fa-calendar"></i>
+                                <span data-i18n="common.bookings">Мои бронирования</span>
+                            </a>
+                            <a href="/wallet" class="dropdown-item" data-i18n-ignore>
+                                <i class="fas fa-wallet"></i>
+                                <span data-i18n="common.wallet">Кошелек</span>
+                            </a>
+                            <a href="/setting" class="dropdown-item" data-i18n-ignore>
+                                <i class="fas fa-cog"></i>
+                                <span data-i18n="common.settings">Настройки</span>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item logout-item" onclick="logout()" data-i18n-ignore>
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span data-i18n="common.logout">Выйти</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+    } else {
+        navAuth.innerHTML = `
+                <a href="/login" class="btn-auth btn-login" data-i18n-ignore>
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span data-i18n="common.login">Войти</span>
+                </a>
+                <a href="/register" class="btn-auth btn-register" data-i18n-ignore>
+                    <i class="fas fa-user-plus"></i>
+                    <span data-i18n="common.register">Регистрация</span>
+                </a>
+            `;
+    }
+
+    if (window.i18n && window.i18n.applyTranslations) {
+        window.i18n.applyTranslations();
+    }
 }
+
+async function logout() {
+    try {
+        // Пытаемся выйти через API
+        await fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include'
+        });
+    } catch (error) {
+        console.error('Logout error:', error);
+    } finally {
+        // Очищаем данные независимо от результата запроса
+        removeAuthData();
+
+        // Показываем уведомление
+        showNotification(
+            window.i18n?.t('auth.logoutSuccess') || 'Вы успешно вышли из системы',
+            'success'
+        );
+
+        // Перенаправляем на страницу входа
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, 500);
+    }
+}
+
+window.logout = logout;
 
 // ==================== UTILITIES ====================
 function setValue(id, value) {
     const el = document.getElementById(id);
     if (el) el.value = value ?? '';
 }
+
 function setChecked(id, checked) {
     const el = document.getElementById(id);
     if (el) el.checked = !!checked;
 }
+
 function formatDate(dateStr) {
     if (!dateStr) return '';
     const d = new Date(dateStr);
     if (Number.isNaN(d.getTime())) return '';
-    return d.toLocaleString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    return d.toLocaleString('ru-RU', {year: 'numeric', month: '2-digit', day: '2-digit'});
 }
+
 function formatMoney(v) {
     if (v === null || v === undefined || v === '') return '';
     const num = typeof v === 'number' ? v : parseFloat(v);
     if (Number.isNaN(num)) return '';
-    return num.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return num.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
+
 function sameDate(a, b) {
     return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
+
 function escapeHtml(s) {
     return String(s).replace(/[&<>"'`=\/]/g, function (c) {
-        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#x60;', '=': '&#x3D;', '/': '&#x2F;' })[c];
+        return ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+            '`': '&#x60;',
+            '=': '&#x3D;',
+            '/': '&#x2F;'
+        })[c];
     });
 }
+
 function showLoading(show) {
     const overlay = document.getElementById('loadingOverlay');
     if (!overlay) return;
@@ -1313,29 +1449,29 @@ function showNotification(message, type = 'info') {
                 'info-circle';
 
     notification.innerHTML = `
-        <div class="notification-content">
-            <i class="fas fa-${icon}"></i>
-            <span>${message}</span>
-            <button class="notification-close" onclick="this.parentElement.parentElement.remove()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
+            <div class="notification-content">
+                <i class="fas fa-${icon}"></i>
+                <span>${message}</span>
+                <button class="notification-close" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
 
     notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        z-index: 10000;
-        animation: slideInRight 0.3s ease;
-        max-width: 400px;
-        min-width: 300px;
-    `;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            z-index: 10000;
+            animation: slideInRight 0.3s ease;
+            max-width: 400px;
+            min-width: 300px;
+        `;
 
     document.body.appendChild(notification);
 
@@ -1351,61 +1487,61 @@ if (!document.querySelector('#notification-styles')) {
     const notificationStyles = document.createElement('style');
     notificationStyles.id = 'notification-styles';
     notificationStyles.textContent = `
-        .notification-content {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .notification-close {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            padding: 0;
-            margin-left: auto;
-            font-size: 1.1rem;
-            opacity: 0.8;
-            transition: opacity 0.2s;
-        }
-
-        .notification-close:hover {
-            opacity: 1;
-        }
-
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
+            .notification-content {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
             }
-            to {
-                transform: translateX(0);
+    
+            .notification-close {
+                background: none;
+                border: none;
+                color: white;
+                cursor: pointer;
+                padding: 0;
+                margin-left: auto;
+                font-size: 1.1rem;
+                opacity: 0.8;
+                transition: opacity 0.2s;
+            }
+    
+            .notification-close:hover {
                 opacity: 1;
             }
-        }
-
-        @keyframes slideOutRight {
-            from {
-                transform: translateX(0);
-                opacity: 1;
+    
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
             }
-            to {
-                transform: translateX(100%);
-                opacity: 0;
+    
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
             }
-        }
-
-        .required {
-            color: #ef4444;
-        }
-
-        .form-hint {
-            display: block;
-            margin-top: 0.25rem;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-    `;
+    
+            .required {
+                color: #ef4444;
+            }
+    
+            .form-hint {
+                display: block;
+                margin-top: 0.25rem;
+                font-size: 0.875rem;
+                color: var(--text-secondary);
+            }
+        `;
     document.head.appendChild(notificationStyles);
 }
 // Экспорт функций в глобальную область

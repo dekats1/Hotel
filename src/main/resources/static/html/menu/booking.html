@@ -34,7 +34,7 @@
                     <li><a href="/" class="nav-link" data-i18n="common.home">Главная</a></li>
                     <li><a href="/#rooms" class="nav-link" data-i18n="common.rooms">Номера</a></li>
                     <li><a href="/#services" class="nav-link" data-i18n="common.services">Услуги</a></li>
-                    <li><a href="/aboutUs" class="nav-link" data-i18n="common.about">О нас</a></li>
+                    <li><a href="aboutUs" class="nav-link" data-i18n="common.about">О нас</a></li>
                     <li><a href="/#contact" class="nav-link" data-i18n="common.contact">Контакты</a></li>
                 </ul>
                 <div class="nav-auth">
@@ -42,7 +42,7 @@
                         <div class="user-info">
                             <div class="user-avatar" id="userAvatar">👤</div>
                             <div class="user-details">
-                                <div class="user-name" id="userName"></div>
+                                <div class="user-name" id="userName">Пользователь</div>
                                 <div class="user-wallet">
                                     <i class="fas fa-wallet"></i>
                                     <span id="userWallet">BYN</span>
@@ -50,38 +50,38 @@
                             </div>
                         </div>
                         <div class="user-menu">
-                            <button class="btn-auth btn-user" onclick="toggleUserMenu()">
+                            <button class="btn-auth btn-user">
                                 <i class="fas fa-chevron-down"></i>
                             </button>
                             <div class="user-dropdown" id="userDropdown">
                                 <div class="dropdown-header">
                                     <div class="user-avatar-small" id="userAvatarSmall">👤</div>
                                     <div>
-                                        <div class="user-name-small" id="userNameSmall"></div>
+                                        <div class="user-name-small" id="userNameSmall">Пользователь</div>
                                         <div class="user-email-small" id="userEmailSmall">user@example.com</div>
                                     </div>
                                 </div>
                                 <div class="dropdown-divider"></div>
                                 <a href="/profile" class="dropdown-item">
                                     <i class="fas fa-user"></i>
-                                    <span data-i18n="common.profile">Мой профиль</span>
+                                    Мой профиль
                                 </a>
                                 <a href="/booking" class="dropdown-item active">
                                     <i class="fas fa-calendar"></i>
-                                    <span data-i18n="common.bookings">Мои бронирования</span>
+                                    Мои бронирования
                                 </a>
                                 <a href="/wallet" class="dropdown-item">
                                     <i class="fas fa-wallet"></i>
-                                    <span data-i18n="common.wallet">Кошелек</span>
+                                    Кошелек
                                 </a>
                                 <a href="/setting" class="dropdown-item">
                                     <i class="fas fa-cog"></i>
-                                    <span data-i18n="common.settings">Настройки</span>
+                                    Настройки
                                 </a>
                                 <div class="dropdown-divider"></div>
                                 <a href="#" class="dropdown-item logout-item" onclick="logout()">
                                     <i class="fas fa-sign-out-alt"></i>
-                                    <span data-i18n="common.logout">Выйти</span>
+                                    Выйти
                                 </a>
                             </div>
                         </div>
@@ -122,19 +122,19 @@
                     </button>
                     <button class="filter-tab" data-filter="upcoming" onclick="filterBookings('upcoming')">
                         <i class="fas fa-calendar-check"></i>
-                        <span data-i18n="booking.upcoming">Предстоящие</span>
+                        <span data-i18n="booking.tabUpcoming">Предстоящие</span>
                     </button>
                     <button class="filter-tab" data-filter="current" onclick="filterBookings('current')">
                         <i class="fas fa-bed"></i>
-                        <span data-i18n="booking.current">Текущие</span>
+                        <span data-i18n="booking.tabCurrent">Текущие</span>
                     </button>
                     <button class="filter-tab" data-filter="completed" onclick="filterBookings('completed')">
                         <i class="fas fa-check-circle"></i>
-                        <span data-i18n="booking.completed">Завершенные</span>
+                        <span data-i18n="booking.tabCompleted">Завершенные</span>
                     </button>
                     <button class="filter-tab" data-filter="cancelled" onclick="filterBookings('cancelled')">
                         <i class="fas fa-times-circle"></i>
-                        <span data-i18n="booking.cancelled">Отмененные</span>
+                        <span data-i18n="booking.tabCancelled">Отмененные</span>
                     </button>
                 </div>
             </section>
@@ -195,7 +195,7 @@
     <div class="modal" id="bookingDetailsModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 data-i18n="booking.details">Детали бронирования</h2>
+                <h2 data-i18n="booking.detailsTitle">Детали бронирования</h2>
                 <button class="modal-close" onclick="closeBookingDetailsModal()">
                     <i class="fas fa-times"></i>
                 </button>

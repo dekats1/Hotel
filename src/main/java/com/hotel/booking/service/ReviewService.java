@@ -1,7 +1,7 @@
 package com.hotel.booking.service;
 
 import com.hotel.booking.dto.request.review.CreateReviewRequest;
-import com.hotel.booking.dto.request.review.ReviewResponse;
+import com.hotel.booking.dto.response.review.ReviewResponse;
 import java.util.List;
 
 public interface ReviewService {

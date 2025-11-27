@@ -208,7 +208,6 @@ window.addEventListener('languageChanged', function() {
 });
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Wallet page loaded');
 
     checkAuthOnPageLoad();
     initializeWallet();
@@ -217,7 +216,25 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     initializeTheme();
 
-    console.log('✅ Wallet initialized successfully');
+    window.addEventListener('languageChanged', function() {
+        if (typeof updateNavigation === 'function') {
+            updateNavigation();
+        }
+        // Re-display transactions with new translations
+        if (typeof displayTransactions === 'function' && typeof transactions !== 'undefined') {
+            displayTransactions(transactions);
+        }
+        if (typeof displayHistoryTransactions === 'function') {
+            displayHistoryTransactions();
+        }
+        if (typeof updatePaymentOptions === 'function') {
+            updatePaymentOptions();
+        }
+        if (window.i18n && window.i18n.applyTranslations) {
+            window.i18n.applyTranslations();
+        }
+    });
+
 });
 
 function checkAuthOnPageLoad() {
@@ -733,9 +750,14 @@ function setupAmountButtons() {
 }
 
 function setupPaymentOptions() {
+    updatePaymentOptions();
+
+    window.addEventListener('languageChanged', updatePaymentOptions);
+}
+
+function updatePaymentOptions() {
     const paymentOptions = document.getElementById('paymentOptions');
     if (!paymentOptions) return;
-
     const options = [
         {
             id: 'card',

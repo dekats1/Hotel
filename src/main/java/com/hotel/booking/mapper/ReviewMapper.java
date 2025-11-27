@@ -1,7 +1,7 @@
 package com.hotel.booking.mapper;
 
 import com.hotel.booking.domain.entity.Review;
-import com.hotel.booking.dto.request.review.ReviewResponse;
+import com.hotel.booking.dto.response.review.ReviewResponse;
 import com.hotel.booking.dto.response.admin.AdminReviewResponse;
 import org.mapstruct.*;
 

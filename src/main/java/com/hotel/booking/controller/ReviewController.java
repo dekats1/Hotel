@@ -1,7 +1,7 @@
 package com.hotel.booking.controller;
 
 import com.hotel.booking.dto.request.review.CreateReviewRequest;
-import com.hotel.booking.dto.request.review.ReviewResponse;
+import com.hotel.booking.dto.response.review.ReviewResponse;
 import com.hotel.booking.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -551,10 +551,16 @@ function updateUserInterface() {
     const userWallet = document.getElementById('userWallet');
     const userAvatar = document.getElementById('userAvatar');
 
+    const userNameSmall = document.querySelector('.user-name-small');
+    const userEmailSmall = document.querySelector('.user-email-small');
+
     if (profileName) profileName.textContent = currentUser.name;
     if (profileEmail) profileEmail.textContent = currentUser.email;
     if (userName) userName.textContent = currentUser.name;
     if (userWallet) userWallet.textContent = currentUser.wallet ? currentUser.wallet.toLocaleString() + 'BYN' : '0BYN';
+
+    if (userNameSmall) userNameSmall.textContent = currentUser.name;
+    if (userEmailSmall) userEmailSmall.textContent = currentUser.email;
 
     const updateAvatar = (element) => {
         if (!element) return;
@@ -571,6 +577,10 @@ function updateUserInterface() {
     }
     updateAvatar(userAvatar);
 
+    // ДОБАВЬТЕ обновление маленького аватара в выпадающем меню
+    const userAvatarSmall = document.querySelector('.user-avatar-small');
+    updateAvatar(userAvatarSmall);
+
     if (currentUser.stats) {
         const statNumbers = document.querySelectorAll('.stat-number');
         if (statNumbers.length >= 3) {
@@ -582,6 +592,7 @@ function updateUserInterface() {
 
     updateFormFields();
 }
+
 
 function updateFormFields() {
     if (!currentUser) return;
@@ -695,14 +706,6 @@ function toggleTheme() {
 // ==============================================
 // ЗАПУСК ПРИ ЗАГРУЗКЕ
 // ==============================================
-
-// Listen for language changes
-window.addEventListener('languageChanged', function() {
-    // Re-apply translations to all elements
-    if (window.i18n && window.i18n.applyTranslations) {
-        window.i18n.applyTranslations();
-    }
-});
 
 document.addEventListener('DOMContentLoaded', function () {
     if (!checkAuthOnPageLoad()) {

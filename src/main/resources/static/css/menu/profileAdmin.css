@@ -11,6 +11,29 @@
     display: flex;
     min-height: calc(100vh - 80px);
 }
+.btn-logout {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--danger-color, #ef4444);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.btn-logout:hover {
+    background: var(--danger-hover, #dc2626);
+    transform: translateY(-2px);
+}
+
+.btn-logout i {
+    font-size: 1rem;
+}
+
 
 /* Sidebar */
 .admin-sidebar {

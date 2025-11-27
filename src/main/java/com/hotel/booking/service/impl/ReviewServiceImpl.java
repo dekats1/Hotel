@@ -5,7 +5,7 @@ import com.hotel.booking.domain.entity.Review;
 import com.hotel.booking.domain.entity.User;
 import com.hotel.booking.domain.enums.BookingStatus;
 import com.hotel.booking.dto.request.review.CreateReviewRequest;
-import com.hotel.booking.dto.request.review.ReviewResponse;
+import com.hotel.booking.dto.response.review.ReviewResponse;
 import com.hotel.booking.exception.ReviewAlreadyExistsException;
 import com.hotel.booking.exception.ReviewNotAllowedException;
 import com.hotel.booking.mapper.ReviewMapper;

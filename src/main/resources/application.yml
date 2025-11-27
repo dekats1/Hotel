@@ -2,6 +2,10 @@ app:
   jwt:
     secret: "your-super-secure-jwt-secret-key-that-is-at-least-64-characters-long-for-hs512-algorithm-1234567890"
     expiration: 86400000  # 24 hours in milliseconds
+  password-reset:
+    code-length: 6
+    expiration-minutes: 15
+
 
 spring:
   datasource:
@@ -20,3 +24,16 @@ spring:
     multipart:
       max-file-size: 30MB
       max-request-size: 200MB
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: deniskatcko05@gmail.com
+    password: cpof zcxc vedz dblr
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+        transport:
+          protocol: smtp

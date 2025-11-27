@@ -33,7 +33,6 @@ async function apiCall(endpoint, options = {}) {
 
     if (!response.ok) {
         const errorText = await response.text();
-
         if (!errorText || errorText.trim() === '') {
             throw new Error(`${window.i18n?.t('errors.error') || 'Ошибка'} ${response.status}: ${window.i18n?.t('errors.noErrorDescription') || 'Сервер не вернул описание ошибки'}`);
         }
@@ -45,9 +44,7 @@ async function apiCall(endpoint, options = {}) {
             }
             throw new Error(JSON.stringify(errorData));
         } catch (parseError) {
-            const shortText = errorText.length > 200
-                ? errorText.substring(0, 200) + '...'
-                : errorText;
+            const shortText = errorText.length > 200 ? errorText.substring(0, 200) + '...' : errorText;
             throw new Error(shortText);
         }
     }
@@ -108,7 +105,7 @@ async function loadUserReviews() {
 async function cancelBooking(bookingId) {
     try {
         await apiCall(`/booking/${bookingId}/cancel`, { method: 'PUT' });
-        showNotification(window.i18n?.t('booking.cancelled') || 'Бронирование отменено', 'success');
+        showNotification(window.i18n?.t('booking.cancelSuccess') || 'Бронирование отменено', 'success');
         await loadUserBookings();
         await loadUserProfile();
     } catch (error) {
@@ -145,7 +142,7 @@ async function submitReview(bookingId, rating, comment) {
             error.message.includes('already exists')) {
             showNotification(window.i18n?.t('errors.reviewAlreadyExists') || 'Вы уже оставили отзыв на это бронирование', 'warning');
         } else if (error.message.includes('завершённое бронирование') ||
-                   error.message.includes('completed booking')) {
+            error.message.includes('completed booking')) {
             showNotification(window.i18n?.t('errors.reviewOnlyCompleted') || 'Отзыв можно оставить только на завершённое бронирование', 'warning');
         } else {
             showNotification((window.i18n?.t('errors.reviewError') || 'Ошибка при отправке отзыва') + ': ' + error.message, 'error');
@@ -153,20 +150,9 @@ async function submitReview(bookingId, rating, comment) {
     }
 }
 
-
 // ==============================================
 // ИНИЦИАЛИЗАЦИЯ
 // ==============================================
-
-// Listen for language changes
-window.addEventListener('languageChanged', function() {
-    if (typeof updateNavigation === 'function') {
-        updateNavigation();
-    }
-    if (typeof displayBookings === 'function' && typeof currentFilter === 'string') {
-        displayBookings(getFilteredBookings(currentFilter));
-    }
-});
 
 document.addEventListener('DOMContentLoaded', function() {
     const userData = localStorage.getItem(USER_DATA_KEY);
@@ -176,11 +162,38 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     initializeBooking();
-    loadUserProfile();
-    loadUserBookings();
-    loadUserReviews();
     setupEventListeners();
     initializeTheme();
+
+    // Инициализируем переводы при загрузке
+    if (window.i18n && window.i18n.isReady) {
+        updateTranslations();
+    } else {
+        window.addEventListener('i18nReady', updateTranslations);
+    }
+
+    // Загружаем данные
+    loadUserProfile().then(() => {
+        loadUserBookings();
+        loadUserReviews();
+    });
+
+    console.log('✅ Booking page initialized successfully');
+});
+
+// ОДИН обработчик языка (не дублируем!)
+window.addEventListener('languageChanged', function() {
+    console.log('Language changed, updating interface...');
+    updateTranslations();
+    updateUserInterface();
+
+    if (bookings.length > 0) {
+        const filtered = currentFilter === 'all' ? bookings :
+            bookings.filter(b => getBookingStatus(b) === currentFilter);
+        displayBookings(filtered);
+    }
+
+    updateStatistics();
 });
 
 function initializeBooking() {
@@ -222,7 +235,7 @@ function updateUserInterface() {
                     </div>
                 </div>
                 <div class="user-menu">
-                    <button class="btn-auth btn-user" onclick="toggleUserMenu()">
+                    <button class="btn-auth btn-user">
                         <i class="fas fa-chevron-down"></i>
                     </button>
                     <div class="user-dropdown" id="userDropdown">
@@ -288,7 +301,7 @@ function displayBookings(bookingsToShow) {
                     </div>
                     <div class="booking-actions">
                         <button class="booking-action-btn" onclick="viewBookingDetails('${booking.id}')">
-                            <i class="fas fa-eye"></i> ${window.i18n?.t('booking.details') || 'Подробнее'}
+                            <i class="fas fa-eye"></i> ${window.i18n?.t('booking.detailsAction') || 'Подробнее'}
                         </button>
                         ${status === 'upcoming' ? `
                             <button class="booking-action-btn" onclick="handleCancelBooking('${booking.id}')">
@@ -328,10 +341,10 @@ function getBookingStatus(booking) {
 function getStatusText(status) {
     if (window.i18n) {
         const statusMap = {
-            upcoming: window.i18n.t('booking.upcoming') || 'Предстоящее',
-            current: window.i18n.t('booking.current') || 'Текущее',
-            completed: window.i18n.t('booking.completed') || 'Завершено',
-            cancelled: window.i18n.t('booking.cancelled') || 'Отменено'
+            upcoming: window.i18n.t('booking.statusUpcoming') || 'Предстоящее',
+            current: window.i18n.t('booking.statusCurrent') || 'Текущее',
+            completed: window.i18n.t('booking.statusCompleted') || 'Завершено',
+            cancelled: window.i18n.t('booking.statusCancelled') || 'Отменено'
         };
         return statusMap[status] || status;
     }
@@ -376,7 +389,6 @@ function updateStatistics() {
         el('averageRating', '—');
     }
 }
-
 
 // ==============================================
 // УПРАВЛЕНИЕ МОДАЛЬНЫМИ ОКНАМИ
@@ -579,13 +591,15 @@ async function handleCancelBooking(bookingId) {
     }
 }
 
-
 // ==============================================
 // ОБЩИЕ ФУНКЦИИ И УТИЛИТЫ
 // ==============================================
 
 function toggleUserMenu() {
-    document.getElementById('userDropdown')?.classList.toggle('show');
+    const dropdown = document.getElementById('userDropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('show');
+    }
 }
 
 async function logout() {
@@ -597,6 +611,16 @@ async function logout() {
 }
 
 function setupEventListeners() {
+    // Обработчик для кнопки меню пользователя (делегирование)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.btn-user')) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleUserMenu();
+        }
+    });
+
+    // Закрытие меню при клике вне его
     document.addEventListener('click', e => {
         if (!e.target.closest('.user-menu')) {
             document.getElementById('userDropdown')?.classList.remove('show');
@@ -607,10 +631,12 @@ function setupEventListeners() {
         }
     });
 
+    // Закрытие по Escape
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
             closeBookingDetailsModal();
             closeReviewModal();
+            document.getElementById('userDropdown')?.classList.remove('show');
         }
     });
 }
@@ -637,6 +663,33 @@ function formatMoney(amount) {
 
 function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function updateTranslations() {
+    if (!window.i18n) return;
+
+    // Обновляем вкладки фильтров
+    const filterTabs = {
+        'all': document.querySelector('[data-filter="all"] span'),
+        'upcoming': document.querySelector('[data-filter="upcoming"] span'),
+        'current': document.querySelector('[data-filter="current"] span'),
+        'completed': document.querySelector('[data-filter="completed"] span'),
+        'cancelled': document.querySelector('[data-filter="cancelled"] span')
+    };
+
+    if (filterTabs.all) filterTabs.all.textContent = window.i18n.t('booking.all') || 'Все';
+    if (filterTabs.upcoming) filterTabs.upcoming.textContent = window.i18n.t('booking.tabUpcoming') || 'Предстоящие';
+    if (filterTabs.current) filterTabs.current.textContent = window.i18n.t('booking.tabCurrent') || 'Текущие';
+    if (filterTabs.completed) filterTabs.completed.textContent = window.i18n.t('booking.tabCompleted') || 'Завершенные';
+    if (filterTabs.cancelled) filterTabs.cancelled.textContent = window.i18n.t('booking.tabCancelled') || 'Отмененные';
+
+    // Обновляем все элементы с data-i18n
+    document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.getAttribute('data-i18n');
+        if (key && window.i18n.t(key)) {
+            element.textContent = window.i18n.t(key);
+        }
+    });
 }
 
 function showNotification(message, type = 'info') {
