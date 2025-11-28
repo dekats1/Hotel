@@ -1,4 +1,4 @@
-package com.hotel.booking.service.impl;
+package com.hotel.booking.service.impl.integration;
 
 import com.hotel.booking.domain.entity.User;
 import com.hotel.booking.domain.enums.UserGender;

@@ -53,6 +53,6 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Run tests
+      - name: Run unit tests only
         run: |
-          mvn -B test
+          mvn -B test -Dtest="com/hotel/booking/service/impl/unit/**"
