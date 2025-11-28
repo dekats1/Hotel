@@ -14,6 +14,6 @@ public class UserInfoResponse {
     UUID id;
     String email;
     String firstName;
-    String lastName;
+    String lastName;//
     String role;
 }
