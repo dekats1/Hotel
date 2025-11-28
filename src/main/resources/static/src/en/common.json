@@ -146,7 +146,8 @@
     "backToEmailStep": "Back",
     "resetPasswordBtn": "Change password",
     "resettingPassword": "Updating...",
-    "passwordResetSuccess": "Password updated. You can log in with the new password."
+    "passwordResetSuccess": "Password updated. You can log in with the new password.",
+    "confirmNewPassword": "Confirm password"
   },
   "catalog": {
     "guestsOptions": {

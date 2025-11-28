@@ -1,4 +1,70 @@
-// Admin Panel Management JavaScript
+
+window.addEventListener('languageChanged', function() {
+    switch (currentSection) {
+        case 'dashboard':
+            updateDashboardStats();
+            updateRecentBookings();
+            updateRoomStats();
+            break;
+        case 'users':
+            displayUsers(users);
+            break;
+        case 'rooms':
+            displayRooms(rooms);
+            break;
+        case 'reviews':
+            displayReviews(reviews);
+            break;
+        case 'bookings':
+            displayBookings(bookings);
+            break;
+    }
+
+    if (window.i18n) {
+        window.i18n.applyTranslations();
+    }
+});
+
+// Добавьте в конец i18n.js
+function setupMutationObserver() {
+    const observer = new MutationObserver((mutations) => {
+        let needsUpdate = false;
+
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1 && node.querySelector('[data-i18n]')) {
+                        needsUpdate = true;
+                    }
+                });
+            }
+        });
+
+        if (needsUpdate) {
+            applyTranslations();
+        }
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+}
+
+// Вызовите в initI18n
+async function initI18n() {
+    const savedLanguage = localStorage.getItem('language') || 'ru';
+    await loadTranslations(savedLanguage);
+    document.documentElement.setAttribute('lang', savedLanguage);
+    applyTranslations();
+    isReady = true;
+
+    // Добавьте наблюдатель за изменениями DOM
+    setupMutationObserver();
+
+    window.dispatchEvent(new Event('i18nReady'));
+}
+
 
 const navToggle = document.querySelector('.nav-toggle');
 const navMenu = document.querySelector('.nav-menu');
@@ -288,23 +354,32 @@ function updateDashboardStats() {
 function updateRecentBookings() {
     const container = document.getElementById('recentBookings');
     if (!container) return;
+
     const recent = [...bookings].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+
     if (recent.length === 0) {
-        container.innerHTML = `<div class="recent-item">${window.i18n?.t('admin.noRecentBookings') || 'Нет недавних бронирований'}</div>`;
+        container.innerHTML = `<div class="recent-item"><span data-i18n="admin.noRecentBookings">Нет недавних бронирований</span></div>`;
+        if (window.i18n) window.i18n.applyTranslations();
         return;
     }
+
     container.innerHTML = recent.map(b => `
         <div class="recent-item">
-          <div class="recent-item-info">
-            <h4>${escapeHtml(b.userEmail || '')} • ${window.i18n?.t('admin.room') || 'Комната'} ${escapeHtml(b.roomNumber || '')}</h4>
-            <p>${formatDate(b.checkInDate)} — ${formatDate(b.checkOutDate)}</p>
-          </div>
-          <div class="recent-item-status">
-            <span class="status-badge ${getBookingStatusClass(b.status)}">${getBookingStatusText(b.status)}</span>
-          </div>
+            <div class="recent-item-info">
+                <h4>${escapeHtml(b.userEmail)} - <span data-i18n="admin.room">Номер</span>: ${escapeHtml(b.roomNumber)}</h4>
+                <p>${formatDate(b.checkInDate)} - ${formatDate(b.checkOutDate)}</p>
+            </div>
+            <div class="recent-item-status">
+                <span class="status-badge ${getBookingStatusClass(b.status)}" data-i18n="bookingStatuses.${b.status}"></span>
+            </div>
         </div>
-      `).join('');
+    `).join('');
+
+    // ВАЖНО! Применяем переводы после создания HTML
+    if (window.i18n) window.i18n.applyTranslations();
 }
+
+
 
 function updateRoomStats() {
     const stats = {
@@ -317,19 +392,27 @@ function updateRoomStats() {
         apartment: rooms.filter(r => r.type === 'APARTMENT').length,
         penthouse: rooms.filter(r => r.type === 'PENTHOUSE').length
     };
+
     const container = document.getElementById('roomStats');
     if (!container) return;
+
     container.innerHTML = `
-        <div class="room-stat"><h4>${stats.total}</h4><p>${window.i18n?.t('admin.total') || 'Всего'}</p></div>
-        <div class="room-stat"><h4>${stats.active}</h4><p>${window.i18n?.t('admin.active') || 'Активные'}</p></div>
-        <div class="room-stat"><h4>${stats.inactive}</h4><p>${window.i18n?.t('admin.inactive') || 'Неактивные'}</p></div>
-        <div class="room-stat"><h4>${stats.standard}</h4><p>${window.i18n?.t('roomTypes.STANDARD') || 'Стандарт'}</p></div>
-        <div class="room-stat"><h4>${stats.deluxe}</h4><p>${window.i18n?.t('roomTypes.DELUXE') || 'Делюкс'}</p></div>
-        <div class="room-stat"><h4>${stats.suite}</h4><p>${window.i18n?.t('roomTypes.SUITE') || 'Люкс'}</p></div>
-        <div class="room-stat"><h4>${stats.apartment}</h4><p>${window.i18n?.t('roomTypes.APARTMENT') || 'Апартаменты'}</p></div>
-        <div class="room-stat"><h4>${stats.penthouse}</h4><p>${window.i18n?.t('roomTypes.PENTHOUSE') || 'Пентхаус'}</p></div>
-      `;
+        <div class="room-stat"><h4>${stats.total}</h4><p data-i18n="admin.total">Всего</p></div>
+        <div class="room-stat"><h4>${stats.active}</h4><p data-i18n="admin.active">Активные</p></div>
+        <div class="room-stat"><h4>${stats.inactive}</h4><p data-i18n="admin.inactive">Неактивные</p></div>
+        <div class="room-stat"><h4>${stats.standard}</h4><p data-i18n="roomTypes.STANDARD">Стандарт</p></div>
+        <div class="room-stat"><h4>${stats.deluxe}</h4><p data-i18n="roomTypes.DELUXE">Делюкс</p></div>
+        <div class="room-stat"><h4>${stats.suite}</h4><p data-i18n="roomTypes.SUITE">Люкс</p></div>
+        <div class="room-stat"><h4>${stats.apartment}</h4><p data-i18n="roomTypes.APARTMENT">Апартаменты</p></div>
+        <div class="room-stat"><h4>${stats.penthouse}</h4><p data-i18n="roomTypes.PENTHOUSE">Пентхаус</p></div>
+    `;
+
+    // ВАЖНО! Применяем переводы после создания HTML
+    if (window.i18n) window.i18n.applyTranslations();
 }
+
+
+
 
 // ==================== USERS ====================
 async function loadUsers() {
@@ -347,27 +430,33 @@ async function loadUsers() {
 function displayUsers(list) {
     const tbody = document.getElementById('usersTableBody');
     if (!tbody) return;
+
     if (!list || list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem">${window.i18n?.t('admin.noData') || 'Нет данных'}</td></tr>`;
-        return;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;"><span data-i18n="admin.noData">Нет данных</span></td></tr>`;
+    } else {
+        tbody.innerHTML = list.map(u => `
+            <tr>
+                <td>${u.id}</td>
+                <td>${escapeHtml((u.firstName + ' ' + u.lastName).trim())}</td>
+                <td>${escapeHtml(u.email)}</td>
+                <td>${escapeHtml(u.role)}</td>
+                <td><span class="status-badge ${u.isActive ? 'active' : 'inactive'}" data-i18n="admin.${u.isActive ? 'activeStatus' : 'inactiveStatus'}"></span></td>
+                <td>${formatDate(u.createdAt)}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-action btn-edit" onclick="editUser(${u.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn-action btn-delete" onclick="deleteUser(${u.id})"><i class="fas fa-trash"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
     }
-    tbody.innerHTML = list.map(u => `
-        <tr>
-          <td>${u.id}</td>
-          <td>${escapeHtml(`${u.firstName || ''} ${u.lastName || ''}`.trim())}</td>
-          <td>${escapeHtml(u.email || '')}</td>
-          <td>${escapeHtml(u.role || '')}</td>
-          <td><span class="status-badge ${u.isActive ? 'active' : 'inactive'}">${u.isActive ? (window.i18n?.t('admin.activeStatus') || 'Активен') : (window.i18n?.t('admin.inactiveStatus') || 'Неактивен')}</span></td>
-          <td>${formatDate(u.createdAt)}</td>
-          <td>
-            <div class="action-buttons">
-              <button class="btn-action btn-edit" onclick="editUser('${u.id}')"><i class="fas fa-edit"></i></button>
-              <button class="btn-action btn-delete" onclick="deleteUser('${u.id}')"><i class="fas fa-trash"></i></button>
-            </div>
-          </td>
-        </tr>
-      `).join('');
+
+    if (window.i18n && window.i18n.applyTranslations) {
+        window.i18n.applyTranslations();
+    }
 }
+
 
 function filterUsers() {
     const search = (document.getElementById('userSearch').value || '').toLowerCase();
@@ -554,27 +643,33 @@ async function loadRooms() {
 function displayRooms(roomsToShow) {
     const tbody = document.getElementById('roomsTableBody');
     if (!tbody) return;
+
     if (!roomsToShow || roomsToShow.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem">${window.i18n?.t('admin.noData') || 'Нет данных'}</td></tr>`;
-        return;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;"><span data-i18n="admin.noData">Нет данных</span></td></tr>`;
+    } else {
+        tbody.innerHTML = roomsToShow.map(room => `
+            <tr>
+                <td>${room.id}</td>
+                <td>${escapeHtml(room.roomNumber)}</td>
+                <td><span data-i18n="roomTypes.${room.type}"></span></td>
+                <td>${formatMoney(room.basePrice)}</td>
+                <td><span class="status-badge ${room.isActive ? 'active' : 'inactive'}" data-i18n="admin.${room.isActive ? 'available' : 'occupied'}"></span></td>
+                <td>${room.capacity ?? '-'}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-action btn-edit" onclick="editRoom(${room.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn-action btn-delete" onclick="deleteRoom(${room.id})"><i class="fas fa-trash"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
     }
-    tbody.innerHTML = roomsToShow.map(room => `
-        <tr>
-          <td>${room.id}</td>
-          <td>${escapeHtml(room.roomNumber || '')}</td>
-          <td>${getRoomTypeText(room.type)}</td>
-          <td>${formatMoney(room.basePrice)}</td>
-          <td><span class="status-badge ${room.isActive ? 'active' : 'inactive'}">${room.isActive ? (window.i18n?.t('admin.available') || 'Свободна') : (window.i18n?.t('admin.occupied') || 'Занята')}</span></td>
-          <td>${room.capacity ?? ''}</td>
-          <td>
-            <div class="action-buttons">
-              <button class="btn-action btn-edit" onclick="editRoom('${room.id}')"><i class="fas fa-edit"></i></button>
-              <button class="btn-action btn-delete" onclick="deleteRoom('${room.id}')"><i class="fas fa-trash"></i></button>
-            </div>
-          </td>
-        </tr>
-      `).join('');
+
+    if (window.i18n && window.i18n.applyTranslations) {
+        window.i18n.applyTranslations();
+    }
 }
+
 
 function filterRooms() {
     const search = (document.getElementById('roomSearch').value || '').toLowerCase();
@@ -737,14 +832,8 @@ async function onRoomFormSubmit(e) {
 
 
 function getRoomTypeText(type) {
-    const map = {
-        STANDARD: window.i18n?.t('roomTypes.STANDARD') || 'Стандарт',
-        DELUXE: window.i18n?.t('roomTypes.DELUXE') || 'Делюкс',
-        SUITE: window.i18n?.t('roomTypes.SUITE') || 'Люкс',
-        APARTMENT: window.i18n?.t('roomTypes.APARTMENT') || 'Апартаменты',
-        PENTHOUSE: window.i18n?.t('roomTypes.PENTHOUSE') || 'Пентхаус'
-    };
-    return map[type] || type || '';
+    // Возвращаем ключ для перевода вместо прямого перевода
+    return type || 'STANDARD';
 }
 
 async function deleteRoom(id) {
@@ -1286,76 +1375,6 @@ function closeMobileMenu() {
 
 function toggleUserMenu() {
     if (userDropdown) userDropdown.classList.toggle('show');
-}
-
-function updateNavigation() {
-    const navAuth = document.querySelector('.nav-auth');
-    const userData = getUserData();
-
-    if (userData) {
-        navAuth.innerHTML = `
-                <div class="user-profile">
-                    <div class="user-info">
-                        <div class="user-avatar">${userData.firstName?.charAt(0) || '👤'}</div>
-                        <div class="user-details">
-                            <div class="user-name">${userData.firstName} ${userData.lastName}</div>
-                            <div class="user-email">${userData.email}</div>
-                        </div>
-                    </div>
-                    <div class="user-menu">
-                        <button class="btn-auth btn-user" onclick="toggleUserMenu()">
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="user-dropdown" id="userDropdown">
-                            <div class="dropdown-header">
-                                <div class="user-avatar-small">${userData.firstName?.charAt(0) || '👤'}</div>
-                                <div>
-                                    <div class="user-name-small">${userData.firstName} ${userData.lastName}</div>
-                                    <div class="user-email-small">${userData.email}</div>
-                                </div>
-                            </div>
-                            <div class="dropdown-divider"></div>
-                            <a href="/profile" class="dropdown-item" data-i18n-ignore>
-                                <i class="fas fa-user"></i>
-                                <span data-i18n="common.profile">Мой профиль</span>
-                            </a>
-                            <a href="/booking" class="dropdown-item" data-i18n-ignore>
-                                <i class="fas fa-calendar"></i>
-                                <span data-i18n="common.bookings">Мои бронирования</span>
-                            </a>
-                            <a href="/wallet" class="dropdown-item" data-i18n-ignore>
-                                <i class="fas fa-wallet"></i>
-                                <span data-i18n="common.wallet">Кошелек</span>
-                            </a>
-                            <a href="/setting" class="dropdown-item" data-i18n-ignore>
-                                <i class="fas fa-cog"></i>
-                                <span data-i18n="common.settings">Настройки</span>
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a href="#" class="dropdown-item logout-item" onclick="logout()" data-i18n-ignore>
-                                <i class="fas fa-sign-out-alt"></i>
-                                <span data-i18n="common.logout">Выйти</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            `;
-    } else {
-        navAuth.innerHTML = `
-                <a href="/login" class="btn-auth btn-login" data-i18n-ignore>
-                    <i class="fas fa-sign-in-alt"></i>
-                    <span data-i18n="common.login">Войти</span>
-                </a>
-                <a href="/register" class="btn-auth btn-register" data-i18n-ignore>
-                    <i class="fas fa-user-plus"></i>
-                    <span data-i18n="common.register">Регистрация</span>
-                </a>
-            `;
-    }
-
-    if (window.i18n && window.i18n.applyTranslations) {
-        window.i18n.applyTranslations();
-    }
 }
 
 async function logout() {

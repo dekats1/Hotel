@@ -1,5 +1,7 @@
 let translations = {};
 let currentLanguage = 'ru';
+let isReady = false;
+let observer = null;
 
 async function loadTranslations(lang = 'ru') {
     try {
@@ -49,6 +51,7 @@ async function setLanguage(lang) {
     localStorage.setItem('language', lang);
     document.documentElement.setAttribute('lang', lang);
     currentLanguage = lang;
+
     applyTranslations();
 
     const langText = document.getElementById('langText');
@@ -56,24 +59,51 @@ async function setLanguage(lang) {
         langText.textContent = lang.toUpperCase();
     }
 
-    if (typeof updateNavigation === 'function') {
-        updateNavigation();
-    }
+    // УБРАНО: updateNavigation больше не нужна в админ-панели
+    // if (typeof updateNavigation === 'function') {
+    //     updateNavigation();
+    // }
 
     window.dispatchEvent(new CustomEvent('languageChanged', { detail: { language: lang } }));
+
+    setTimeout(() => {
+        applyTranslations();
+        console.log('✅ Translations re-applied for static elements');
+    }, 150);
+
+    setTimeout(() => {
+        applyTranslations();
+        console.log('✅ Final translation pass completed');
+    }, 300);
 }
+
+
 
 function getLanguage() {
     return currentLanguage;
 }
 
 function applyTranslations() {
-    document.querySelectorAll('[data-i18n]').forEach(element => {
+    console.log('🔄 Applying translations for language:', currentLanguage);
+    console.log('📚 Available translations:', translations);
+
+    // Переводим элементы с data-i18n
+    const elements = document.querySelectorAll('[data-i18n]');
+    console.log(`📍 Found ${elements.length} elements with [data-i18n]`);
+
+    elements.forEach((element, index) => {
         const key = element.getAttribute('data-i18n');
         if (!key) return;
 
         const translation = t(key);
-        if (!translation || translation === key) return;
+
+        // ВАЖНО! Логируем каждый элемент
+        console.log(`[${index + 1}] Key: "${key}" => Translation: "${translation}" (Element:`, element, ')');
+
+        if (!translation || translation === key) {
+            console.warn(`⚠️ Translation NOT found for key: ${key}`);
+            return;
+        }
 
         if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
             if (element.type === 'submit' || element.type === 'button') {
@@ -86,11 +116,14 @@ function applyTranslations() {
         } else {
             const hasI18nChildren = element.querySelector('[data-i18n]');
             if (!hasI18nChildren || element.children.length === 0) {
+                const oldText = element.textContent;
                 element.textContent = translation;
+                console.log(`  ✅ Updated: "${oldText}" -> "${translation}"`);
             }
         }
     });
 
+    // Остальной код без изменений...
     document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
         const key = element.getAttribute('data-i18n-placeholder');
         if (!key) return;
@@ -124,6 +157,63 @@ function applyTranslations() {
             option.textContent = translation;
         }
     });
+
+    console.log('✅ Translations applied');
+}
+
+
+function setupMutationObserver() {
+    // Отключаем предыдущий наблюдатель, если есть
+    if (observer) {
+        observer.disconnect();
+    }
+
+    observer = new MutationObserver((mutations) => {
+        let needsUpdate = false;
+
+        for (const mutation of mutations) {
+            // Проверяем добавленные узлы
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                for (const node of mutation.addedNodes) {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        // Проверяем, есть ли в узле data-i18n атрибуты
+                        if (node.hasAttribute && node.hasAttribute('data-i18n')) {
+                            needsUpdate = true;
+                            break;
+                        }
+                        if (node.querySelector && node.querySelector('[data-i18n]')) {
+                            needsUpdate = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Проверяем изменения атрибутов
+            if (mutation.type === 'attributes' && mutation.attributeName === 'data-i18n') {
+                needsUpdate = true;
+            }
+
+            if (needsUpdate) break;
+        }
+
+        if (needsUpdate) {
+            // Используем debounce чтобы не применять переводы слишком часто
+            clearTimeout(applyTranslations.timeout);
+            applyTranslations.timeout = setTimeout(() => {
+                applyTranslations();
+            }, 50);
+        }
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['data-i18n', 'data-i18n-placeholder']
+    });
+
+    console.log('✅ MutationObserver setup complete');
 }
 
 async function initI18n() {
@@ -131,6 +221,12 @@ async function initI18n() {
     await loadTranslations(savedLanguage);
     document.documentElement.setAttribute('lang', savedLanguage);
     applyTranslations();
+    isReady = true;
+
+    // Настраиваем наблюдатель
+    setupMutationObserver();
+
+    window.dispatchEvent(new Event('i18nReady'));
 }
 
 function createLanguageSwitcher() {
@@ -173,7 +269,7 @@ function createLanguageSwitcher() {
             .lang-btn:hover {
                 background: var(--bg-hover, #e5e7eb);
                 transform: translateY(-1px);
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             }
             [data-theme="dark"] .lang-btn {
                 background: var(--bg-secondary, #334155);
@@ -233,6 +329,7 @@ function initLanguageSwitcher() {
     }
 }
 
+// Экспортируем API
 window.i18n = {
     t,
     setLanguage,
@@ -242,12 +339,14 @@ window.i18n = {
     initI18n,
     initLanguageSwitcher,
     switchLanguage,
-    toggleLanguage
+    toggleLanguage,
+    get isReady() { return isReady; }
 };
 
 window.switchLanguage = switchLanguage;
 window.toggleLanguage = toggleLanguage;
 
+// Инициализация
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', async () => {
         await initI18n();

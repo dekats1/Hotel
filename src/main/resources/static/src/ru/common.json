@@ -146,7 +146,8 @@
     "backToEmailStep": "Назад",
     "resetPasswordBtn": "Сменить пароль",
     "resettingPassword": "Обновляем...",
-    "passwordResetSuccess": "Пароль успешно обновлен. Войдите с новым паролем."
+    "passwordResetSuccess": "Пароль успешно обновлен. Войдите с новым паролем.",
+    "confirmNewPassword": "Подтвердите пароль"
   },
   "catalog": {
     "guestsOptions": {
@@ -316,6 +317,10 @@
     "allRoles": "Все роли",
     "user": "Пользователь",
     "admin": "Администратор",
+    "totalUsers": "Пользователей",
+    "totalRooms": "Номеров",
+    "totalBookings": "Бронирований",
+    "dashboardOverview": "Обзор системы отеля",
     "allStatuses": "Все статусы",
     "active": "Активные",
     "inactive": "Неактивные",

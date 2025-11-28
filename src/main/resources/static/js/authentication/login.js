@@ -626,23 +626,34 @@ if (forgotResetForm) {
     });
 }
 
-const passwordToggle = document.querySelector('.password-toggle');
-if (passwordToggle) {
-    passwordToggle.addEventListener('click', function() {
-        const type = passwordInput.type === 'password' ? 'text' : 'password';
-        passwordInput.type = type;
+function togglePassword() {
+    const passwordInput = document.getElementById('password');
+    if (!passwordInput) return;
 
-        const icon = this.querySelector('i');
-        if (icon) {
-            icon.classList.toggle('fa-eye');
-            icon.classList.toggle('fa-eye-slash');
-        }
-    });
+    const type = passwordInput.type === 'password' ? 'text' : 'password';
+    passwordInput.type = type;
+
+    const passwordToggle = document.querySelector('.password-toggle');
+    const icon = passwordToggle?.querySelector('i');
+    if (icon) {
+        icon.classList.toggle('fa-eye');
+        icon.classList.toggle('fa-eye-slash');
+    }
 }
+
+// Сделать функцию глобальной
+window.togglePassword = togglePassword;
+
 
 
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Проверяем, залогинен ли пользователь
+    if (window.location.pathname === '/login') {
+        checkIfLoggedIn();
+    }
+
+    // Восстанавливаем сохраненный email
     const savedEmail = localStorage.getItem('remembered_email');
     if (savedEmail && emailInput) {
         emailInput.value = savedEmail;
@@ -652,39 +663,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-if (rememberCheckbox) {
-    rememberCheckbox.addEventListener('change', function() {
-        if (this.checked && emailInput.value) {
-            localStorage.setItem('remembered_email', emailInput.value.trim());
-        } else {
-            localStorage.removeItem('remembered_email');
-        }
-    });
-}
-
-// ==============================================
-// REDIRECT IF ALREADY LOGGED IN
-// ==============================================
-
-function checkIfLoggedIn() {
-    const userData = getUserData();
-
-    if (userData) {
-        console.log('User already logged in, redirecting...');
-
-        if (userData.role === 'ADMIN') {
-            window.location.href = '/profileAdmin';
-        } else {
-            window.location.href = '/';
-        }
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    if (window.location.pathname === '/login') {
-        checkIfLoggedIn();
-    }
-});
 
 // ==============================================
 // CSS ANIMATIONS FOR NOTIFICATIONS

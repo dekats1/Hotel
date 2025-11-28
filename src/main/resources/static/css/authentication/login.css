@@ -12,10 +12,11 @@
 
 .theme-toggle-top {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    top: 12px;
+    right: 120px;
     z-index: 1000;
 }
+
 
 .theme-btn {
     width: 50px;

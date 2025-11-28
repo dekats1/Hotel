@@ -12,8 +12,8 @@
 
 .theme-toggle-top {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    top: 17px;
+    right: 110px;
     z-index: 1000;
 }
 
