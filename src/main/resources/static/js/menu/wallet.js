@@ -16,6 +16,12 @@ let transactions = [];
 let currentPage = 0;
 const TRANSACTIONS_PER_PAGE = 20;
 
+// Exchange rate (1 USD = 3.3 BYN)
+const EXCHANGE_RATE = {
+    BYN_TO_USD: 3.3,
+    USD_TO_BYN: 1 / 3.3
+};
+
 function getUserDataFromStorage() {
     try {
         const userData = localStorage.getItem(USER_DATA_KEY);
@@ -216,6 +222,15 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     initializeTheme();
 
+    // Listen for currency changes
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'currency' && currentUser) {
+            updateWalletBalances();
+            updateMonthlyStats();
+            displayTransactions(transactions);
+        }
+    });
+
     window.addEventListener('languageChanged', function() {
         if (typeof updateNavigation === 'function') {
             updateNavigation();
@@ -273,25 +288,58 @@ function updateUserInterface() {
     updateMonthlyStats();
 }
 
+// Currency conversion functions
+function convertCurrency(amount, fromCurrency, toCurrency) {
+    if (fromCurrency === toCurrency) return amount;
+    
+    const amountNum = Number(amount) || 0;
+    
+    if (fromCurrency === 'BYN' && toCurrency === 'USD') {
+        return amountNum / EXCHANGE_RATE.BYN_TO_USD;
+    } else if (fromCurrency === 'USD' && toCurrency === 'BYN') {
+        return amountNum * EXCHANGE_RATE.BYN_TO_USD;
+    }
+    
+    return amountNum;
+}
+
+function formatCurrency(amount, currency = null) {
+    const selectedCurrency = currency || localStorage.getItem('currency') || 'BYN';
+    const amountNum = Number(amount) || 0;
+    
+    // Convert from BYN to selected currency
+    const convertedAmount = convertCurrency(amountNum, 'BYN', selectedCurrency);
+    
+    const currencies = {
+        'BYN': 'Br',
+        'USD': '$',
+    };
+    
+    const symbol = currencies[selectedCurrency] || 'Br';
+    return `${convertedAmount.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${symbol}`;
+}
+
 function updateWalletBalances() {
     if (!currentUser) return;
 
     const mainBalance = document.getElementById('mainBalance');
     const userWallet = document.getElementById('userWallet');
     const availableBalance = document.getElementById('availableBalance');
+    const navWalletAmount = document.getElementById('navWalletAmount');
 
-    const balanceText = formatMoney(currentUser.wallet) + 'BYN';
+    const balanceText = formatCurrency(currentUser.wallet);
 
     if (mainBalance) mainBalance.textContent = balanceText;
     if (userWallet) userWallet.textContent = balanceText;
     if (availableBalance) availableBalance.textContent = balanceText;
+    if (navWalletAmount) navWalletAmount.textContent = balanceText;
 }
 
 function updateMonthlyStats() {
     const monthlySpent = calculateMonthlySpent();
     const monthlySpentElement = document.getElementById('monthlySpent');
     if (monthlySpentElement) {
-        monthlySpentElement.textContent = '-' + formatMoney(monthlySpent) + 'BYN';
+        monthlySpentElement.textContent = '-' + formatCurrency(monthlySpent);
     }
 }
 
@@ -318,13 +366,13 @@ function updateNavigationForLoggedInUser(user) {
         <div class="user-profile">
             <div class="user-info">
                 <div class="user-avatar" id="userAvatar">${user.avatar || '👤'}</div>
-                <div class="user-details">
-                    <div class="user-name" id="userName">${user.name || (window.i18n?.t('common.user') || 'Пользователь')}</div>
-                    <div class="user-wallet">
-                        <i class="fas fa-wallet"></i>
-                        <span id="navWalletAmount">${formatMoney(user.wallet)}BYN</span>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">${user.name || (window.i18n?.t('common.user') || 'Пользователь')}</div>
+                        <div class="user-wallet">
+                            <i class="fas fa-wallet"></i>
+                            <span id="navWalletAmount">${formatCurrency(user.wallet)}</span>
+                        </div>
                     </div>
-                </div>
             </div>
             <div class="user-menu">
                 <button class="btn-auth btn-user" onclick="toggleUserMenu()">
@@ -401,7 +449,7 @@ function displayTransactions(transactionsToShow) {
                         </div>
                     </div>
                     <div class="transaction-amount ${isPositive ? 'positive' : 'negative'}">
-                        ${isPositive ? '+' : '-'}${formatMoney(transaction.amount)}BYN
+                        ${isPositive ? '+' : '-'}${formatCurrency(transaction.amount)}
                     </div>
                     <div class="transaction-date">
                         ${formatDate(transaction.createdAt)}
@@ -643,7 +691,7 @@ function applyHistoryFilters() {
                                 </div>
                             </div>
                             <div class="transaction-amount ${isPositive ? 'positive' : 'negative'}">
-                                ${isPositive ? '+' : '-'}${formatMoney(transaction.amount)}BYN
+                                ${isPositive ? '+' : '-'}${formatCurrency(transaction.amount)}
                             </div>
                             <div class="transaction-date">
                                 ${formatDate(transaction.createdAt)}

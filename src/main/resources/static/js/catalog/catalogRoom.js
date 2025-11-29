@@ -13,9 +13,16 @@ const ENDPOINTS = {
 let allRooms = [];
 let filteredRooms = [];
 let currentTheme = localStorage.getItem('theme') || 'light';
+let currentUser = null;
 
 let selectedCheckIn = null;
 let selectedCheckOut = null;
+
+// Exchange rate (1 USD = 3.3 BYN)
+const EXCHANGE_RATE = {
+    BYN_TO_USD: 3.3,
+    USD_TO_BYN: 1 / 3.3
+};
 
 document.addEventListener('DOMContentLoaded', async () => {
     initializeThemeToggle();
@@ -26,6 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     bindFilters();
     checkAuthStatus();
+    await loadUserProfile();
     initializeDatePickers();
     applyUrlParams();
     await loadRooms();
@@ -42,6 +50,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.addEventListener('languageChanged', function() {
     updateNavigation();
     renderRooms();
+});
+
+// Listen for currency changes
+window.addEventListener('storage', function(e) {
+    if (e.key === 'currency' && currentUser) {
+        updateNavigation();
+    }
 });
 
 function initializeThemeToggle() {
@@ -141,6 +156,87 @@ function toNum(v) {
 function formatMoney(v) {
     const n = toNum(v);
     return n.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+// Currency conversion functions
+function convertCurrency(amount, fromCurrency, toCurrency) {
+    if (fromCurrency === toCurrency) return amount;
+    
+    const amountNum = Number(amount) || 0;
+    
+    if (fromCurrency === 'BYN' && toCurrency === 'USD') {
+        return amountNum / EXCHANGE_RATE.BYN_TO_USD;
+    } else if (fromCurrency === 'USD' && toCurrency === 'BYN') {
+        return amountNum * EXCHANGE_RATE.BYN_TO_USD;
+    }
+    
+    return amountNum;
+}
+
+function formatCurrency(amount, currency = null) {
+    const selectedCurrency = currency || localStorage.getItem('currency') || 'BYN';
+    const amountNum = Number(amount) || 0;
+    
+    // Convert from BYN to selected currency
+    const convertedAmount = convertCurrency(amountNum, 'BYN', selectedCurrency);
+    
+    const currencies = {
+        'BYN': 'Br',
+        'USD': '$',
+    };
+    
+    const symbol = currencies[selectedCurrency] || 'Br';
+    return `${convertedAmount.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${symbol}`;
+}
+
+async function loadUserProfile() {
+    const userData = getUserData();
+    if (userData) {
+        currentUser = userData;
+    }
+
+    try {
+        const response = await fetch('/api/users/profile', {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            currentUser = {
+                id: data.id,
+                name: `${data.firstName || ''} ${data.lastName || ''}`,
+                firstName: data.firstName,
+                lastName: data.lastName,
+                email: data.email,
+                wallet: data.balance ? Number(data.balance) : 0,
+                avatar: data.avatarUrl || '👤'
+            };
+
+            const userBasicData = {
+                id: data.id,
+                email: data.email,
+                firstName: data.firstName,
+                lastName: data.lastName,
+                wallet: currentUser.wallet,
+                avatar: currentUser.avatar
+            };
+            localStorage.setItem('user_data', JSON.stringify(userBasicData));
+        } else if (response.status === 401) {
+            // User is not authenticated, clear current user
+            currentUser = null;
+            localStorage.removeItem('user_data');
+        }
+    } catch (error) {
+        console.error('Failed to load user profile:', error);
+        // If error, keep current user data from localStorage if exists
+        if (!currentUser) {
+            currentUser = userData;
+        }
+    } finally {
+        // Always update navigation after attempting to load profile
+        updateNavigation();
+    }
 }
 
 function debounce(fn, t) {
@@ -647,8 +743,16 @@ function openBookingModal(roomId) {
 
     const name = getRoomName(room);
     document.getElementById('bookingRoomName').textContent = name;
-    const perNightText = window.i18n?.t('catalog.perNight') || 'BYN/ночь';
-    document.getElementById('bookingRoomPrice').textContent = `${formatMoney(room.basePrice)} ${perNightText}`;
+    
+    // Set initial currency from localStorage or default to BYN
+    const savedCurrency = localStorage.getItem('currency') || 'BYN';
+    const currencies = {
+        'BYN': 'Br',
+        'USD': '$',
+    };
+    const symbol = currencies[savedCurrency] || 'Br';
+    const convertedPrice = convertCurrency(room.basePrice, 'BYN', savedCurrency);
+    document.getElementById('bookingRoomPrice').textContent = `${formatMoney(convertedPrice)} ${symbol}/ночь`;
 
     const savedCheckIn = selectedCheckIn || sessionStorage.getItem('searchCheckIn');
     const savedCheckOut = selectedCheckOut || sessionStorage.getItem('searchCheckOut');
@@ -668,10 +772,18 @@ function openBookingModal(roomId) {
     checkOutInput.value = savedCheckOut || tomorrow;
     guestsInput.value = savedGuests || '1';
 
-    document.getElementById('currency').value = 'BYN';
+    document.getElementById('currency').value = savedCurrency;
     document.getElementById('specialRequests').value = '';
 
     calculateTotalPrice();
+    
+    // Add listener for currency change
+    const currencySelect = document.getElementById('currency');
+    if (currencySelect) {
+        currencySelect.removeEventListener('change', calculateTotalPrice);
+        currencySelect.addEventListener('change', calculateTotalPrice);
+    }
+    
     modal.classList.add('show');
 }
 
@@ -686,10 +798,12 @@ function calculateTotalPrice() {
 
     const checkInDate = document.getElementById('checkInDate').value;
     const checkOutDate = document.getElementById('checkOutDate').value;
+    const currencySelect = document.getElementById('currency');
+    const selectedCurrency = currencySelect ? currencySelect.value : 'BYN';
 
     if (!checkInDate || !checkOutDate) {
         document.getElementById('totalNights').textContent = '0';
-        document.getElementById('totalPrice').textContent = '0 BYN';
+        document.getElementById('totalPrice').textContent = formatCurrency(0, selectedCurrency);
         return;
     }
 
@@ -699,7 +813,20 @@ function calculateTotalPrice() {
     const totalPrice = nights * pricePerNight;
 
     document.getElementById('totalNights').textContent = nights;
-    document.getElementById('totalPrice').textContent = `${formatMoney(totalPrice)} BYN`;
+    document.getElementById('totalPrice').textContent = formatCurrency(totalPrice, selectedCurrency);
+    
+    // Update price per night display
+    const bookingRoomPrice = document.getElementById('bookingRoomPrice');
+    if (bookingRoomPrice) {
+        const currencies = {
+            'BYN': 'Br',
+            'USD': '$',
+        };
+        const symbol = currencies[selectedCurrency] || 'Br';
+        const convertedPrice = convertCurrency(pricePerNight, 'BYN', selectedCurrency);
+        const perNightText = window.i18n?.t('catalog.perNight') || 'BYN/ночь';
+        bookingRoomPrice.textContent = `${formatMoney(convertedPrice)} ${symbol}/ночь`;
+    }
 }
 
 async function submitBooking() {
@@ -881,7 +1008,7 @@ async function apiClient(url, options = {}) {
 
 function checkAuthStatus() {
     const userData = getUserData();
-    updateNavigation();
+    // Don't update navigation here - it will be updated after loadUserProfile()
     return !!userData;
 }
 
@@ -889,9 +1016,10 @@ function updateNavigation() {
     const navAuth = document.querySelector('.nav-auth');
     if (!navAuth) return;
 
-    const userData = getUserData();
+    const userData = currentUser || getUserData();
 
     if (userData) {
+        const walletAmount = formatCurrency(userData.wallet || 0);
         navAuth.innerHTML = `
             <div class="user-profile">
                 <div class="user-info">
@@ -900,7 +1028,7 @@ function updateNavigation() {
                         <div class="user-name" id="userName">${userData.firstName || ''} ${userData.lastName || ''}</div>
                         <div class="user-wallet">
                             <i class="fas fa-wallet"></i>
-                            <span id="userWallet">${formatMoney(userData.wallet || 0)} BYN</span>
+                            <span id="userWallet">${walletAmount}</span>
                         </div>
                     </div>
                 </div>

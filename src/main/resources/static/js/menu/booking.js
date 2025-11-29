@@ -10,6 +10,12 @@ let bookings = [];
 let userReviews = [];
 let currentFilter = 'all';
 
+// Exchange rate (1 USD = 3.3 BYN)
+const EXCHANGE_RATE = {
+    BYN_TO_USD: 3.3,
+    USD_TO_BYN: 1 / 3.3
+};
+
 // ==============================================
 // ФУНКЦИИ ДЛЯ РАБОТЫ С API
 // ==============================================
@@ -178,6 +184,19 @@ document.addEventListener('DOMContentLoaded', function() {
         loadUserReviews();
     });
 
+    // Listen for currency changes
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'currency' && currentUser) {
+            updateUserInterface();
+            if (bookings.length > 0) {
+                const filtered = currentFilter === 'all' ? bookings :
+                    bookings.filter(b => getBookingStatus(b) === currentFilter);
+                displayBookings(filtered);
+                updateStatistics();
+            }
+        }
+    });
+
     console.log('✅ Booking page initialized successfully');
 });
 
@@ -230,7 +249,7 @@ function updateUserInterface() {
                         <div class="user-name">${currentUser.name}</div>
                         <div class="user-wallet">
                             <i class="fas fa-wallet"></i>
-                            <span>${formatMoney(currentUser.wallet)}BYN</span>
+                            <span>${formatCurrency(currentUser.wallet)}</span>
                         </div>
                     </div>
                 </div>
@@ -281,7 +300,8 @@ function displayBookings(bookingsToShow) {
         .map(booking => {
             const status = getBookingStatus(booking);
             const nights = calculateNights(booking.checkInDate, booking.checkOutDate);
-            const canReview = status === 'completed' && !hasReviewForBooking(booking.id);
+            // Can review if status is completed or checked_out
+            const canReview = (status === 'completed' || booking.status === 'COMPLETED' || booking.status === 'CHECKED_OUT') && !hasReviewForBooking(booking.id);
 
             return `
                 <div class="booking-card ${status}">
@@ -297,7 +317,7 @@ function displayBookings(bookingsToShow) {
                         <div class="booking-detail"><i class="fas fa-calendar-times"></i> ${window.i18n?.t('home.checkOut') || 'Выезд'}: <strong>${formatDate(booking.checkOutDate)}</strong></div>
                         <div class="booking-detail"><i class="fas fa-users"></i> ${window.i18n?.t('booking.guests') || 'Гостей'}: <strong>${booking.guestsCount}</strong></div>
                         <div class="booking-detail"><i class="fas fa-moon"></i> ${window.i18n?.t('booking.nights') || 'Ночей'}: <strong>${nights}</strong></div>
-                        <div class="booking-detail"><i class="fas fa-ruble-sign"></i> ${window.i18n?.t('booking.total') || 'Сумма'}: <strong>${formatMoney(booking.totalPrice)}BYN</strong></div>
+                        <div class="booking-detail"><i class="fas fa-ruble-sign"></i> ${window.i18n?.t('booking.total') || 'Сумма'}: <strong>${formatCurrency(booking.totalPrice)}</strong></div>
                     </div>
                     <div class="booking-actions">
                         <button class="booking-action-btn" onclick="viewBookingDetails('${booking.id}')">
@@ -325,8 +345,40 @@ function displayBookings(bookingsToShow) {
 }
 
 function getBookingStatus(booking) {
-    if (booking.status === 'CANCELLED') return 'cancelled';
-
+    // Use status from backend if available
+    if (booking.status) {
+        const backendStatus = booking.status.toUpperCase();
+        
+        // Map backend statuses to client display statuses
+        switch (backendStatus) {
+            case 'CANCELLED':
+                return 'cancelled';
+            case 'COMPLETED':
+            case 'CHECKED_OUT':
+                return 'completed';
+            case 'CHECKED_IN':
+                return 'current';
+            case 'CONFIRMED':
+            case 'PENDING':
+                // For confirmed/pending, check if dates indicate current status
+                const now = new Date();
+                const checkIn = new Date(booking.checkInDate);
+                const checkOut = new Date(booking.checkOutDate);
+                
+                if (checkOut < now) {
+                    return 'completed';
+                }
+                if (checkIn <= now && checkOut >= now) {
+                    return 'current';
+                }
+                return 'upcoming';
+            default:
+                // Fallback to date-based calculation for unknown statuses
+                break;
+        }
+    }
+    
+    // Fallback: calculate status based on dates if no status from backend
     const now = new Date();
     const checkOut = new Date(booking.checkOutDate);
 
@@ -339,6 +391,22 @@ function getBookingStatus(booking) {
 }
 
 function getStatusText(status) {
+    // Handle both backend statuses and client display statuses
+    const backendStatusMap = {
+        'PENDING': 'Ожидает подтверждения',
+        'CONFIRMED': 'Подтверждено',
+        'CHECKED_IN': 'Гость заселён',
+        'CHECKED_OUT': 'Выселен',
+        'COMPLETED': 'Завершено',
+        'CANCELLED': 'Отменено'
+    };
+    
+    // If status is a backend status, use its display name
+    if (backendStatusMap[status]) {
+        return backendStatusMap[status];
+    }
+    
+    // Otherwise, use client display statuses
     if (window.i18n) {
         const statusMap = {
             upcoming: window.i18n.t('booking.statusUpcoming') || 'Предстоящее',
@@ -373,14 +441,19 @@ function filterBookings(filter) {
 }
 
 function updateStatistics() {
-    const active = bookings.filter(b => getBookingStatus(b) !== 'cancelled');
+    // Filter out cancelled bookings - check both backend status and computed status
+    const active = bookings.filter(b => {
+        const status = getBookingStatus(b);
+        const backendStatus = b.status ? b.status.toUpperCase() : null;
+        return status !== 'cancelled' && backendStatus !== 'CANCELLED';
+    });
     const totalNights = active.reduce((sum, b) => sum + calculateNights(b.checkInDate, b.checkOutDate), 0);
     const totalSpent = active.reduce((sum, b) => sum + Number(b.totalPrice), 0);
 
     const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
     el('totalBookings', active.length);
     el('totalNights', totalNights);
-    el('totalSpent', formatMoney(totalSpent) + 'BYN');
+    el('totalSpent', formatCurrency(totalSpent));
 
     if (userReviews.length > 0) {
         const avgRating = userReviews.reduce((sum, r) => sum + r.rating, 0) / userReviews.length;
@@ -423,10 +496,10 @@ function viewBookingDetails(bookingId) {
                 <div class="detail-section">
                     <h3>${window.i18n?.t('booking.price') || 'Стоимость'}</h3>
                     <div class="price-breakdown">
-                        <div class="price-item"><span>${window.i18n?.t('booking.pricePerNight') || 'Цена за ночь'}:</span><span>${formatMoney(booking.pricePerNight)}BYN</span></div>
+                        <div class="price-item"><span>${window.i18n?.t('booking.pricePerNight') || 'Цена за ночь'}:</span><span>${formatCurrency(booking.pricePerNight)}</span></div>
                         <div class="price-item"><span>${window.i18n?.t('booking.nightsCount') || 'Количество ночей'}:</span><span>${nights}</span></div>
                         ${booking.specialRequests ? `<div class="price-item"><span>${window.i18n?.t('booking.requests') || 'Пожелания'}:</span><span>${booking.specialRequests}</span></div>` : ''}
-                        <div class="price-total"><strong>${window.i18n?.t('booking.total') || 'Итого'}:</strong><strong>${formatMoney(booking.totalPrice)}BYN</strong></div>
+                        <div class="price-total"><strong>${window.i18n?.t('booking.total') || 'Итого'}:</strong><strong>${formatCurrency(booking.totalPrice)}</strong></div>
                     </div>
                 </div>
             </div>
@@ -655,6 +728,37 @@ function toggleTheme() {
     localStorage.setItem('theme', newTheme);
     const icon = document.getElementById('themeIcon');
     if (icon) icon.className = newTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+}
+
+// Currency conversion functions
+function convertCurrency(amount, fromCurrency, toCurrency) {
+    if (fromCurrency === toCurrency) return amount;
+    
+    const amountNum = Number(amount) || 0;
+    
+    if (fromCurrency === 'BYN' && toCurrency === 'USD') {
+        return amountNum / EXCHANGE_RATE.BYN_TO_USD;
+    } else if (fromCurrency === 'USD' && toCurrency === 'BYN') {
+        return amountNum * EXCHANGE_RATE.BYN_TO_USD;
+    }
+    
+    return amountNum;
+}
+
+function formatCurrency(amount, currency = null) {
+    const selectedCurrency = currency || localStorage.getItem('currency') || 'BYN';
+    const amountNum = Number(amount) || 0;
+    
+    // Convert from BYN to selected currency
+    const convertedAmount = convertCurrency(amountNum, 'BYN', selectedCurrency);
+    
+    const currencies = {
+        'BYN': 'Br',
+        'USD': '$',
+    };
+    
+    const symbol = currencies[selectedCurrency] || 'Br';
+    return `${convertedAmount.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${symbol}`;
 }
 
 function formatMoney(amount) {

@@ -6,6 +6,7 @@ public enum BookingStatus {
     PENDING("Ожидает подтверждения", false),
     CONFIRMED("Подтверждено", false),
     CHECKED_IN("Гость заселён", false),
+    CHECKED_OUT("Выселен",true),
     COMPLETED("Завершено", true),
     CANCELLED("Отменено", true);
 

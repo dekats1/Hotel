@@ -13,6 +13,12 @@ const USER_DATA_KEY = 'user_data';
 
 let currentUser = null;
 
+// Exchange rate (1 USD = 3.3 BYN)
+const EXCHANGE_RATE = {
+    BYN_TO_USD: 3.3,
+    USD_TO_BYN: 1 / 3.3
+};
+
 // ==============================================
 // STORAGE FUNCTIONS
 // ==============================================
@@ -342,6 +348,9 @@ function setupSettingsControls() {
             applyCurrencySettings(currency);
             const currencyName = getCurrencyName(currency);
             showNotification(`${window.i18n?.t('settings.currencyChanged') || 'Валюта изменена на'} ${currencyName}`, 'success');
+            
+            // Trigger storage event to update other pages
+            window.dispatchEvent(new Event('storage'));
         });
     }
 
@@ -383,6 +392,7 @@ function setupNotificationToggles() {
 function applyCurrencySettings(currency) {
     if (currentUser) {
         updateAllCurrencyDisplays();
+        updateNavigationForLoggedInUser(currentUser);
     }
 }
 
@@ -397,15 +407,35 @@ function getCurrencyName(currencyCode) {
     return currencyNames[currencyCode] || currencyCode;
 }
 
-function formatCurrency(amount) {
-    const currency = localStorage.getItem('currency') || 'BYN';
+// Currency conversion functions
+function convertCurrency(amount, fromCurrency, toCurrency) {
+    if (fromCurrency === toCurrency) return amount;
+    
+    const amountNum = Number(amount) || 0;
+    
+    if (fromCurrency === 'BYN' && toCurrency === 'USD') {
+        return amountNum / EXCHANGE_RATE.BYN_TO_USD;
+    } else if (fromCurrency === 'USD' && toCurrency === 'BYN') {
+        return amountNum * EXCHANGE_RATE.BYN_TO_USD;
+    }
+    
+    return amountNum;
+}
+
+function formatCurrency(amount, currency = null) {
+    const selectedCurrency = currency || localStorage.getItem('currency') || 'BYN';
+    const amountNum = Number(amount) || 0;
+    
+    // Convert from BYN to selected currency
+    const convertedAmount = convertCurrency(amountNum, 'BYN', selectedCurrency);
+    
     const currencies = {
         'BYN': 'Br',
         'USD': '$',
     };
-
-    const symbol = currencies[currency] || 'Br';
-    return `${amount.toLocaleString()}${symbol}`;
+    
+    const symbol = currencies[selectedCurrency] || 'Br';
+    return `${convertedAmount.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${symbol}`;
 }
 
 function updateAllCurrencyDisplays() {

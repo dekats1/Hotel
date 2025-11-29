@@ -15,6 +15,12 @@ const USER_DATA_KEY = 'user_data';
 
 let currentUser = null;
 
+// Exchange rate (1 USD = 3.3 BYN)
+const EXCHANGE_RATE = {
+    BYN_TO_USD: 3.3,
+    USD_TO_BYN: 1 / 3.3
+};
+
 // ==============================================
 // РАБОТА С LOCAL STORAGE
 // ==============================================
@@ -557,7 +563,7 @@ function updateUserInterface() {
     if (profileName) profileName.textContent = currentUser.name;
     if (profileEmail) profileEmail.textContent = currentUser.email;
     if (userName) userName.textContent = currentUser.name;
-    if (userWallet) userWallet.textContent = currentUser.wallet ? currentUser.wallet.toLocaleString() + 'BYN' : '0BYN';
+    if (userWallet) userWallet.textContent = formatCurrency(currentUser.wallet || 0);
 
     if (userNameSmall) userNameSmall.textContent = currentUser.name;
     if (userEmailSmall) userEmailSmall.textContent = currentUser.email;
@@ -621,6 +627,37 @@ function updateFormFields() {
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+}
+
+// Currency conversion functions
+function convertCurrency(amount, fromCurrency, toCurrency) {
+    if (fromCurrency === toCurrency) return amount;
+    
+    const amountNum = Number(amount) || 0;
+    
+    if (fromCurrency === 'BYN' && toCurrency === 'USD') {
+        return amountNum / EXCHANGE_RATE.BYN_TO_USD;
+    } else if (fromCurrency === 'USD' && toCurrency === 'BYN') {
+        return amountNum * EXCHANGE_RATE.BYN_TO_USD;
+    }
+    
+    return amountNum;
+}
+
+function formatCurrency(amount, currency = null) {
+    const selectedCurrency = currency || localStorage.getItem('currency') || 'BYN';
+    const amountNum = Number(amount) || 0;
+    
+    // Convert from BYN to selected currency
+    const convertedAmount = convertCurrency(amountNum, 'BYN', selectedCurrency);
+    
+    const currencies = {
+        'BYN': 'Br',
+        'USD': '$',
+    };
+    
+    const symbol = currencies[selectedCurrency] || 'Br';
+    return `${convertedAmount.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${symbol}`;
 }
 
 function showNotification(message, type = 'info') {
@@ -716,6 +753,13 @@ document.addEventListener('DOMContentLoaded', function () {
     loadUserData();
     setupEventListeners();
     initTheme();
+
+    // Listen for currency changes
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'currency' && currentUser) {
+            updateUserInterface();
+        }
+    });
 });
 
 // Глобальные функции
