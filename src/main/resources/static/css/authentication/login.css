@@ -291,22 +291,6 @@
     animation: spin 1s linear infinite;
 }
 
-.auth-divider {
-    text-align: center;
-    margin: 2rem 0;
-    position: relative;
-}
-
-.auth-divider::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: var(--border-color);
-}
-
 .auth-divider span {
     background: var(--bg-card);
     padding: 0 1rem;

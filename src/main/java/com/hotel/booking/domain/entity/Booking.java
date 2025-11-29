@@ -41,12 +41,10 @@ public class Booking extends BaseEntity {
     private Room room;
 
     @NotNull(message = "Дата заезда обязательна")
-    @FutureOrPresent(message = "Дата заезда не может быть в прошлом")
     @Column(name = "check_in_date", nullable = false)
     private LocalDate checkInDate;
 
     @NotNull(message = "Дата выезда обязательна")
-    @Future(message = "Дата выезда должна быть в будущем")
     @Column(name = "check_out_date", nullable = false)
     private LocalDate checkOutDate;
 
