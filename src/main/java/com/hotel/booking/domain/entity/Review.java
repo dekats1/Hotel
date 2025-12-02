@@ -131,10 +131,9 @@ public class Review extends BaseEntity {
             return true; // Пропускаем валидацию если booking null
         }
 
-        // ✅ Проверяем напрямую статус и дату
         LocalDate today = LocalDate.now();
         return booking.getStatus() == BookingStatus.COMPLETED
-                || (booking.getCheckOutDate() != null && booking.getCheckOutDate().isBefore(today));
+                || (booking.getCheckOutDate() != null && booking.getCheckOutDate().isBefore(today)) ||booking.getStatus() == BookingStatus.CHECKED_OUT;
     }
 
     // Lifecycle callbacks

@@ -45,7 +45,6 @@ public class BookingServiceImpl implements BookingService {
     log.info("Request: roomId={}, checkIn={}, checkOut={}, guests={}",
             dto.getRoomId(), dto.getCheckInDate(), dto.getCheckOutDate(), dto.getGuestsCount());
 
-    // 1. Получаем пользователя
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     String userEmail = authentication.getName();
     log.info("User email: {}", userEmail);
@@ -54,7 +53,6 @@ public class BookingServiceImpl implements BookingService {
             .orElseThrow(() -> new ResourceNotFoundException("User", "email", userEmail));
     log.info("User found: id={}, balance={}", user.getId(), user.getBalance());
 
-    // 2. Получаем номер
     Room room = roomRepository.findById(dto.getRoomId())
             .orElseThrow(() -> new ResourceNotFoundException("Room", "id", dto.getRoomId().toString()));
     log.info("Room found: number={}, price={}", room.getRoomNumber(), room.getBasePrice());
@@ -76,14 +74,12 @@ public class BookingServiceImpl implements BookingService {
 
     log.info("Room is available, proceeding with booking...");
 
-    // 4. Проверяем баланс пользователя
     if (user.getBalance().compareTo(dto.getTotalPrice()) < 0) {
       log.warn("Insufficient balance: user has {}, needs {}",
               user.getBalance(), dto.getTotalPrice());
       throw new IllegalStateException("Недостаточно средств на балансе");
     }
 
-    // 5. Создаем бронирование
     Booking booking = new Booking();
     booking.setBookingDate(LocalDateTime.now());
     booking.setStatus(BookingStatus.PENDING);
@@ -100,7 +96,6 @@ public class BookingServiceImpl implements BookingService {
     Booking saved = bookingRepository.save(booking);
     log.info("Booking created: id={}, status={}", saved.getId(), saved.getStatus());
 
-    // 6. Списываем средства с баланса
     BigDecimal newBalance = user.getBalance().subtract(saved.getTotalPrice());
     user.setBalance(newBalance);
     userRepository.save(user);
@@ -140,7 +135,6 @@ public class BookingServiceImpl implements BookingService {
       throw new ForbiddenException("Access denied: this booking does not belong to you");
     }
 
-    // Проверка статуса
     if (booking.getStatus() == BookingStatus.CANCELLED) {
       throw new BookingAlreadyCancelledException(booking.getId());
     }
@@ -149,7 +143,6 @@ public class BookingServiceImpl implements BookingService {
       throw new IllegalStateException("Невозможно отменить завершенное бронирование");
     }
 
-    // Возврат средств пользователю
     User user = booking.getUser();
     BigDecimal refundAmount = booking.getTotalPrice();
     user.setBalance(user.getBalance().add(refundAmount));

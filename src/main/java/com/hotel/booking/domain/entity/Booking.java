@@ -141,7 +141,7 @@ public class Booking extends BaseEntity {
     public boolean isCompleted() {
         LocalDate today = LocalDate.now();
         return this.status == BookingStatus.COMPLETED
-                || (this.checkOutDate != null && this.checkOutDate.isBefore(today));
+                || (this.checkOutDate != null && this.checkOutDate.isBefore(today)) || this.status == BookingStatus.CHECKED_OUT;
     }
 
     public boolean canBeReviewed() {

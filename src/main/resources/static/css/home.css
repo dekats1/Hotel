@@ -72,7 +72,10 @@
 .hotel-image {
     width: 500px;
     height: 400px;
-    background: var(--gradient-accent);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(147, 51, 234, 0.3)),
+                url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80');
+    background-size: cover;
+    background-position: center;
     border-radius: 20px;
     box-shadow: var(--shadow-xl);
     position: relative;
@@ -81,11 +84,14 @@
 }
 
 .hotel-image::before {
-    content: '🏨';
+    content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(147, 51, 234, 0.3));
+    border-radius: 20px;
     font-size: 8rem;
     opacity: 0.8;
 }
@@ -563,7 +569,10 @@
 .gallery-large {
     grid-column: span 6;
     grid-row: span 2;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.8)),
+                url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200&q=80');
+    background-size: cover;
+    background-position: center;
 }
 
 .gallery-medium {
@@ -583,50 +592,50 @@
 
 /* Background images with gradients */
 .gallery-pool {
-    background: linear-gradient(135deg, rgba(20, 184, 166, 0.9), rgba(6, 182, 212, 0.9)),
-    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%2314b8a6" width="1200" height="600"/><path fill="%23fff" fill-opacity="0.1" d="M0 300L100 350L200 320L300 360L400 340L500 370L600 350L700 380L800 360L900 390L1000 370L1100 400L1200 380V600H0Z"/></svg>');
+    background: linear-gradient(135deg, rgba(20, 184, 166, 0.7), rgba(6, 182, 212, 0.7)),
+                url('https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800&q=80');
     background-size: cover;
     background-position: center;
 }
 
 .gallery-restaurant {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.9)),
-    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%23f59e0b" width="1200" height="600"/><circle fill="%23fff" fill-opacity="0.1" cx="200" cy="200" r="150"/><circle fill="%23fff" fill-opacity="0.1" cx="800" cy="400" r="200"/></svg>');
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.7), rgba(217, 119, 6, 0.7)),
+                url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80');
     background-size: cover;
     background-position: center;
 }
 
 .gallery-room {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(124, 58, 237, 0.9)),
-    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%238b5cf6" width="1200" height="600"/><path fill="%23fff" fill-opacity="0.1" d="M0 0h400v200h-400z M800 400h400v200h-400z"/></svg>');
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.7), rgba(124, 58, 237, 0.7)),
+                url('https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80');
     background-size: cover;
     background-position: center;
 }
 
 .gallery-spa {
-    background: linear-gradient(135deg, rgba(236, 72, 153, 0.9), rgba(219, 39, 119, 0.9)),
-    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%23ec4899" width="1200" height="600"/><circle fill="%23fff" fill-opacity="0.1" cx="600" cy="300" r="250"/></svg>');
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.7), rgba(219, 39, 119, 0.7)),
+                url('https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&q=80');
     background-size: cover;
     background-position: center;
 }
 
 .gallery-gym {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9)),
-    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%23ef4444" width="1200" height="600"/><path fill="%23fff" fill-opacity="0.1" d="M400 0L600 200L800 0h400v600h-400L600 400L400 600H0V0z"/></svg>');
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.7), rgba(220, 38, 38, 0.7)),
+                url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80');
     background-size: cover;
     background-position: center;
 }
 
 .gallery-lobby {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9)),
-    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%233b82f6" width="1200" height="600"/><path fill="%23fff" fill-opacity="0.1" d="M0 200L200 250L400 220L600 260L800 240L1000 270L1200 250V600H0Z"/></svg>');
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.7), rgba(37, 99, 235, 0.7)),
+                url('https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&q=80');
     background-size: cover;
     background-position: center;
 }
 
 .gallery-bar {
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.9), rgba(147, 51, 234, 0.9)),
-    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%23a855f7" width="1200" height="600"/><circle fill="%23fff" fill-opacity="0.1" cx="300" cy="300" r="180"/><circle fill="%23fff" fill-opacity="0.1" cx="900" cy="300" r="180"/></svg>');
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.7), rgba(147, 51, 234, 0.7)),
+                url('https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800&q=80');
     background-size: cover;
     background-position: center;
 }
