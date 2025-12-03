@@ -27,7 +27,6 @@ public class RoomDTOResponse {
 
   private Double stars;
 
-  // ИЗМЕНЕНО: List вместо Map
   private List<TranslationDTO> translations;
 
   private List<PhotoDTO> photos;

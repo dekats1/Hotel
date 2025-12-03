@@ -423,7 +423,7 @@ function handleSearchForm(e) {
     }, 2000);
 }
 
-function handleContactForm(e) {
+async function handleContactForm(e) {
     e.preventDefault();
 
     const formData = new FormData(contactForm);
@@ -448,12 +448,21 @@ function handleContactForm(e) {
     submitBtn.innerHTML = `<span class="loading"></span> ${window.i18n?.t('common.loading') || 'Отправка'}...`;
     submitBtn.disabled = true;
 
-    setTimeout(() => {
-        showNotification(window.i18n?.t('home.messageSent') || 'Сообщение успешно отправлено! Мы свяжемся с вами в ближайшее время.', 'success');
+    try {
+        const response = await apiClient('/api/contact/send', {
+            method: 'POST',
+            body: JSON.stringify(contactData)
+        });
+
+        showNotification(response.message || (window.i18n?.t('home.messageSent') || 'Сообщение успешно отправлено! Мы свяжемся с вами в ближайшее время.'), 'success');
         contactForm.reset();
+    } catch (error) {
+        console.error('Error sending contact form:', error);
+        showNotification(error.message || (window.i18n?.t('errors.sendMessageError') || 'Не удалось отправить сообщение. Попробуйте еще раз позже.'), 'error');
+    } finally {
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
-    }, 2000);
+    }
 }
 
 function isValidEmail(email) {

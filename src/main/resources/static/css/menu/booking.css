@@ -330,7 +330,6 @@
     font-size: 0.9rem;
 }
 
-/* ✅ НОВОЕ: Стили для звезд рейтинга */
 .star-rating {
     display: flex;
     gap: 0.5rem;

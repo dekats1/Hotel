@@ -913,7 +913,7 @@ async function submitBooking() {
         }
 
         const result = await response.json();
-        console.log('✅ Booking created:', result);
+        console.log('Booking created:', result);
 
         notify(window.i18n?.t('catalog.bookingSuccess') || 'Бронирование успешно создано!', 'success');
         closeBookingModal();
@@ -1117,4 +1117,4 @@ window.openRoomDetails = openRoomDetails;
 window.closeRoomModal = closeRoomModal;
 window.closeBookingModal = closeBookingModal;
 
-console.log('✅ Catalog Room script loaded successfully');
+console.log('Catalog Room script loaded successfully');

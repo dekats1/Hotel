@@ -53,5 +53,37 @@ public class EmailServiceImpl implements EmailService {
                 Команда отеля "Райский уголок"
                 """.formatted(user.getFirstName(), verificationCode);
     }
+
+    @Override
+    public void sendContactFormEmail(String name, String email, String message) {
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setFrom(defaultFrom);
+        mailMessage.setTo("deniskatcko05@gmail.com");
+        mailMessage.setSubject("Новое сообщение с сайта отеля \"Райский уголок\"");
+        mailMessage.setText(buildContactFormBody(name, email, message));
+
+        try {
+            mailSender.send(mailMessage);
+            log.info("Contact form email sent from {} ({})", name, email);
+        } catch (MailException ex) {
+            log.error("Failed to send contact form email", ex);
+            throw new BadRequestException("Не удалось отправить сообщение. Попробуйте еще раз позже.");
+        }
+    }
+
+    private String buildContactFormBody(String name, String email, String message) {
+        return """
+                Новое сообщение с формы обратной связи на сайте отеля "Райский уголок"
+                
+                От: %s
+                Email: %s
+                
+                Сообщение:
+                %s
+                
+                ---
+                Это автоматическое сообщение с сайта отеля "Райский уголок"
+                """.formatted(name, email, message);
+    }
 }
 

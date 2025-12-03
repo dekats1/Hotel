@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -30,7 +31,7 @@ public class UserController {
     public ResponseEntity<UserProfileResponse> getProfile(Authentication authentication) {
         log.info("📋 Getting profile for authenticated user");
 
-        // ✅ ИСПРАВЛЕНО: Получаем email из Authentication
+
         String email = getUserEmailFromAuthentication(authentication);
         log.info("User email: {}", email);
 
@@ -53,7 +54,7 @@ public class UserController {
 
     @PostMapping("/change-password")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<String> changePassword(
+    public ResponseEntity<Map<String, String>> changePassword(
             Authentication authentication,
             @Valid @RequestBody ChangePasswordRequest request) {
 
@@ -61,7 +62,7 @@ public class UserController {
         String email = getUserEmailFromAuthentication(authentication);
 
         userService.changePasswordByEmail(email, request);
-        return ResponseEntity.ok("Пароль успешно изменен");
+        return ResponseEntity.ok(Map.of("message", "Пароль успешно изменен"));
     }
 
     @GetMapping("/wallet")

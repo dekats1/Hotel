@@ -75,13 +75,13 @@ public class Room extends BaseEntity {
     private Boolean isActive = true;
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference("room-translations")  // Добавлено
+    @JsonManagedReference("room-translations")
     @Builder.Default
     private Set<RoomTranslation> translations = new HashSet<>();
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("displayOrder ASC")
-    @JsonManagedReference("room-photos")  // Добавлено
+    @JsonManagedReference("room-photos")
     @Builder.Default
     private Set<RoomPhoto> photos = new HashSet<>();
 

@@ -11,10 +11,10 @@ async function loadTranslations(lang = 'ru') {
         }
         translations = await response.json();
         currentLanguage = lang;
-        console.log('✅ Translations loaded:', lang);
+        //console.log('Translations loaded:', lang);
         return translations;
     } catch (error) {
-        console.error('❌ Error loading translations:', error);
+        console.error('Error loading translations:', error);
         if (lang !== 'ru') {
             return loadTranslations('ru');
         }
@@ -59,21 +59,16 @@ async function setLanguage(lang) {
         langText.textContent = lang.toUpperCase();
     }
 
-    // УБРАНО: updateNavigation больше не нужна в админ-панели
-    // if (typeof updateNavigation === 'function') {
-    //     updateNavigation();
-    // }
-
     window.dispatchEvent(new CustomEvent('languageChanged', { detail: { language: lang } }));
 
     setTimeout(() => {
         applyTranslations();
-        console.log('✅ Translations re-applied for static elements');
+        //console.log('Translations re-applied for static elements');
     }, 150);
 
     setTimeout(() => {
         applyTranslations();
-        console.log('✅ Final translation pass completed');
+       // console.log('Final translation pass completed');
     }, 300);
 }
 
@@ -84,12 +79,9 @@ function getLanguage() {
 }
 
 function applyTranslations() {
-    console.log('🔄 Applying translations for language:', currentLanguage);
-    console.log('📚 Available translations:', translations);
 
-    // Переводим элементы с data-i18n
     const elements = document.querySelectorAll('[data-i18n]');
-    console.log(`📍 Found ${elements.length} elements with [data-i18n]`);
+    //console.log(` Found ${elements.length} elements with [data-i18n]`);
 
     elements.forEach((element, index) => {
         const key = element.getAttribute('data-i18n');
@@ -97,11 +89,11 @@ function applyTranslations() {
 
         const translation = t(key);
 
-        // ВАЖНО! Логируем каждый элемент
-        console.log(`[${index + 1}] Key: "${key}" => Translation: "${translation}" (Element:`, element, ')');
+
+        //console.log(`[${index + 1}] Key: "${key}" => Translation: "${translation}" (Element:`, element, ')');
 
         if (!translation || translation === key) {
-            console.warn(`⚠️ Translation NOT found for key: ${key}`);
+            //console.warn(`Translation NOT found for key: ${key}`);
             return;
         }
 
@@ -118,12 +110,11 @@ function applyTranslations() {
             if (!hasI18nChildren || element.children.length === 0) {
                 const oldText = element.textContent;
                 element.textContent = translation;
-                console.log(`  ✅ Updated: "${oldText}" -> "${translation}"`);
+                //console.log(`  Updated: "${oldText}" -> "${translation}"`);
             }
         }
     });
 
-    // Остальной код без изменений...
     document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
         const key = element.getAttribute('data-i18n-placeholder');
         if (!key) return;
@@ -158,7 +149,7 @@ function applyTranslations() {
         }
     });
 
-    console.log('✅ Translations applied');
+    //console.log('Translations applied');
 }
 
 
@@ -172,11 +163,9 @@ function setupMutationObserver() {
         let needsUpdate = false;
 
         for (const mutation of mutations) {
-            // Проверяем добавленные узлы
             if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
                 for (const node of mutation.addedNodes) {
                     if (node.nodeType === Node.ELEMENT_NODE) {
-                        // Проверяем, есть ли в узле data-i18n атрибуты
                         if (node.hasAttribute && node.hasAttribute('data-i18n')) {
                             needsUpdate = true;
                             break;
@@ -213,7 +202,7 @@ function setupMutationObserver() {
         attributeFilter: ['data-i18n', 'data-i18n-placeholder']
     });
 
-    console.log('✅ MutationObserver setup complete');
+    console.log('MutationObserver setup complete');
 }
 
 async function initI18n() {

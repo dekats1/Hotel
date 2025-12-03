@@ -204,7 +204,7 @@ function updateUserInfoInSettings() {
     // Update user stats if they exist on the settings page
     const statsElements = {
         'userBookingsCount': currentUser.stats?.bookings || 0,
-        'userRating': currentUser.stats?.rating || 4.9,
+        'userRating': currentUser.stats?.rating || 0,
         'userYearsWithUs': currentUser.stats?.yearsWithUs || 1
     };
 
@@ -234,7 +234,7 @@ function transformUserData(apiData) {
         avatar: apiData.avatarUrl || '👤',
         stats: {
             bookings: apiData.totalBookings || 0,
-            rating: apiData.averageRating || 4.9,
+            rating: apiData.averageRating || 0,
             yearsWithUs: apiData.membershipYears || 1
         }
     };
@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     initializeTheme();
 
-    console.log('✅ Settings initialized successfully');
+    console.log('Settings initialized successfully');
 });
 
 function checkAuthOnPageLoad() {

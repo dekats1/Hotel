@@ -578,6 +578,8 @@
     "completed": "выполнено успешно!",
     "statusPending":"В ожидании",
     "statusCompleted": "Успешно",
+    "wallet.apply": "Применить",
+    "withdrawDescription": "успешное списание",
     "paymentMethodCard": "Банковская карта",
     "paymentMethodBank": "Банковский перевод",
     "bankDescription": "Перевод через банк (1-3 рабочих дня)",

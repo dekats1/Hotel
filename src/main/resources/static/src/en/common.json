@@ -581,6 +581,8 @@
     "withdrawSuccess": "Withdrawal of",
     "completed": "completed successfully!",
     "statusPending": "Pending",
+    "wallet.apply": "Applay",
+    "withdrawDescription": "draw success",
     "statusCompleted": "Successfully",
     "paymentMethodCard": "Bank Card",
     "paymentMethodBank": "Bank Transfer",

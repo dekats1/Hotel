@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    console.log('✅ Booking page initialized successfully');
+    console.log('Booking page initialized successfully');
 });
 
 // ОДИН обработчик языка (не дублируем!)
@@ -490,7 +490,6 @@ function viewBookingDetails(bookingId) {
                         <div class="detail-item"><strong>${window.i18n?.t('booking.guests') || 'Гостей'}:</strong> <span>${booking.guestsCount}</span></div>
                         <div class="detail-item"><strong>${window.i18n?.t('booking.nights') || 'Ночей'}:</strong> <span>${nights}</span></div>
                         <div class="detail-item"><strong>${window.i18n?.t('booking.status') || 'Статус'}:</strong> <span class="booking-status ${status}">${getStatusText(status)}</span></div>
-                        <div class="detail-item"><strong>${window.i18n?.t('booking.created') || 'Создано'}:</strong> <span>${formatDate(booking.createdAt)}</span></div>
                     </div>
                 </div>
                 <div class="detail-section">

@@ -59,7 +59,6 @@ async function initI18n() {
     applyTranslations();
     isReady = true;
 
-    // Добавьте наблюдатель за изменениями DOM
     setupMutationObserver();
 
     window.dispatchEvent(new Event('i18nReady'));
@@ -306,15 +305,15 @@ function setText(id, text) {
     const el = document.getElementById(id);
     if (el) {
         el.textContent = text ?? '';
-        console.log(`✅ setText: ${id} = ${text}`);
+       // console.log(`setText: ${id} = ${text}`);
     } else {
-        console.warn(`⚠️ Element not found: ${id}`);
+      //     console.warn(`Element not found: ${id}`);
     }
 }
 
 // ==================== DASHBOARD ====================
 async function loadDashboardData() {
-    console.log('🔄 loadDashboardData called');
+   // console.log('loadDashboardData called');
     showLoading(true);
     try {
         const [usersData, roomsData, bookingsData, reviewsData] = await Promise.all([
@@ -324,7 +323,7 @@ async function loadDashboardData() {
             apiCall('/reviews')
         ]);
 
-        console.log('📊 Data loaded:', {usersData, roomsData, bookingsData, reviewsData});
+      //  console.log('Data loaded:', {usersData, roomsData, bookingsData, reviewsData});
 
         users = usersData;
         rooms = roomsData;
@@ -444,8 +443,8 @@ function displayUsers(list) {
                 <td>${formatDate(u.createdAt)}</td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn-action btn-edit" onclick="editUser(${u.id})"><i class="fas fa-edit"></i></button>
-                        <button class="btn-action btn-delete" onclick="deleteUser(${u.id})"><i class="fas fa-trash"></i></button>
+                        <button class="btn-action btn-edit" onclick="editUser('${u.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn-action btn-delete" onclick="deleteUser('${u.id}')"><i class="fas fa-trash"></i></button>
                     </div>
                 </td>
             </tr>
@@ -657,8 +656,8 @@ function displayRooms(roomsToShow) {
                 <td>${room.capacity ?? '-'}</td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn-action btn-edit" onclick="editRoom(${room.id})"><i class="fas fa-edit"></i></button>
-                        <button class="btn-action btn-delete" onclick="deleteRoom(${room.id})"><i class="fas fa-trash"></i></button>
+                        <button class="btn-action btn-edit" onclick="editRoom('${room.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn-action btn-delete" onclick="deleteRoom('${room.id}')"><i class="fas fa-trash"></i></button>
                     </div>
                 </td>
             </tr>
@@ -714,6 +713,10 @@ function closeRoomModal() {
 }
 
 async function editRoom(roomId) {
+    // Экспортируем функцию в глобальную область
+    if (!window.editRoom) {
+        window.editRoom = editRoom;
+    }
     const room = rooms.find(r => r.id === roomId);
     if (!room) return;
     currentEditId = roomId;
@@ -938,9 +941,29 @@ async function setPrimaryRoomPhoto(photoId) {
 async function loadReviews() {
     showLoading(true);
     try {
-        reviews = await apiCall('/reviews');
-        displayReviews(reviews);
+        const loadedReviews = await apiCall('/reviews');
+        console.log('=== LOADED REVIEWS FROM API ===');
+        console.log('Full response:', JSON.stringify(loadedReviews, null, 2));
+        
+        if (Array.isArray(loadedReviews) && loadedReviews.length > 0) {
+            console.log('First review sample:', {
+                id: loadedReviews[0].id,
+                isApproved: loadedReviews[0].isApproved,
+                isApprovedType: typeof loadedReviews[0].isApproved,
+                isVisible: loadedReviews[0].isVisible,
+                isVisibleType: typeof loadedReviews[0].isVisible,
+                fullObject: loadedReviews[0]
+            });
+        }
+        
+        // Принудительно обновляем массив reviews
+        reviews = Array.isArray(loadedReviews) ? loadedReviews : [];
+        console.log('Reviews array updated, count:', reviews.length);
+        
+        // Применяем текущие фильтры после загрузки
+        filterReviews();
     } catch (e) {
+        console.error('Error loading reviews:', e);
         showNotification(window.i18n?.t('admin.reviewsLoadError') || 'Ошибка загрузки отзывов', 'error');
     } finally {
         showLoading(false);
@@ -960,16 +983,47 @@ function displayReviews(list) {
         let statusBadge = '';
         let statusText = '';
 
-        if (r.isApproved === true) {
+        // Определяем статус ТОЛЬКО по visible (поле в JSON называется "visible", не "isVisible")
+        // visible: true = одобрен (виден), false = отклонён (скрыт)
+        const visibleValue = r.visible !== undefined ? r.visible : r.isVisible; // Поддержка обоих вариантов
+        
+        console.log(`=== REVIEW ${r.id} STATUS DETERMINATION ===`);
+        console.log('Raw review object:', JSON.stringify(r, null, 2));
+        console.log('visible raw value:', visibleValue);
+        console.log('visible type:', typeof visibleValue);
+        console.log('visible === true:', visibleValue === true);
+        console.log('visible === false:', visibleValue === false);
+        
+        // Преобразуем в boolean для надежной проверки
+        const isVisible = visibleValue === true || visibleValue === 'true' || visibleValue === 1 || visibleValue === '1';
+        const isVisibleFalse = visibleValue === false || visibleValue === 'false' || visibleValue === 0 || visibleValue === '0';
+        
+        console.log('Normalized isVisible (boolean):', isVisible);
+        console.log('Normalized isVisibleFalse (boolean):', isVisibleFalse);
+        
+        // Определяем статус только по visible:
+        // - visible === true -> "Одобрен" (отзыв виден)
+        // - visible === false -> "Отклонён" (отзыв скрыт)
+        // - visible === null/undefined -> "На модерации" (по умолчанию)
+        if (isVisible) {
+            // Виден = одобрен
             statusBadge = 'approved';
             statusText = window.i18n?.t('admin.approved') || 'Одобрен';
-        } else if (r.isApproved === false && r.isVisible === false) {
+            console.log('STATUS: APPROVED (visible is true)');
+        } else if (isVisibleFalse) {
+            // Скрыт = отклонён
             statusBadge = 'rejected';
             statusText = window.i18n?.t('admin.rejected') || 'Отклонён';
+            console.log('STATUS: REJECTED (visible is false)');
         } else {
+            // Не определен = на модерации
             statusBadge = 'pending';
             statusText = window.i18n?.t('admin.pending') || 'На модерации';
+            console.log('STATUS: PENDING (visible is null/undefined)');
         }
+        
+        console.log(`Final status for review ${r.id}: ${statusText}`);
+        console.log('==========================================');
 
         return `
                 <tr>
@@ -993,27 +1047,59 @@ function displayReviews(list) {
                 </tr>
             `;
     }).join('');
+    
+    // Применяем переводы после обновления таблицы
+    if (window.i18n && window.i18n.applyTranslations) {
+        window.i18n.applyTranslations();
+    }
 }
 
 
 function filterReviews() {
-    const search = (document.getElementById('reviewSearch').value || '').toLowerCase();
-    const rating = document.getElementById('reviewRatingFilter').value;
-    const status = document.getElementById('reviewStatusFilter').value;
+    const searchEl = document.getElementById('reviewSearch');
+    const ratingEl = document.getElementById('reviewRatingFilter');
+    const statusEl = document.getElementById('reviewStatusFilter');
+    
+    const search = (searchEl?.value || '').toLowerCase();
+    const rating = ratingEl?.value || '';
+    const status = statusEl?.value || '';
 
     let filtered = reviews || [];
     if (search) {
         filtered = filtered.filter(r =>
             (r.userName || '').toLowerCase().includes(search) ||
+            (r.userId || '').toLowerCase().includes(search) ||
             (r.roomNumber || '').toLowerCase().includes(search) ||
+            (r.roomId || '').toLowerCase().includes(search) ||
             (r.comment || '').toLowerCase().includes(search)
         );
     }
     if (rating) filtered = filtered.filter(r => String(r.rating) === rating);
     if (status) {
-        if (status === 'APPROVED') filtered = filtered.filter(r => r.isApproved === true);
-        if (status === 'PENDING') filtered = filtered.filter(r => r.isApproved === false);
-        if (status === 'REJECTED') filtered = filtered.filter(r => r.isApproved === false && r.isVisible === false);
+        // Фильтрация только по visible (поле в JSON называется "visible")
+        if (status === 'APPROVED') {
+            filtered = filtered.filter(r => {
+                const visibleValue = r.visible !== undefined ? r.visible : r.isVisible;
+                const isVisible = visibleValue === true || visibleValue === 'true' || visibleValue === 1 || visibleValue === '1';
+                return isVisible;
+            });
+        }
+        if (status === 'PENDING') {
+            filtered = filtered.filter(r => {
+                // На модерации: visible не определен (null/undefined)
+                const visibleValue = r.visible !== undefined ? r.visible : r.isVisible;
+                const isVisible = visibleValue === true || visibleValue === 'true' || visibleValue === 1 || visibleValue === '1';
+                const isVisibleFalse = visibleValue === false || visibleValue === 'false' || visibleValue === 0 || visibleValue === '0';
+                return !isVisible && !isVisibleFalse; // Не true и не false = null/undefined
+            });
+        }
+        if (status === 'REJECTED') {
+            filtered = filtered.filter(r => {
+                const visibleValue = r.visible !== undefined ? r.visible : r.isVisible;
+                const isVisibleFalse = visibleValue === false || visibleValue === 'false' || visibleValue === 0 || visibleValue === '0';
+                return isVisibleFalse;
+            });
+        }
     }
     displayReviews(filtered);
 }
@@ -1028,8 +1114,8 @@ function openReviewModal(reviewId) {
         <div class="detail-row"><strong>${window.i18n?.t('admin.room') || 'Номер'}:</strong> ${escapeHtml(review.roomNumber || review.roomId || '')}</div>
         <div class="detail-row"><strong>${window.i18n?.t('admin.rating') || 'Оценка'}:</strong> ${review.rating ?? ''}</div>
         <div class="detail-row"><strong>${window.i18n?.t('admin.comment') || 'Комментарий'}:</strong> ${escapeHtml(review.comment || '')}</div>
-        <div class="detail-row"><strong>${window.i18n?.t('admin.status') || 'Статус'}:</strong> ${review.isApproved ? (window.i18n?.t('admin.approved') || 'Одобрен') : (window.i18n?.t('admin.pending') || 'На модерации')}</div>
-        <div class="detail-row"><strong>${window.i18n?.t('admin.visibility') || 'Видимость'}:</strong> ${review.isVisible ? (window.i18n?.t('admin.visible') || 'Виден') : (window.i18n?.t('admin.hidden') || 'Скрыт')}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.status') || 'Статус'}:</strong> ${(review.approved !== undefined ? review.approved : review.isApproved) ? (window.i18n?.t('admin.approved') || 'Одобрен') : (window.i18n?.t('admin.pending') || 'На модерации')}</div>
+        <div class="detail-row"><strong>${window.i18n?.t('admin.visibility') || 'Видимость'}:</strong> ${(review.visible !== undefined ? review.visible : review.isVisible) ? (window.i18n?.t('admin.visible') || 'Виден') : (window.i18n?.t('admin.hidden') || 'Скрыт')}</div>
         <div class="detail-row"><strong>${window.i18n?.t('admin.date') || 'Дата'}:</strong> ${formatDate(review.createdAt)}</div>
       `;
     modal.dataset.reviewId = reviewId;
@@ -1046,14 +1132,36 @@ async function approveReview() {
     const modal = document.getElementById('reviewModal');
     const id = modal.dataset.reviewId;
     if (!id) return;
+    showLoading(true);
     try {
-        await apiCall(`/reviews/${id}/approve?isApproved=true`, {method: 'PUT'});
+        console.log('=== APPROVING REVIEW ===');
+        console.log('Review ID:', id);
+        
+        const response = await apiCall(`/reviews/${id}/approve?isApproved=true`, {method: 'PUT'});
+        console.log('=== APPROVE RESPONSE FROM API ===');
+        console.log('Full response:', JSON.stringify(response, null, 2));
+        console.log('Response isVisible:', response.isVisible);
+        console.log('Response isVisible type:', typeof response.isVisible);
+        console.log('Response isApproved:', response.isApproved);
+        console.log('Response isApproved type:', typeof response.isApproved);
+        
+        // Обновляем отзыв в локальном массиве сразу
+        const reviewIndex = reviews.findIndex(r => r.id === id);
+        if (reviewIndex !== -1) {
+            reviews[reviewIndex] = response;
+            console.log('Updated review in local array:', JSON.stringify(reviews[reviewIndex], null, 2));
+        }
+        
         showNotification(window.i18n?.t('admin.reviewApproved') || 'Отзыв одобрен', 'success');
         closeReviewModal();
 
+        // Обновляем список отзывов с применением фильтров
         await loadReviews();
     } catch (e) {
+        console.error('Approve error:', e);
         showNotification(e.message, 'error');
+    } finally {
+        showLoading(false);
     }
 }
 
@@ -1061,15 +1169,29 @@ async function rejectReview() {
     const modal = document.getElementById('reviewModal');
     const id = modal.dataset.reviewId;
     if (!id) return;
+    showLoading(true);
     try {
-        await apiCall(`/reviews/${id}/approve?isApproved=false`, {method: 'PUT'});
-        await apiCall(`/reviews/${id}/visibility?isVisible=false`, {method: 'PUT'});
+        const approveResponse = await apiCall(`/reviews/${id}/approve?isApproved=false`, {method: 'PUT'});
+        const visibilityResponse = await apiCall(`/reviews/${id}/visibility?isVisible=false`, {method: 'PUT'});
+        console.log('Reject responses:', { approveResponse, visibilityResponse }); // Отладка
+        
+        // Обновляем отзыв в локальном массиве сразу
+        const reviewIndex = reviews.findIndex(r => r.id === id);
+        if (reviewIndex !== -1) {
+            reviews[reviewIndex] = visibilityResponse; // Используем последний ответ
+            console.log('Updated review in local array:', reviews[reviewIndex]); // Отладка
+        }
+        
         showNotification(window.i18n?.t('admin.reviewRejected') || 'Отзыв отклонён', 'success');
         closeReviewModal();
 
+        // Обновляем список отзывов с применением фильтров
         await loadReviews();
     } catch (e) {
+        console.error('Reject error:', e); // Отладка
         showNotification(e.message, 'error');
+    } finally {
+        showLoading(false);
     }
 }
 
@@ -1346,6 +1468,7 @@ function getBookingStatusClass(s) {
 function initializeTheme() {
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) {
+        // Добавляем обработчик клика (onclick уже удален из HTML)
         themeToggle.addEventListener('click', toggleTheme);
         updateThemeIcon();
     }

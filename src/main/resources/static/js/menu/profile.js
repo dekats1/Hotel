@@ -109,7 +109,21 @@ async function apiCall(endpoint, options = {}) {
         return null;
     }
 
-    return await response.json();
+    // Check content type to determine if response is JSON or text
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+        try {
+            return await response.json();
+        } catch (e) {
+            // If JSON parsing fails, try to get text
+            const text = await response.text();
+            return text || null;
+        }
+    } else {
+        // If not JSON, return as text
+        const text = await response.text();
+        return text || null;
+    }
 }
 
 async function loadUserData() {
@@ -161,7 +175,7 @@ function transformUserData(apiData) {
         avatar: apiData.avatarUrl || '👤',
         stats: {
             bookings: apiData.totalBookings || 0,
-            rating: apiData.averageRating || 4.9,
+            rating: apiData.averageRating || 0,
             yearsWithUs: apiData.membershipYears || 1
         }
     };
@@ -187,7 +201,7 @@ async function updateProfileOnBackend(profileData) {
 }
 
 async function changePasswordOnBackend(passwordData) {
-    await apiCall('/users/change-password', {
+    return await apiCall('/users/change-password', {
         method: 'POST',
         body: JSON.stringify(passwordData)
     });
@@ -481,11 +495,13 @@ async function handlePasswordFormSubmit(e) {
     }
 
     try {
-        await changePasswordOnBackend(passwordData);
-        showNotification('Пароль успешно изменен!', 'success');
+        const result = await changePasswordOnBackend(passwordData);
+        const message = (result && result.message) || (window.i18n?.t('profile.passwordChanged') || 'Пароль успешно изменен!');
+        showNotification(message, 'success');
         closePasswordModal();
     } catch (error) {
-        showNotification('Ошибка смены пароля: ' + error.message, 'error');
+        console.error('Password change error:', error);
+        showNotification((window.i18n?.t('errors.passwordChangeError') || 'Ошибка смены пароля') + ': ' + error.message, 'error');
     }
 }
 

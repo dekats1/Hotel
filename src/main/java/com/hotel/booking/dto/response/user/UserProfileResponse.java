@@ -25,7 +25,6 @@ UserProfileResponse {
     Boolean emailVerified;
     Boolean isActive;
 
-    // Статистика (можно добавить позже)
     Integer totalBookings;
     Double averageRating;
     Integer membershipYears;

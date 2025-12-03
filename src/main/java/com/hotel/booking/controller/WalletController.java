@@ -28,7 +28,7 @@ public class WalletController {
     @GetMapping("/balance")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<WalletBalanceResponse> getBalance(Authentication authentication) {
-        log.info("💰 Getting wallet balance for authenticated user");
+        log.info("Getting wallet balance for authenticated user");
         String email = getUserEmailFromAuthentication(authentication);
 
         WalletBalanceResponse balance = walletService.getBalance(email);
@@ -41,7 +41,7 @@ public class WalletController {
             Authentication authentication,
             @Valid @RequestBody DepositRequest request) {
 
-        log.info("💵 Deposit request: amount={}, currency={}",
+        log.info("Deposit request: amount={}, currency={}",
                 request.getAmount(), request.getCurrency());
 
         String email = getUserEmailFromAuthentication(authentication);
@@ -56,7 +56,7 @@ public class WalletController {
             Authentication authentication,
             @Valid @RequestBody WithdrawRequest request) {
 
-        log.info("💸 Withdrawal request: amount={}, currency={}",
+        log.info("Withdrawal request: amount={}, currency={}",
                 request.getAmount(), request.getCurrency());
 
         String email = getUserEmailFromAuthentication(authentication);
@@ -73,7 +73,7 @@ public class WalletController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        log.info("📜 Getting transaction history: page={}, size={}", page, size);
+        log.info("Getting transaction history: page={}, size={}", page, size);
 
         String email = getUserEmailFromAuthentication(authentication);
 
@@ -87,7 +87,7 @@ public class WalletController {
             Authentication authentication,
             @PathVariable UUID transactionId) {
 
-        log.info("🔍 Getting transaction details: id={}", transactionId);
+        log.info("Getting transaction details: id={}", transactionId);
 
         String email = getUserEmailFromAuthentication(authentication);
 
