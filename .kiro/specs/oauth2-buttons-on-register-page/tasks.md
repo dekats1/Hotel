@@ -1,0 +1,82 @@
+# Implementation Plan
+
+- [x] 1. Write bug condition exploration test
+  - **Property 1: Bug Condition** - OAuth2 Buttons Missing on Register Page
+  - **CRITICAL**: This test MUST FAIL on unfixed code - failure confirms the bug exists
+  - **DO NOT attempt to fix the test or the code when it fails**
+  - **NOTE**: This test encodes the expected behavior - it will validate the fix when it passes after implementation
+  - **GOAL**: Surface counterexamples that demonstrate the bug exists
+  - **Manual Testing Approach**: Since this is a UI/template bug, manual inspection is most appropriate
+  - Navigate to `/register` page in browser
+  - Verify OAuth2 divider with text "или зарегистрироваться через" is NOT visible
+  - Verify Google OAuth2 button with text "Зарегистрироваться через Google" is NOT visible
+  - Verify GitHub OAuth2 button with text "Зарегистрироваться через GitHub" is NOT visible
+  - Inspect HTML source and confirm `oauth-divider` class is absent
+  - Inspect HTML source and confirm OAuth2 button elements are absent
+  - Run test on UNFIXED code
+  - **EXPECTED OUTCOME**: Test FAILS (this is correct - it proves the bug exists)
+  - Document counterexamples found: OAuth2 divider and buttons are missing from register.html DOM
+  - Mark task complete when test is written, run, and failure is documented
+  - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.2_
+
+- [x] 2. Write preservation property tests (BEFORE implementing fix)
+  - **Property 2: Preservation** - Non-Register Page Behavior Unchanged
+  - **IMPORTANT**: Follow observation-first methodology
+  - Observe behavior on UNFIXED code for non-buggy inputs (pages other than register.html)
+  - Test login page OAuth2 buttons: Navigate to `/login` and verify OAuth2 buttons display with text "Войти через Google/GitHub"
+  - Test traditional registration form: Submit registration form on `/register` with username/password and verify it processes correctly
+  - Test login OAuth2 flow: Click Google/GitHub buttons on `/login` and verify redirect to OAuth2 authorization endpoints
+  - Test footer links: Verify "Уже есть аккаунт? Войти" and "Вернуться на главную" links work on `/register`
+  - Document observed behavior patterns from Preservation Requirements
+  - Run tests on UNFIXED code
+  - **EXPECTED OUTCOME**: Tests PASS (this confirms baseline behavior to preserve)
+  - Mark task complete when tests are written, run, and passing on unfixed code
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+
+- [x] 3. Fix for OAuth2 buttons missing on register page
+
+  - [x] 3.1 Add OAuth2 section to register.html
+    - Open `src/main/resources/templates/pages/register.html`
+    - Locate the card-footer section (around line 297)
+    - After the card-footer closing tag, before the closing `</div><!-- /.card -->` tag, add:
+      - OAuth2 divider: `<div class="oauth-divider"><span>или зарегистрироваться через</span></div>`
+      - Google OAuth2 button: `<a href="/oauth2/authorization/google" class="btn btn-oauth btn-google"><img src="/images/google-icon.svg" alt="Google" width="20" height="20"> Зарегистрироваться через Google</a>`
+      - GitHub OAuth2 button: `<a href="/oauth2/authorization/github" class="btn btn-oauth btn-github"><i class="fab fa-github"></i> Зарегистрироваться через GitHub</a>`
+    - Ensure the HTML structure matches login.html (lines 140-153) but with registration-appropriate text
+    - Use the same CSS classes as login.html for visual consistency
+    - _Bug_Condition: isBugCondition(input) where input.page == 'register.html' AND NOT hasOAuth2Divider(input.page) AND NOT hasOAuth2Buttons(input.page)_
+    - _Expected_Behavior: hasOAuth2Divider(result) AND hasOAuth2Buttons(result) AND buttonText(result.googleButton) == "Зарегистрироваться через Google" AND buttonText(result.githubButton) == "Зарегистрироваться через GitHub"_
+    - _Preservation: Login page OAuth2 buttons, traditional registration form, footer links, OAuth2 backend configuration_
+    - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 3.4, 3.5_
+
+  - [x] 3.2 Verify bug condition exploration test now passes
+    - **Property 1: Expected Behavior** - OAuth2 Buttons Display on Register Page
+    - **IMPORTANT**: Re-run the SAME test from task 1 - do NOT write a new test
+    - The test from task 1 encodes the expected behavior
+    - When this test passes, it confirms the expected behavior is satisfied
+    - Navigate to `/register` page in browser
+    - Verify OAuth2 divider with text "или зарегистрироваться через" IS NOW visible
+    - Verify Google OAuth2 button with text "Зарегистрироваться через Google" IS NOW visible
+    - Verify GitHub OAuth2 button with text "Зарегистрироваться через GitHub" IS NOW visible
+    - Verify button hrefs point to `/oauth2/authorization/google` and `/oauth2/authorization/github`
+    - Verify CSS classes match login.html (`oauth-divider`, `btn-oauth`, `btn-google`, `btn-github`)
+    - **EXPECTED OUTCOME**: Test PASSES (confirms bug is fixed)
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
+
+  - [x] 3.3 Verify preservation tests still pass
+    - **Property 2: Preservation** - Non-Register Page Behavior Unchanged
+    - **IMPORTANT**: Re-run the SAME tests from task 2 - do NOT write new tests
+    - Test login page OAuth2 buttons: Navigate to `/login` and verify OAuth2 buttons still display with text "Войти через Google/GitHub"
+    - Test traditional registration form: Submit registration form on `/register` with username/password and verify it still processes correctly
+    - Test login OAuth2 flow: Click Google/GitHub buttons on `/login` and verify redirect still works to OAuth2 authorization endpoints
+    - Test footer links: Verify "Уже есть аккаунт? Войти" and "Вернуться на главную" links still work on `/register`
+    - **EXPECTED OUTCOME**: Tests PASS (confirms no regressions)
+    - Confirm all tests still pass after fix (no regressions)
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+
+- [x] 4. Checkpoint - Ensure all tests pass
+  - Verify all manual tests from tasks 1, 2, and 3 pass
+  - Confirm OAuth2 buttons are visible on register.html with correct text and styling
+  - Confirm login.html OAuth2 buttons remain unchanged
+  - Confirm traditional registration form still works
+  - Ask the user if questions arise

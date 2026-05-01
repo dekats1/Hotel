@@ -1,0 +1,110 @@
+# ============================================================
+# application.yml — мердж вашей текущей конфигурации с настройками
+# для Thymeleaf MPA. Ваши старые секции (datasource, jpa, mail, jwt)
+# сохранены без изменений.
+# ============================================================
+
+app:
+  jwt:
+    secret: "your-super-secure-jwt-secret-key-that-is-at-least-64-characters-long-for-hs512-algorithm-1234567890"
+    expiration: 86400000  # 24 hours in milliseconds
+  password-reset:
+    code-length: 6
+    expiration-minutes: 15
+
+  # Куда отправляются сообщения с контактной формы (см. ContactService)
+  contact:
+    recipient: ${spring.mail.username}
+
+# Spring Boot настройки сервера — server.* должен быть на верхнем уровне,
+# а не внутри spring: (это была ошибка в исходном yml)
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: openid, profile, email
+            redirect-uri: "{baseUrl}/login/oauth2/code/google"
+
+          github:
+            client-id:  Iv23li7eyy2EwBQBXj66
+            client-secret: 323717119fbc1577e299dccb81da24ec7c0bfd04
+            scope: read:user, user:email
+            redirect-uri: "{baseUrl}/login/oauth2/code/github"
+  # ----- Thymeleaf -----
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false   # в проде поставь true
+    enable-spring-el-compiler: true
+
+  # ----- Локализация / i18n -----
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+    use-code-as-default-message: false
+    cache-duration: -1
+
+  # ----- Web (статика, кэш) -----
+  web:
+    resources:
+      static-locations: classpath:/static/
+      cache:
+        period: 3600
+
+  # ----- БД (PostgreSQL) -----
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hotel
+    username: postgres
+    password: 12345
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # ----- Multipart (загрузка файлов) -----
+  servlet:
+    multipart:
+      max-file-size: 30MB
+      max-request-size: 200MB
+
+  # ----- SMTP (для контактной формы и password-reset) -----
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: deniskatcko05@gmail.com
+    password: cpof zcxc vedz dblr
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+        transport:
+          protocol: smtp
+
+# ----- Логирование (опционально) -----
+logging:
+  level:
+    com.hotel.booking: DEBUG
+    org.thymeleaf: WARN
+    org.springframework.web: INFO
